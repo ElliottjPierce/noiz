@@ -133,29 +133,48 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
             frequency,
         }
     }
+}
 
-    /// Sets the [`seed`](Self::seed) of the [`Noise`] as a `u64`.
-    pub fn set_seed(&mut self, seed: u64) {
+/// Specifies that this noise is configurable.
+pub trait ConfigurableNoise {
+    /// Sets the seed of the noise as a `u64`.
+    fn set_seed(&mut self, seed: u64);
+
+    /// Gets the seed of the noise as a `u64`.
+    fn get_seed(&mut self) -> u64;
+
+    /// Sets the scale of the noise via its frequency.
+    fn set_frequency(&mut self, frequency: f32);
+
+    /// Gets the scale of the noise via its frequency.
+    fn get_frequency(&mut self) -> f32;
+
+    /// Sets the scale of the noise via its period.
+    fn set_period(&mut self, period: f32) {
+        self.set_frequency(1.0 / period);
+    }
+
+    /// Gets the scale of the noise via its period.
+    fn get_period(&mut self) -> f32 {
+        1.0 / self.get_frequency()
+    }
+}
+
+impl<R, W, N> ConfigurableNoise for Noise<R, W, N> {
+    fn set_seed(&mut self, seed: u64) {
         self.seed = RngContext::from_bits(seed);
     }
 
-    /// Gets the [`seed`](Self::seed) of the [`Noise`] as a `u64`.
-    pub fn get_seed(&mut self) -> u64 {
+    fn get_seed(&mut self) -> u64 {
         self.seed.to_bits()
     }
 
-    /// Sets the [`frequency`](Self::frequency) of the [`Noise`] via its inverse/period.
-    /// It is often more convenient to reason about the scale of noise via its period rather than its frequency,
-    /// but it is stored as a frequency for efficiency.
-    pub fn set_period(&mut self, period: f32) {
-        self.frequency = 1.0 / period;
+    fn set_frequency(&mut self, frequency: f32) {
+        self.frequency = frequency;
     }
 
-    /// Gets the [`frequency`](Self::frequency) of the [`Noise`] via its inverse/period.
-    /// It is often more convenient to reason about the scale of noise via its period rather than its frequency,
-    /// but it is stored as a frequency for efficiency.
-    pub fn get_period(&mut self) -> f32 {
-        1.0 / self.frequency
+    fn get_frequency(&mut self) -> f32 {
+        self.frequency
     }
 }
 
@@ -195,5 +214,28 @@ impl<
         self.noise
             .do_noise_op(&mut seeds, &mut working_loc, &mut result, &mut weights);
         result
+    }
+}
+
+/// A version of [`Sampleable`] that is object safe.
+/// `noize` uses exact types whenever possible to enable more inlining and optimizations,
+/// but this trait focuses instead on usability at the expense of speed.
+///
+/// Use [`Sampleable`] when you need performance and [`DynamicSampleable`] when you need object safety or don't want to bloat binary size with more inlining.
+pub trait DynamicSampleable<I: VectorSpace, T>: ConfigurableNoise {
+    /// Samples the [`Noise`] at `loc`, returning the raw [`NoiseResult`].
+    fn sample_dyn(&self, loc: I) -> T;
+}
+
+impl<
+    T,
+    I: VectorSpace,
+    R: NoiseResultContext<Result: NoiseResultOf<T>>,
+    W: NoiseWeightsSettings,
+    N: NoiseOperationFor<I, R, W::Weights>,
+> DynamicSampleable<I, T> for Noise<R, W, N>
+{
+    fn sample_dyn(&self, loc: I) -> T {
+        self.sample_for(loc)
     }
 }
