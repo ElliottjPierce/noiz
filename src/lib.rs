@@ -5,6 +5,7 @@
 )]
 #![doc = include_str!("../README.md")]
 
+use bevy_math::VectorSpace;
 use rng::RngContext;
 
 #[cfg(test)]
@@ -52,7 +53,7 @@ pub trait NoiseResultOf<T>: NoiseResult {
 }
 
 /// Specifies that this [`NoiseResult`] can include values of type `V`.
-pub trait NoiseResultFor<V>: NoiseResult {
+pub trait NoiseResultFor<V: VectorSpace>: NoiseResult {
     /// Includes `value` in the final result at this `weight`.
     /// The `value` should be kepy plain, for example, if multiplication is needed, this will do so.
     /// If `weight` was not included in [`NoiseResultContext::expect_weight`],
@@ -79,11 +80,11 @@ pub trait NoiseWeights {
 /// `R` represents how the result is collected, and `W` represents how each layer is weighted.
 pub trait NoiseOperation<R: NoiseResultContext, W: NoiseWeights> {
     /// Prepares the result context `R` for this noise. This is like a dry run of the noise to try to precompute anything it needs.
-    fn prepare(&self, seeds: &mut RngContext, result_context: &mut R, weights: &mut W);
+    fn prepare(&self, result_context: &mut R, weights: &mut W);
 }
 
 /// Specifies that this [`NoiseOperation`] can be done on type `I`.
-pub trait NoiseOperationFor<I, R: NoiseResultContext, W: NoiseWeights>:
+pub trait NoiseOperationFor<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights>:
     NoiseOperation<R, W>
 {
     /// Performs the noise operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
@@ -100,8 +101,11 @@ pub trait NoiseOperationFor<I, R: NoiseResultContext, W: NoiseWeights>:
 pub struct Noise<R, W, N> {
     result_context: R,
     weight_settings: W,
-    seed: RngContext,
     noise: N,
+    /// The seed of the [`Noise`].
+    pub seed: RngContext,
+    /// The frequency or scale of the [`Noise`].
+    pub frequency: f32,
 }
 
 impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Weights>>
@@ -112,13 +116,13 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
         result_settings: impl NoiseResultSettings<Context = R>,
         weight_settings: W,
         seed: u64,
+        frequency: f32,
         noise: N,
     ) -> Self {
         // prepare
         let mut result_context = result_settings.into_initial_context();
         let mut weights = weight_settings.start_weights();
-        let mut seeds = RngContext::from_bits(seed);
-        noise.prepare(&mut seeds, &mut result_context, &mut weights);
+        noise.prepare(&mut result_context, &mut weights);
 
         // construct
         Self {
@@ -126,12 +130,13 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
             weight_settings,
             seed: RngContext::from_bits(seed),
             noise,
+            frequency,
         }
     }
 }
 
 /// Indicates that this noise is samplable by type `I`.
-pub trait Sampleable<I> {
+pub trait Sampleable<I: VectorSpace> {
     /// Represents the raw result of the sample.
     type Result: NoiseResult;
 
@@ -140,7 +145,7 @@ pub trait Sampleable<I> {
 
     /// Samples the noise at `loc` for a result of type `T`.
     #[inline]
-    fn sample<T>(&self, loc: I) -> T
+    fn sample_for<T>(&self, loc: I) -> T
     where
         Self::Result: NoiseResultOf<T>,
     {
@@ -148,8 +153,12 @@ pub trait Sampleable<I> {
     }
 }
 
-impl<I, R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperationFor<I, R, W::Weights>>
-    Sampleable<I> for Noise<R, W, N>
+impl<
+    I: VectorSpace,
+    R: NoiseResultContext,
+    W: NoiseWeightsSettings,
+    N: NoiseOperationFor<I, R, W::Weights>,
+> Sampleable<I> for Noise<R, W, N>
 {
     type Result = R::Result;
 
@@ -158,7 +167,7 @@ impl<I, R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperationFor<I, 
         let mut seeds = self.seed;
         let mut weights = self.weight_settings.start_weights();
         let mut result = self.result_context.start_result();
-        let mut working_loc = loc;
+        let mut working_loc = loc * self.frequency;
         self.noise
             .do_noise_op(&mut seeds, &mut working_loc, &mut result, &mut weights);
         result
