@@ -161,6 +161,58 @@ impl NoiseRngInput for UVec4 {
     }
 }
 
+/// A context of [`NoiseRng`]s. This generates seeds and rngs.
+///
+/// This stores the seed of the RNG.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct RngContext {
+    next_rng: NoiseRng,
+    entropy: u32,
+}
+
+impl RngContext {
+    /// Provides the next [`NoiseRng`] to be generated.
+    #[inline(always)]
+    pub fn peek_rng(&self) -> NoiseRng {
+        self.next_rng
+    }
+
+    /// Provides the next [`NoiseRng`] to be generated.
+    #[inline(always)]
+    pub fn next_rng(&mut self) -> NoiseRng {
+        let rng = self.next_rng;
+        self.next_rng = NoiseRng(rng.rand_u32(self.entropy));
+        rng
+    }
+
+    /// Creates a different [`RngContext`] that will yield values independent of this one.
+    #[inline(always)]
+    pub fn branch(&mut self) -> Self {
+        Self::new(self.next_rng().0, self.next_rng().0)
+    }
+
+    /// Creates a [`RngContext`] with this entropy and seed.
+    #[inline(always)]
+    pub fn new(seed: u32, entropy: u32) -> Self {
+        Self {
+            next_rng: NoiseRng(seed),
+            entropy,
+        }
+    }
+
+    /// Creates a [`RngContext`] with entropy and seed from these `bits`.
+    #[inline(always)]
+    pub fn from_bits(bits: u64) -> Self {
+        Self::new((bits >> 32) as u32, bits as u32)
+    }
+
+    /// Creates a [`RngContext`] with entropy and seed from these `bits`.
+    #[inline(always)]
+    pub fn to_bits(self) -> u64 {
+        ((self.next_rng.0 as u64) << 32) | (self.entropy as u64)
+    }
+}
+
 /// Assuming `x` is in 0..1, maps it to between -1..=1.
 #[inline(always)]
 pub fn unorm_to_snorm(x: f32) -> f32 {
