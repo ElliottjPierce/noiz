@@ -1,7 +1,7 @@
 //! Defines RNG for noise especially.
 //! This does not use the `rand` crate to enable more control and performance optimizations.
 
-use bevy_math::{UVec2, UVec3, UVec4};
+use bevy_math::{IVec2, IVec3, IVec4, UVec2, UVec3, UVec4};
 
 /// A seeded RNG inspired by [FxHash](https://crates.io/crates/fxhash).
 /// This is similar to a hash function, but does not use std's hash traits, as those produce `u64` outputs only.
@@ -157,6 +157,62 @@ impl NoiseRngInput for UVec4 {
             .include(self.y)
             .include(self.z)
             .include(self.w);
+        collapsed.finish()
+    }
+}
+
+impl<const N: usize> NoiseRngInput for [i32; N] {
+    #[inline(always)]
+    fn collapse_for_rng(self) -> u32 {
+        let mut collapsed = NoiseRngCollapser::default();
+        for v in self {
+            collapsed.include(v as u32);
+        }
+        collapsed.finish()
+    }
+}
+
+impl NoiseRngInput for &[i32] {
+    #[inline(always)]
+    fn collapse_for_rng(self) -> u32 {
+        let mut collapsed = NoiseRngCollapser::default();
+        for &v in self {
+            collapsed.include(v as u32);
+        }
+        collapsed.finish()
+    }
+}
+
+impl NoiseRngInput for IVec2 {
+    #[inline(always)]
+    fn collapse_for_rng(self) -> u32 {
+        let mut collapsed = NoiseRngCollapser::default();
+        collapsed.include(self.x as u32).include(self.y as u32);
+        collapsed.finish()
+    }
+}
+
+impl NoiseRngInput for IVec3 {
+    #[inline(always)]
+    fn collapse_for_rng(self) -> u32 {
+        let mut collapsed = NoiseRngCollapser::default();
+        collapsed
+            .include(self.x as u32)
+            .include(self.y as u32)
+            .include(self.z as u32);
+        collapsed.finish()
+    }
+}
+
+impl NoiseRngInput for IVec4 {
+    #[inline(always)]
+    fn collapse_for_rng(self) -> u32 {
+        let mut collapsed = NoiseRngCollapser::default();
+        collapsed
+            .include(self.x as u32)
+            .include(self.y as u32)
+            .include(self.z as u32)
+            .include(self.w as u32);
         collapsed.finish()
     }
 }
