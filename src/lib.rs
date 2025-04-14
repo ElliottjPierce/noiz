@@ -128,13 +128,33 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
             noise,
         }
     }
+}
+
+/// Indicates that this noise is samplable by type `I`.
+pub trait Sampleable<I> {
+    /// Represents the raw result of the sample.
+    type Result: NoiseResult;
 
     /// Samples the [`Noise`] at `loc`, returning the raw [`NoiseResult`].
+    fn sample_raw(&self, loc: I) -> Self::Result;
+
+    /// Samples the noise at `loc` for a result of type `T`.
     #[inline]
-    pub fn sample_raw<I>(&self, loc: I) -> R::Result
+    fn sample<T>(&self, loc: I) -> T
     where
-        N: NoiseOperationFor<I, R, W::Weights>,
+        Self::Result: NoiseResultOf<T>,
     {
+        self.sample_raw(loc).finish()
+    }
+}
+
+impl<I, R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperationFor<I, R, W::Weights>>
+    Sampleable<I> for Noise<R, W, N>
+{
+    type Result = R::Result;
+
+    #[inline]
+    fn sample_raw(&self, loc: I) -> Self::Result {
         let mut seeds = self.seed;
         let mut weights = self.weight_settings.start_weights();
         let mut result = self.result_context.start_result();
