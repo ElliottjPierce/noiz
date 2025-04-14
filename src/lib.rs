@@ -133,6 +133,30 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
             frequency,
         }
     }
+
+    /// Sets the [`seed`](Self::seed) of the [`Noise`] as a `u64`.
+    pub fn set_seed(&mut self, seed: u64) {
+        self.seed = RngContext::from_bits(seed);
+    }
+
+    /// Gets the [`seed`](Self::seed) of the [`Noise`] as a `u64`.
+    pub fn get_seed(&mut self) -> u64 {
+        self.seed.to_bits()
+    }
+
+    /// Sets the [`frequency`](Self::frequency) of the [`Noise`] via its inverse/period.
+    /// It is often more convenient to reason about the scale of noise via its period rather than its frequency,
+    /// but it is stored as a frequency for efficiency.
+    pub fn set_period(&mut self, period: f32) {
+        self.frequency = 1.0 / period;
+    }
+
+    /// Gets the [`frequency`](Self::frequency) of the [`Noise`] via its inverse/period.
+    /// It is often more convenient to reason about the scale of noise via its period rather than its frequency,
+    /// but it is stored as a frequency for efficiency.
+    pub fn get_period(&mut self) -> f32 {
+        1.0 / self.frequency
+    }
 }
 
 /// Indicates that this noise is samplable by type `I`.
