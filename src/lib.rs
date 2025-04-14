@@ -7,3 +7,5 @@
 
 #[cfg(test)]
 extern crate alloc;
+
+pub mod rng;
