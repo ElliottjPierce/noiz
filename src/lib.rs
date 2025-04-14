@@ -239,3 +239,52 @@ impl<
         self.sample_for(loc)
     }
 }
+
+macro_rules! impl_all_operation_tuples {
+    () => { };
+
+    ($i:ident=$f:tt, $($ni:ident=$nf:tt),* $(,)?) => {
+        impl<R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperation<R, W>, $($ni: NoiseOperation<R, W>),* > NoiseOperation<R, W> for ($i, $($ni),*) {
+            #[inline]
+            fn prepare(&self, result_context: &mut R, weights: &mut W) {
+                self.$f.prepare(result_context, weights);
+                $(self.$nf.prepare(result_context, weights);)*
+            }
+        }
+
+        impl<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperationFor<I, R, W>, $($ni: NoiseOperationFor<I, R, W>),* > NoiseOperationFor<I, R, W> for ($i, $($ni),*) {
+            #[inline]
+            fn do_noise_op(
+                &self,
+                seeds: &mut RngContext,
+                working_loc: &mut I,
+                result: &mut R::Result,
+                weights: &mut W,
+            ) {
+                self.$f.do_noise_op(seeds, working_loc, result, weights);
+                $(self.$nf.do_noise_op(seeds, working_loc, result, weights);)*
+            }
+        }
+
+        impl_all_operation_tuples!($($ni=$nf,)*);
+    };
+}
+
+impl_all_operation_tuples!(
+    T15 = 15,
+    T14 = 14,
+    T13 = 13,
+    T12 = 12,
+    T11 = 11,
+    T10 = 10,
+    T9 = 9,
+    T8 = 8,
+    T7 = 7,
+    T6 = 6,
+    T5 = 5,
+    T4 = 4,
+    T3 = 3,
+    T2 = 2,
+    T1 = 1,
+    T0 = 0,
+);
