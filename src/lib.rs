@@ -12,6 +12,7 @@ use rng::RngContext;
 extern crate alloc;
 
 pub mod rng;
+pub mod segments;
 
 /// Represents the root of some [`NoiseResultContext`].
 /// This includes the user-configurable parts of the result context.
