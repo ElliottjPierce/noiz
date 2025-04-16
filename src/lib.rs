@@ -85,6 +85,7 @@ pub trait NoiseOperation<R: NoiseResultContext, W: NoiseWeights> {
 }
 
 /// Specifies that this [`NoiseOperation`] can be done on type `I`.
+/// If this adds to the `result`, this is called an octave.
 pub trait NoiseOperationFor<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights>:
     NoiseOperation<R, W>
 {
@@ -289,3 +290,46 @@ impl_all_operation_tuples!(
     T1 = 1,
     T0 = 0,
 );
+
+/// A [`NoiseWeightsSettings`] for [`PersistenceWeights`].
+/// This is a very common weight system, as it can produce fractal noise easily.
+/// If you're not sure which one to use, use this one.
+///
+/// Values greater than 1 make later octaves weigh more, while values less than 1 make earlier octaves weigh more.
+/// A value of 1 makes all octaves equally weighted. Values of 0 or nan have no defined meaning.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Persistence(pub f32);
+
+impl Persistence {
+    /// Makes every octave get the same weight.
+    pub const CONSTANT: Self = Self(1.0);
+}
+
+/// The [`NoiseWeights`] for [`Persistence`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PersistenceWeights {
+    persistence: Persistence,
+    next: f32,
+}
+
+impl NoiseWeights for PersistenceWeights {
+    #[inline]
+    fn next_weight(&mut self) -> f32 {
+        let result = self.next;
+        self.next *= self.persistence.0;
+        result
+    }
+}
+
+impl NoiseWeightsSettings for Persistence {
+    type Weights = PersistenceWeights;
+
+    #[inline]
+    fn start_weights(&self) -> Self::Weights {
+        PersistenceWeights {
+            persistence: *self,
+            // Start high to minimize precision loss, not that it's a big deal.
+            next: 1000.0,
+        }
+    }
+}
