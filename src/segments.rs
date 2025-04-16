@@ -610,3 +610,55 @@ impl DiferentiableSegment for GridSquare<Vec4, IVec4> {
         [dx, dy, dz, dw]
     }
 }
+
+impl Segmenter<Vec2> for Grid {
+    type Segment = GridSquare<Vec2, IVec2>;
+
+    #[inline]
+    fn segment(&self, full: Vec2) -> Self::Segment {
+        let floor = full.floor();
+        GridSquare {
+            floored: floor.as_ivec2(),
+            offset: full - floor,
+        }
+    }
+}
+
+impl Segmenter<Vec3> for Grid {
+    type Segment = GridSquare<Vec3, IVec3>;
+
+    #[inline]
+    fn segment(&self, full: Vec3) -> Self::Segment {
+        let floor = full.floor();
+        GridSquare {
+            floored: floor.as_ivec3(),
+            offset: full - floor,
+        }
+    }
+}
+
+impl Segmenter<Vec3A> for Grid {
+    type Segment = GridSquare<Vec3A, IVec3>;
+
+    #[inline]
+    fn segment(&self, full: Vec3A) -> Self::Segment {
+        let floor = full.floor();
+        GridSquare {
+            floored: floor.as_ivec3(),
+            offset: full - floor,
+        }
+    }
+}
+
+impl Segmenter<Vec4> for Grid {
+    type Segment = GridSquare<Vec4, IVec4>;
+
+    #[inline]
+    fn segment(&self, full: Vec4) -> Self::Segment {
+        let floor = full.floor();
+        GridSquare {
+            floored: floor.as_ivec4(),
+            offset: full - floor,
+        }
+    }
+}
