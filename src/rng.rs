@@ -46,10 +46,13 @@ impl NoiseRng {
     }
 
     /// Based on `input`, generates a random `f32` in range -1..=1 and a byte of remanining entropy from the seed.
+    /// Note that the sign of the snorm can be determined by the least bit of the returned `u8`.
     #[inline(always)]
     pub fn rand_snorm_with_entropy(&self, input: impl NoiseRngInput) -> (f32, u8) {
         let (unorm, entropy) = self.rand_unorm_with_entropy(input);
-        (unorm_to_snorm(unorm), entropy)
+        // Use the least bit of entropy as the sign bit
+        let snorm = f32::from_bits(unorm.to_bits() ^ ((entropy as u32) << 31));
+        (snorm, entropy)
     }
 
     /// Based on `input`, generates a random `f32` in range 0..1.
