@@ -434,6 +434,7 @@ impl<
     ) {
         let octave_result = self.0.evaluate(*working_loc, seeds);
         result.include_value(octave_result, weights.next_weight());
+        seeds.update_seed();
     }
 }
 

@@ -34,7 +34,7 @@ impl<
     fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
         let segment = self.segment.segment(input);
         segment.interpolate_within(
-            seeds.next_rng(),
+            seeds.rng(),
             |point| self.noise.evaluate(point, seeds),
             &self.curve,
         )
@@ -54,7 +54,7 @@ impl<
     fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
         let segment = self.segment.segment(input);
         segment.interpolate_with_gradient(
-            seeds.next_rng(),
+            seeds.rng(),
             |point| self.noise.evaluate(point, seeds),
             &self.curve,
         )
@@ -78,7 +78,6 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
         let segment = self.segment.segment(input);
-        self.noise
-            .evaluate(segment.rough_id(seeds.next_rng()), seeds)
+        self.noise.evaluate(segment.rough_id(seeds.rng()), seeds)
     }
 }
