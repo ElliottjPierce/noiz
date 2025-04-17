@@ -5,7 +5,10 @@ use bevy_math::{
     curve::derivatives::SampleDerivative,
 };
 
-use crate::rng::NoiseRng;
+use crate::{
+    NoiseFunction,
+    rng::{NoiseRng, RngContext},
+};
 
 /// Represents a portion or cell of some larger domain and a position within that cell.
 pub trait DomainCell {
@@ -87,6 +90,19 @@ pub trait Partitioner<T: VectorSpace> {
 
     /// Constructs this segment based on its full location.
     fn segment(&self, full: T) -> Self::Cell;
+}
+
+/// A [`NoiseFunction`] that takes any [`DomainCell`] and produces a fully random `u32`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct PerCellRandom;
+
+impl<T: DomainCell> NoiseFunction<T> for PerCellRandom {
+    type Output = u32;
+
+    #[inline]
+    fn evaluate(&self, input: T, seeds: &mut RngContext) -> Self::Output {
+        input.rough_id(seeds.rng())
+    }
 }
 
 /// Represents a grid square.
