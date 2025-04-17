@@ -14,6 +14,7 @@ use rng::RngContext;
 extern crate alloc;
 
 pub mod curves;
+pub mod point_interpolations;
 pub mod rng;
 pub mod segments;
 
