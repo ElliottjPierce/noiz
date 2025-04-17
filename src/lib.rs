@@ -99,26 +99,20 @@ pub trait NoiseOperationFor<I: VectorSpace, R: NoiseResultContext, W: NoiseWeigh
     );
 }
 
-/// Represents a noise function based on layers of [`NoiseOperation`]s.
-pub struct Noise<R, W, N> {
+/// Represents a [`NoiseFunction`] based on layers of [`NoiseOperation`]s.
+pub struct LayeredNoise<R, W, N> {
     result_context: R,
     weight_settings: W,
     noise: N,
-    /// The seed of the [`Noise`].
-    pub seed: RngContext,
-    /// The frequency or scale of the [`Noise`].
-    pub frequency: f32,
 }
 
 impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Weights>>
-    Noise<R, W, N>
+    LayeredNoise<R, W, N>
 {
     /// Constructs a [`Noise`] from these values.
     pub fn new(
         result_settings: impl NoiseResultSettings<Context = R>,
         weight_settings: W,
-        seed: u64,
-        frequency: f32,
         noise: N,
     ) -> Self {
         // prepare
@@ -130,11 +124,38 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
         Self {
             result_context,
             weight_settings,
-            seed: RngContext::from_bits(seed),
             noise,
-            frequency,
         }
     }
+}
+
+impl<
+    I: VectorSpace,
+    R: NoiseResultContext,
+    W: NoiseWeightsSettings,
+    N: NoiseOperationFor<I, R, W::Weights>,
+> NoiseFunction<I> for LayeredNoise<R, W, N>
+{
+    type Output = R::Result;
+
+    #[inline]
+    fn evaluate(&self, mut input: I, seeds: &mut RngContext) -> Self::Output {
+        let mut weights = self.weight_settings.start_weights();
+        let mut result = self.result_context.start_result();
+        self.noise
+            .do_noise_op(seeds, &mut input, &mut result, &mut weights);
+        result
+    }
+}
+
+/// This is the end goal of a [`NoiseFunction`].
+pub struct Noise<N> {
+    /// The [`NoiseFunction`] powering this noise.
+    pub noise: N,
+    /// The seed of the [`Noise`].
+    pub seed: RngContext,
+    /// The frequency or scale of the [`Noise`].
+    pub frequency: f32,
 }
 
 /// Specifies that this noise is configurable.
@@ -162,7 +183,7 @@ pub trait ConfigurableNoise {
     }
 }
 
-impl<R, W, N> ConfigurableNoise for Noise<R, W, N> {
+impl<N> ConfigurableNoise for Noise<N> {
     fn set_seed(&mut self, seed: u64) {
         self.seed = RngContext::from_bits(seed);
     }
@@ -183,7 +204,7 @@ impl<R, W, N> ConfigurableNoise for Noise<R, W, N> {
 /// Indicates that this noise is samplable by type `I`.
 pub trait Sampleable<I: VectorSpace> {
     /// Represents the raw result of the sample.
-    type Result: NoiseResult;
+    type Result;
 
     /// Samples the [`Noise`] at `loc`, returning the raw [`NoiseResult`].
     fn sample_raw(&self, loc: I) -> Self::Result;
@@ -198,24 +219,13 @@ pub trait Sampleable<I: VectorSpace> {
     }
 }
 
-impl<
-    I: VectorSpace,
-    R: NoiseResultContext,
-    W: NoiseWeightsSettings,
-    N: NoiseOperationFor<I, R, W::Weights>,
-> Sampleable<I> for Noise<R, W, N>
-{
-    type Result = R::Result;
+impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
+    type Result = N::Output;
 
     #[inline]
     fn sample_raw(&self, loc: I) -> Self::Result {
         let mut seeds = self.seed;
-        let mut weights = self.weight_settings.start_weights();
-        let mut result = self.result_context.start_result();
-        let mut working_loc = loc * self.frequency;
-        self.noise
-            .do_noise_op(&mut seeds, &mut working_loc, &mut result, &mut weights);
-        result
+        self.noise.evaluate(loc * self.frequency, &mut seeds)
     }
 }
 
@@ -229,13 +239,8 @@ pub trait DynamicSampleable<I: VectorSpace, T>: ConfigurableNoise {
     fn sample_dyn(&self, loc: I) -> T;
 }
 
-impl<
-    T,
-    I: VectorSpace,
-    R: NoiseResultContext<Result: NoiseResultOf<T>>,
-    W: NoiseWeightsSettings,
-    N: NoiseOperationFor<I, R, W::Weights>,
-> DynamicSampleable<I, T> for Noise<R, W, N>
+impl<T, I: VectorSpace, N: NoiseFunction<I, Output: NoiseResultOf<T>>> DynamicSampleable<I, T>
+    for Noise<N>
 {
     fn sample_dyn(&self, loc: I) -> T {
         self.sample_for(loc)
