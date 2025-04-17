@@ -15,7 +15,7 @@ pub trait DomainCell {
     /// Identifies this segment roughly from others per `rng`, roughly meaning the ids are not necessarily unique.
     fn rough_id(&self, rng: NoiseRng) -> u32;
     /// Iterates all the points relevant to this segment.
-    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CelledPoint<Self::Full>>;
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>>;
 }
 
 /// Represents a [`DomainCell`] that can be soothly interpolated within.
@@ -24,7 +24,7 @@ pub trait InterpolatableCell: DomainCell {
     fn interpolate_within<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl Curve<f32>,
     ) -> T;
 }
@@ -39,7 +39,7 @@ pub trait DiferentiableCell: InterpolatableCell {
     fn interpolation_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> Self::Gradient<T>;
 
@@ -47,7 +47,7 @@ pub trait DiferentiableCell: InterpolatableCell {
     fn interpolate_with_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        mut f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        mut f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> WithGradient<T, Self::Gradient<T>> {
         WithGradient {
@@ -72,7 +72,7 @@ pub struct WithGradient<T, G> {
 
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainCell`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CelledPoint<T> {
+pub struct CellPoint<T> {
     /// Identifies this point roughly from others, roughly meaning the ids are not necessarily unique.
     /// The ids must be determenistaic per point. Ids for the same point must match, even if they are from different [`DomainCells`].
     pub rough_id: u32,
@@ -104,15 +104,15 @@ pub struct Grid;
 
 impl GridSquare<Vec2, IVec2> {
     #[inline]
-    fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CelledPoint<Vec2> {
-        CelledPoint {
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
+        CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
             offset: self.offset,
         }
     }
 
     #[inline]
-    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CelledPoint<Vec2>) -> T) -> [T; 4] {
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec2>) -> T) -> [T; 4] {
         [
             f(self.point_at_offset(rng, IVec2::new(0, 0))),
             f(self.point_at_offset(rng, IVec2::new(0, 1))),
@@ -131,7 +131,7 @@ impl DomainCell for GridSquare<Vec2, IVec2> {
     }
 
     #[inline]
-    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CelledPoint<Self::Full>> {
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.corners_map(rng, |p| p).into_iter()
     }
 }
@@ -141,7 +141,7 @@ impl InterpolatableCell for GridSquare<Vec2, IVec2> {
     fn interpolate_within<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl Curve<f32>,
     ) -> T {
         // points
@@ -162,7 +162,7 @@ impl DiferentiableCell for GridSquare<Vec2, IVec2> {
     fn interpolation_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> Self::Gradient<T> {
         // points
@@ -187,15 +187,15 @@ impl DiferentiableCell for GridSquare<Vec2, IVec2> {
 
 impl GridSquare<Vec3, IVec3> {
     #[inline]
-    fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CelledPoint<Vec3> {
-        CelledPoint {
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3> {
+        CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
             offset: self.offset,
         }
     }
 
     #[inline]
-    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CelledPoint<Vec3>) -> T) -> [T; 8] {
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec3>) -> T) -> [T; 8] {
         [
             f(self.point_at_offset(rng, IVec3::new(0, 0, 0))),
             f(self.point_at_offset(rng, IVec3::new(0, 0, 1))),
@@ -218,7 +218,7 @@ impl DomainCell for GridSquare<Vec3, IVec3> {
     }
 
     #[inline]
-    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CelledPoint<Self::Full>> {
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.corners_map(rng, |p| p).into_iter()
     }
 }
@@ -228,7 +228,7 @@ impl InterpolatableCell for GridSquare<Vec3, IVec3> {
     fn interpolate_within<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl Curve<f32>,
     ) -> T {
         // points
@@ -253,7 +253,7 @@ impl DiferentiableCell for GridSquare<Vec3, IVec3> {
     fn interpolation_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> Self::Gradient<T> {
         // points
@@ -302,15 +302,15 @@ impl DiferentiableCell for GridSquare<Vec3, IVec3> {
 
 impl GridSquare<Vec3A, IVec3> {
     #[inline]
-    fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CelledPoint<Vec3A> {
-        CelledPoint {
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3A> {
+        CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
             offset: self.offset,
         }
     }
 
     #[inline]
-    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CelledPoint<Vec3A>) -> T) -> [T; 8] {
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec3A>) -> T) -> [T; 8] {
         [
             f(self.point_at_offset(rng, IVec3::new(0, 0, 0))),
             f(self.point_at_offset(rng, IVec3::new(0, 0, 1))),
@@ -333,7 +333,7 @@ impl DomainCell for GridSquare<Vec3A, IVec3> {
     }
 
     #[inline]
-    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CelledPoint<Self::Full>> {
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.corners_map(rng, |p| p).into_iter()
     }
 }
@@ -343,7 +343,7 @@ impl InterpolatableCell for GridSquare<Vec3A, IVec3> {
     fn interpolate_within<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl Curve<f32>,
     ) -> T {
         // points
@@ -368,7 +368,7 @@ impl DiferentiableCell for GridSquare<Vec3A, IVec3> {
     fn interpolation_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> Self::Gradient<T> {
         // points
@@ -417,15 +417,15 @@ impl DiferentiableCell for GridSquare<Vec3A, IVec3> {
 
 impl GridSquare<Vec4, IVec4> {
     #[inline]
-    fn point_at_offset(&self, rng: NoiseRng, offset: IVec4) -> CelledPoint<Vec4> {
-        CelledPoint {
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec4) -> CellPoint<Vec4> {
+        CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
             offset: self.offset,
         }
     }
 
     #[inline]
-    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CelledPoint<Vec4>) -> T) -> [T; 16] {
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec4>) -> T) -> [T; 16] {
         [
             f(self.point_at_offset(rng, IVec4::new(0, 0, 0, 0))),
             f(self.point_at_offset(rng, IVec4::new(0, 0, 0, 1))),
@@ -456,7 +456,7 @@ impl DomainCell for GridSquare<Vec4, IVec4> {
     }
 
     #[inline]
-    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CelledPoint<Self::Full>> {
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.corners_map(rng, |p| p).into_iter()
     }
 }
@@ -466,7 +466,7 @@ impl InterpolatableCell for GridSquare<Vec4, IVec4> {
     fn interpolate_within<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl Curve<f32>,
     ) -> T {
         // points
@@ -516,7 +516,7 @@ impl DiferentiableCell for GridSquare<Vec4, IVec4> {
     fn interpolation_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
-        f: impl FnMut(CelledPoint<Self::Full>) -> T,
+        f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> Self::Gradient<T> {
         // points
