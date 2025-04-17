@@ -13,6 +13,7 @@ use rng::RngContext;
 #[cfg(test)]
 extern crate alloc;
 
+pub mod curves;
 pub mod rng;
 pub mod segments;
 
