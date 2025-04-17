@@ -42,6 +42,32 @@ pub trait DiferentiableSegment: InterpolatableSegment {
         f: impl FnMut(SegmentedPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
     ) -> Self::Gradient<T>;
+
+    /// Combines [`interpolate_within`](InterpolatableSegment::interpolate_within) and [`interpolation_gradient`](DiferentiableSegment::interpolation_gradient).
+    fn interpolate_with_gradient<T: VectorSpace>(
+        &self,
+        rng: NoiseRng,
+        mut f: impl FnMut(SegmentedPoint<Self::Full>) -> T,
+        curve: &impl SampleDerivative<f32>,
+    ) -> WithGradient<T, Self::Gradient<T>> {
+        WithGradient {
+            #[expect(
+                clippy::redundant_closure,
+                reason = "It's not redundant. It prevents a move."
+            )]
+            value: self.interpolate_within(rng, |p| f(p), curve),
+            gradieht: self.interpolation_gradient(rng, f, curve),
+        }
+    }
+}
+
+/// A value `T` with its gradieht `G`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WithGradient<T, G> {
+    /// The value.
+    pub value: T,
+    /// The gradient of the value.
+    pub gradieht: G,
 }
 
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainSegment`].
