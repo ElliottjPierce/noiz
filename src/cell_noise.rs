@@ -1,21 +1,19 @@
-//! Contains logic for interpolating within a [`DomainSegment`].
+//! Contains logic for interpolating within a [`DomainCell`].
 
 use bevy_math::{Curve, VectorSpace, curve::derivatives::SampleDerivative};
 
 use crate::{
     NoiseFunction,
+    cells::{CelledPoint, DiferentiableCell, InterpolatableCell, Partitioner, WithGradient},
     rng::RngContext,
-    segments::{
-        DiferentiableSegment, InterpolatableSegment, SegmentedPoint, Segmenter, WithGradient,
-    },
 };
 
-/// A [`NoiseFunction`] that interpolates a value sourced from a [`NoiseFunction<SegmentedPoint>`] `N` by a [`Curve`] `C` within some [`DomainSegment`] form a [`Segmenter`] `S`.
+/// A [`NoiseFunction`] that interpolates a value sourced from a [`NoiseFunction<CelledPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `S`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct SmoothSegment<S, C, N, const DIFFERENTIATE: bool = false> {
-    /// The [`Segmenter`].
+pub struct SmoothCell<S, C, N, const DIFFERENTIATE: bool = false> {
+    /// The [`Partitioner`].
     pub segment: S,
-    /// The [`NoiseFunction<SegmentedPoint>`].
+    /// The [`NoiseFunction<CelledPoint>`].
     pub noise: N,
     /// The [`Curve`].
     pub curve: C,
@@ -23,10 +21,10 @@ pub struct SmoothSegment<S, C, N, const DIFFERENTIATE: bool = false> {
 
 impl<
     I: VectorSpace,
-    S: Segmenter<I, Segment: InterpolatableSegment>,
+    S: Partitioner<I, Cell: InterpolatableCell>,
     C: Curve<f32>,
-    N: NoiseFunction<SegmentedPoint<I>, Output: VectorSpace>,
-> NoiseFunction<I> for SmoothSegment<S, C, N, false>
+    N: NoiseFunction<CelledPoint<I>, Output: VectorSpace>,
+> NoiseFunction<I> for SmoothCell<S, C, N, false>
 {
     type Output = N::Output;
 
@@ -43,13 +41,12 @@ impl<
 
 impl<
     I: VectorSpace,
-    S: Segmenter<I, Segment: DiferentiableSegment>,
+    S: Partitioner<I, Cell: DiferentiableCell>,
     C: SampleDerivative<f32>,
-    N: NoiseFunction<SegmentedPoint<I>, Output: VectorSpace>,
-> NoiseFunction<I> for SmoothSegment<S, C, N, true>
+    N: NoiseFunction<CelledPoint<I>, Output: VectorSpace>,
+> NoiseFunction<I> for SmoothCell<S, C, N, true>
 {
-    type Output =
-        WithGradient<N::Output, <S::Segment as DiferentiableSegment>::Gradient<N::Output>>;
+    type Output = WithGradient<N::Output, <S::Cell as DiferentiableCell>::Gradient<N::Output>>;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {

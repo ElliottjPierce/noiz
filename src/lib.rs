@@ -13,10 +13,10 @@ use rng::RngContext;
 #[cfg(test)]
 extern crate alloc;
 
+pub mod cell_noise;
+pub mod cells;
 pub mod curves;
-pub mod point_interpolations;
 pub mod rng;
-pub mod segments;
 
 /// This represents the context of some [`NoiseResult`].
 pub trait NoiseResultContext {
