@@ -42,6 +42,7 @@ pub trait NoiseResultContext {
 }
 
 /// Represents a working result of a noise sample.
+/// Implement [`Into`] to resolve this working result into a final value.
 pub trait NoiseResult {
     /// Informs the result that `weight` will be in included even though it was not in [`NoiseResultContext::expect_weight`].
     fn add_unexpected_weight_to_total(&mut self, weight: f32);
@@ -97,6 +98,103 @@ pub trait NoiseOperationFor<I: VectorSpace, R: NoiseResultContext, W: NoiseWeigh
         result: &mut R::Result,
         weights: &mut W,
     );
+}
+
+macro_rules! impl_all_operation_tuples {
+    () => { };
+
+    ($i:ident=$f:tt, $($ni:ident=$nf:tt),* $(,)?) => {
+        impl<R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperation<R, W>, $($ni: NoiseOperation<R, W>),* > NoiseOperation<R, W> for ($i, $($ni),*) {
+            #[inline]
+            fn prepare(&self, result_context: &mut R, weights: &mut W) {
+                self.$f.prepare(result_context, weights);
+                $(self.$nf.prepare(result_context, weights);)*
+            }
+        }
+
+        impl<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperationFor<I, R, W>, $($ni: NoiseOperationFor<I, R, W>),* > NoiseOperationFor<I, R, W> for ($i, $($ni),*) {
+            #[inline]
+            fn do_noise_op(
+                &self,
+                seeds: &mut RngContext,
+                working_loc: &mut I,
+                result: &mut R::Result,
+                weights: &mut W,
+            ) {
+                self.$f.do_noise_op(seeds, working_loc, result, weights);
+                $(self.$nf.do_noise_op(seeds, working_loc, result, weights);)*
+            }
+        }
+
+        impl_all_operation_tuples!($($ni=$nf,)*);
+    };
+}
+
+impl_all_operation_tuples!(
+    T15 = 15,
+    T14 = 14,
+    T13 = 13,
+    T12 = 12,
+    T11 = 11,
+    T10 = 10,
+    T9 = 9,
+    T8 = 8,
+    T7 = 7,
+    T6 = 6,
+    T5 = 5,
+    T4 = 4,
+    T3 = 3,
+    T2 = 2,
+    T1 = 1,
+    T0 = 0,
+);
+
+/// Represents a simple noise function with an input `I` and an output.
+pub trait NoiseFunction<I> {
+    /// The output of the function.
+    type Output;
+
+    /// Evaluates the function at `input`.
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output;
+}
+
+impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>> NoiseFunction<I> for (T0, T1) {
+    type Output = T1::Output;
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+        let input = self.0.evaluate(input, seeds);
+        self.1.evaluate(input, seeds)
+    }
+}
+
+impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>, T2: NoiseFunction<T1::Output>>
+    NoiseFunction<I> for (T0, T1, T2)
+{
+    type Output = T2::Output;
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+        let input = self.0.evaluate(input, seeds);
+        let input = self.1.evaluate(input, seeds);
+        self.2.evaluate(input, seeds)
+    }
+}
+
+impl<
+    I,
+    T0: NoiseFunction<I>,
+    T1: NoiseFunction<T0::Output>,
+    T2: NoiseFunction<T1::Output>,
+    T3: NoiseFunction<T2::Output>,
+> NoiseFunction<I> for (T0, T1, T2, T3)
+{
+    type Output = T3::Output;
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+        let input = self.0.evaluate(input, seeds);
+        let input = self.1.evaluate(input, seeds);
+        let input = self.2.evaluate(input, seeds);
+        self.3.evaluate(input, seeds)
+    }
 }
 
 /// Represents a [`NoiseFunction`] based on layers of [`NoiseOperation`]s.
@@ -213,9 +311,9 @@ pub trait Sampleable<I: VectorSpace> {
     #[inline]
     fn sample_for<T>(&self, loc: I) -> T
     where
-        Self::Result: NoiseResultOf<T>,
+        Self::Result: Into<T>,
     {
-        self.sample_raw(loc).finish()
+        self.sample_raw(loc).into()
     }
 }
 
@@ -239,108 +337,9 @@ pub trait DynamicSampleable<I: VectorSpace, T>: ConfigurableNoise {
     fn sample_dyn(&self, loc: I) -> T;
 }
 
-impl<T, I: VectorSpace, N: NoiseFunction<I, Output: NoiseResultOf<T>>> DynamicSampleable<I, T>
-    for Noise<N>
-{
+impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> DynamicSampleable<I, T> for Noise<N> {
     fn sample_dyn(&self, loc: I) -> T {
         self.sample_for(loc)
-    }
-}
-
-macro_rules! impl_all_operation_tuples {
-    () => { };
-
-    ($i:ident=$f:tt, $($ni:ident=$nf:tt),* $(,)?) => {
-        impl<R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperation<R, W>, $($ni: NoiseOperation<R, W>),* > NoiseOperation<R, W> for ($i, $($ni),*) {
-            #[inline]
-            fn prepare(&self, result_context: &mut R, weights: &mut W) {
-                self.$f.prepare(result_context, weights);
-                $(self.$nf.prepare(result_context, weights);)*
-            }
-        }
-
-        impl<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperationFor<I, R, W>, $($ni: NoiseOperationFor<I, R, W>),* > NoiseOperationFor<I, R, W> for ($i, $($ni),*) {
-            #[inline]
-            fn do_noise_op(
-                &self,
-                seeds: &mut RngContext,
-                working_loc: &mut I,
-                result: &mut R::Result,
-                weights: &mut W,
-            ) {
-                self.$f.do_noise_op(seeds, working_loc, result, weights);
-                $(self.$nf.do_noise_op(seeds, working_loc, result, weights);)*
-            }
-        }
-
-        impl_all_operation_tuples!($($ni=$nf,)*);
-    };
-}
-
-impl_all_operation_tuples!(
-    T15 = 15,
-    T14 = 14,
-    T13 = 13,
-    T12 = 12,
-    T11 = 11,
-    T10 = 10,
-    T9 = 9,
-    T8 = 8,
-    T7 = 7,
-    T6 = 6,
-    T5 = 5,
-    T4 = 4,
-    T3 = 3,
-    T2 = 2,
-    T1 = 1,
-    T0 = 0,
-);
-
-/// Represents a simple noise function with an input `I` and an output.
-pub trait NoiseFunction<I> {
-    /// The output of the function.
-    type Output;
-
-    /// Evaluates the function at `input`.
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output;
-}
-
-impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>> NoiseFunction<I> for (T0, T1) {
-    type Output = T1::Output;
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
-        let input = self.0.evaluate(input, seeds);
-        self.1.evaluate(input, seeds)
-    }
-}
-
-impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>, T2: NoiseFunction<T1::Output>>
-    NoiseFunction<I> for (T0, T1, T2)
-{
-    type Output = T2::Output;
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
-        let input = self.0.evaluate(input, seeds);
-        let input = self.1.evaluate(input, seeds);
-        self.2.evaluate(input, seeds)
-    }
-}
-
-impl<
-    I,
-    T0: NoiseFunction<I>,
-    T1: NoiseFunction<T0::Output>,
-    T2: NoiseFunction<T1::Output>,
-    T3: NoiseFunction<T2::Output>,
-> NoiseFunction<I> for (T0, T1, T2, T3)
-{
-    type Output = T3::Output;
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
-        let input = self.0.evaluate(input, seeds);
-        let input = self.1.evaluate(input, seeds);
-        let input = self.2.evaluate(input, seeds);
-        self.3.evaluate(input, seeds)
     }
 }
 
