@@ -291,6 +291,85 @@ impl_all_operation_tuples!(
     T0 = 0,
 );
 
+/// Represents a simple noise function with an input `I` and an output.
+pub trait NoiseFunction<I> {
+    /// The output of the function.
+    type Output;
+
+    /// Evaluates the function at `input`.
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output;
+}
+
+impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>> NoiseFunction<I> for (T0, T1) {
+    type Output = T1::Output;
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+        let input = self.0.evaluate(input, seeds);
+        self.1.evaluate(input, seeds)
+    }
+}
+
+impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>, T2: NoiseFunction<T1::Output>>
+    NoiseFunction<I> for (T0, T1, T2)
+{
+    type Output = T2::Output;
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+        let input = self.0.evaluate(input, seeds);
+        let input = self.1.evaluate(input, seeds);
+        self.2.evaluate(input, seeds)
+    }
+}
+
+impl<
+    I,
+    T0: NoiseFunction<I>,
+    T1: NoiseFunction<T0::Output>,
+    T2: NoiseFunction<T1::Output>,
+    T3: NoiseFunction<T2::Output>,
+> NoiseFunction<I> for (T0, T1, T2, T3)
+{
+    type Output = T3::Output;
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+        let input = self.0.evaluate(input, seeds);
+        let input = self.1.evaluate(input, seeds);
+        let input = self.2.evaluate(input, seeds);
+        self.3.evaluate(input, seeds)
+    }
+}
+
+/// Represents a [`NoiseOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Octave<T>(pub T);
+
+impl<T, R: NoiseResultContext, W: NoiseWeights> NoiseOperation<R, W> for Octave<T> {
+    #[inline]
+    fn prepare(&self, result_context: &mut R, weights: &mut W) {
+        result_context.expect_weight(weights.next_weight());
+    }
+}
+
+impl<
+    T: NoiseFunction<I, Output: VectorSpace>,
+    I: VectorSpace,
+    R: NoiseResultContext<Result: NoiseResultFor<T::Output>>,
+    W: NoiseWeights,
+> NoiseOperationFor<I, R, W> for Octave<T>
+{
+    #[inline]
+    fn do_noise_op(
+        &self,
+        seeds: &mut RngContext,
+        working_loc: &mut I,
+        result: &mut <R as NoiseResultContext>::Result,
+        weights: &mut W,
+    ) {
+        let octave_result = self.0.evaluate(*working_loc, seeds);
+        result.include_value(octave_result, weights.next_weight());
+    }
+}
+
 /// A [`NoiseWeightsSettings`] for [`PersistenceWeights`].
 /// This is a very common weight system, as it can produce fractal noise easily.
 /// If you're not sure which one to use, use this one.
