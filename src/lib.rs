@@ -5,6 +5,8 @@
 )]
 #![doc = include_str!("../README.md")]
 
+use core::marker::PhantomData;
+
 use bevy_math::VectorSpace;
 use rng::RngContext;
 
@@ -13,20 +15,6 @@ extern crate alloc;
 
 pub mod rng;
 pub mod segments;
-
-/// Represents the root of some [`NoiseResultContext`].
-/// This includes the user-configurable parts of the result context.
-/// The full context may also depend on the particulars of the noise operations.
-pub trait NoiseResultSettings {
-    /// The context produced by these settings.
-    type Context: NoiseResultContext;
-
-    /// Produces the initial context of these settings.
-    /// This should be the context if there are no noise operations.
-    ///
-    /// This result should be immediately passed to any [`NoiseOperation::prepare`] calls.
-    fn into_initial_context(self) -> Self::Context;
-}
 
 /// This represents the context of some [`NoiseResult`].
 pub trait NoiseResultContext {
@@ -42,7 +30,6 @@ pub trait NoiseResultContext {
 }
 
 /// Represents a working result of a noise sample.
-/// Implement [`Into`] to resolve this working result into a final value.
 pub trait NoiseResult {
     /// Informs the result that `weight` will be in included even though it was not in [`NoiseResultContext::expect_weight`].
     fn add_unexpected_weight_to_total(&mut self, weight: f32);
@@ -51,11 +38,11 @@ pub trait NoiseResult {
 /// Signifies that the [`NoiseResult`] can finalize into type `T`.
 pub trait NoiseResultOf<T>: NoiseResult {
     /// Collapses all accumulated noise results into a finished product `T`.
-    fn finish(self) -> T;
+    fn finish(self, rng: &mut RngContext) -> T;
 }
 
 /// Specifies that this [`NoiseResult`] can include values of type `V`.
-pub trait NoiseResultFor<V: VectorSpace>: NoiseResult {
+pub trait NoiseResultFor<V>: NoiseResult {
     /// Includes `value` in the final result at this `weight`.
     /// The `value` should be kepy plain, for example, if multiplication is needed, this will do so.
     /// If `weight` was not included in [`NoiseResultContext::expect_weight`],
@@ -208,13 +195,9 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
     LayeredNoise<R, W, N>
 {
     /// Constructs a [`Noise`] from these values.
-    pub fn new(
-        result_settings: impl NoiseResultSettings<Context = R>,
-        weight_settings: W,
-        noise: N,
-    ) -> Self {
+    pub fn new(result_settings: R, weight_settings: W, noise: N) -> Self {
         // prepare
-        let mut result_context = result_settings.into_initial_context();
+        let mut result_context = result_settings;
         let mut weights = weight_settings.start_weights();
         noise.prepare(&mut result_context, &mut weights);
 
@@ -348,10 +331,13 @@ impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
     }
 }
 
-impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T> for Noise<N> {
+impl<T, I: VectorSpace, N: NoiseFunction<I, Output: NoiseResultOf<T>>> SampleableFor<I, T>
+    for Noise<N>
+{
     #[inline]
     fn sample(&self, loc: I) -> T {
-        self.sample_raw(loc).0.into()
+        let (result, mut rng) = self.sample_raw(loc);
+        result.finish(&mut rng)
     }
 }
 
@@ -489,5 +475,69 @@ impl NoiseWeightsSettings for Persistence {
             // Start high to minimize precision loss, not that it's a big deal.
             next: 1000.0,
         }
+    }
+}
+
+/// This will normalize the results into a whieghted average.
+/// This is a good default for most noise functions.
+///
+/// `T` is the [`VectorSpace`] you want to collect.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Normed<T> {
+    marker: PhantomData<T>,
+    total_weights: f32,
+}
+
+impl<T: VectorSpace> Default for Normed<T> {
+    fn default() -> Self {
+        Self {
+            marker: PhantomData,
+            total_weights: 0.0,
+        }
+    }
+}
+
+impl<T: VectorSpace> NoiseResultContext for Normed<T> {
+    type Result = NormedResult<T>;
+
+    #[inline]
+    fn expect_weight(&mut self, weight: f32) {
+        self.total_weights += weight;
+    }
+
+    #[inline]
+    fn start_result(&self) -> Self::Result {
+        NormedResult {
+            total_weights: self.total_weights,
+            running_total: T::ZERO,
+        }
+    }
+}
+
+/// The in-progress result of a [`Normed`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NormedResult<T> {
+    total_weights: f32,
+    running_total: T,
+}
+
+impl<T> NoiseResult for NormedResult<T> {
+    #[inline]
+    fn add_unexpected_weight_to_total(&mut self, weight: f32) {
+        self.total_weights += weight;
+    }
+}
+
+impl<T: VectorSpace, I: Into<T>> NoiseResultFor<I> for NormedResult<T> {
+    #[inline]
+    fn include_value(&mut self, value: I, weight: f32) {
+        self.running_total = self.running_total + (value.into() * weight);
+    }
+}
+
+impl<T: VectorSpace, O: From<T>> NoiseResultOf<O> for NormedResult<T> {
+    #[inline]
+    fn finish(self, _rng: &mut RngContext) -> O {
+        O::from(self.running_total / self.total_weights)
     }
 }
