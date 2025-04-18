@@ -6,7 +6,8 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
-    AdaptiveNoise, DynamicSampleable, Noise,
+    AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
+    Persistence,
     cell_noise::{
         ApproximateUniformGradients, Cellular, GradientCell, MixedCell, PerCellPointRandom,
         QuickGradients,
@@ -104,6 +105,78 @@ fn main() -> AppExit {
                                 GradientCell<Grid, Smoothstep, ApproximateUniformGradients>,
                                 SNormToUNorm,
                             >::default()),
+                        },
+                        NoiseOption {
+                            name: "Fractal Approximate Uniform Perlin noise",
+                            noise: Box::new(AdaptiveNoise::<
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            GradientCell<
+                                                Grid,
+                                                Smoothstep,
+                                                ApproximateUniformGradients,
+                                            >,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            > {
+                                noise: Noise::from(LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                )),
+                                adapter: SNormToUNorm,
+                            }),
+                        },
+                        NoiseOption {
+                            name: "Cusrom Fractal Perlin noise",
+                            noise: Box::new(AdaptiveNoise::<
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    (
+                                        FractalOctaves<
+                                            Octave<
+                                                GradientCell<
+                                                    Grid,
+                                                    Smoothstep,
+                                                    ApproximateUniformGradients,
+                                                >,
+                                            >,
+                                        >,
+                                        FractalOctaves<
+                                            Octave<GradientCell<Grid, Smoothstep, QuickGradients>>,
+                                        >,
+                                    ),
+                                >,
+                                SNormToUNorm,
+                            > {
+                                noise: Noise::from(LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.75),
+                                    (
+                                        FractalOctaves {
+                                            octave: Default::default(),
+                                            lacunarity: 1.8,
+                                            octaves: 3,
+                                        },
+                                        FractalOctaves {
+                                            octave: Default::default(),
+                                            lacunarity: 1.5,
+                                            octaves: 5,
+                                        },
+                                    ),
+                                )),
+                                adapter: SNormToUNorm,
+                            }),
                         },
                     ],
                     selected: 0,

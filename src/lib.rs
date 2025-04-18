@@ -325,6 +325,16 @@ impl<N: Default> Default for Noise<N> {
     }
 }
 
+impl<N> From<N> for Noise<N> {
+    fn from(value: N) -> Self {
+        Self {
+            noise: value,
+            seed: RngContext::from_bits(0),
+            frequency: 1.0,
+        }
+    }
+}
+
 impl<N> ConfigurableNoise for Noise<N> {
     fn set_seed(&mut self, seed: u64) {
         self.seed = RngContext::from_bits(seed);
@@ -413,13 +423,17 @@ impl<I: VectorSpace, N: NoiseFunction<I>, A> Sampleable<I> for AdaptiveNoise<N, 
     }
 }
 
-impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>, A: NoiseFunction<T, Output = T>>
-    SampleableFor<I, T> for AdaptiveNoise<N, A>
+impl<
+    T,
+    I: VectorSpace,
+    N: NoiseFunction<I, Output: NoiseResultOf<T>>,
+    A: NoiseFunction<T, Output = T>,
+> SampleableFor<I, T> for AdaptiveNoise<N, A>
 {
     #[inline]
     fn sample(&self, loc: I) -> T {
         let (result, mut rng) = self.noise.sample_raw(loc);
-        self.adapter.evaluate(result.into(), &mut rng)
+        self.adapter.evaluate(result.finish(&mut rng), &mut rng)
     }
 }
 
@@ -429,7 +443,7 @@ impl<T, I: VectorSpace, N, A> DynamicSampleable<I, T> for AdaptiveNoise<N, A> wh
 }
 
 /// Represents a [`NoiseOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Octave<T>(pub T);
 
 impl<T, R: NoiseResultContext, W: NoiseWeights> NoiseOperation<R, W> for Octave<T> {
