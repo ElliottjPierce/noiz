@@ -242,6 +242,7 @@ impl<
 /// Specifies that this noise is configurable.
 pub trait ConfigurableNoise {
     /// Sets the seed of the noise as a `u64`.
+    /// Note that for single octave noises or those that don't call [`RngContext::update_seed`], the lower 32 likely will not be meaningful.
     fn set_seed(&mut self, seed: u64);
 
     /// Gets the seed of the noise as a `u64`.

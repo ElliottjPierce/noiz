@@ -132,6 +132,9 @@ fn update_system(
     input: Res<ButtonInput<KeyCode>>,
 ) {
     let mut changed = false;
+    // A big number to more quickly change the seed of the rng.
+    // If we used 1, this would only produce a visual change for multi-octave noise.
+    let seed_jump = 120983745238u64;
 
     if input.just_pressed(KeyCode::ArrowRight) {
         noise.selected = (noise.selected.wrapping_add(1)) % noise.options.len();
@@ -147,11 +150,11 @@ fn update_system(
     }
 
     if input.just_pressed(KeyCode::KeyW) {
-        noise.seed = noise.seed.wrapping_add(1);
+        noise.seed = noise.seed.wrapping_add(seed_jump);
         changed = true;
     }
     if input.just_pressed(KeyCode::KeyS) {
-        noise.seed = noise.seed.wrapping_sub(1);
+        noise.seed = noise.seed.wrapping_sub(seed_jump);
         changed = true;
     }
 
