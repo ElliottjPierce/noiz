@@ -7,8 +7,8 @@ use bevy::{
 };
 use noiz::{
     DynamicSampleable, Noise,
-    cell_noise::{Cellular, MixedCell},
-    cells::{Grid, PerCellPointRandom},
+    cell_noise::{Cellular, MixedCell, PerCellPointRandom},
+    cells::Grid,
     curves::{Linear, Smoothstep},
     rng::UValue,
 };
