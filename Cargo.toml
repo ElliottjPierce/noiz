@@ -68,7 +68,7 @@ unused_qualifications = "warn"
 name = "show_noise"
 path = "examples/show_noise.rs"
 
-# [[bench]]
-# name = "compare"
-# path = "benches/compare/main.rs"
-# harness = false
+[[bench]]
+name = "compare"
+path = "benches/compare/main.rs"
+harness = false
