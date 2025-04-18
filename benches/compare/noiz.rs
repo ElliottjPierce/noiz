@@ -59,10 +59,10 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 >,
             >::from(LayeredNoise::new(
                 Normed::default(),
-                Persistence(0.6),
+                Persistence(0.5),
                 FractalOctaves {
                     octave: Default::default(),
-                    lacunarity: 1.8,
+                    lacunarity: 2.0,
                     octaves,
                 },
             ));
@@ -82,10 +82,10 @@ fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 >,
             >::from(LayeredNoise::new(
                 Normed::default(),
-                Persistence(0.6),
+                Persistence(0.5),
                 FractalOctaves {
                     octave: Default::default(),
-                    lacunarity: 1.8,
+                    lacunarity: 2.0,
                     octaves,
                 },
             ));
