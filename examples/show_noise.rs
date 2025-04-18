@@ -6,9 +6,10 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
-    DynamicSampleable, Noise,
-    cell_noise::{Cellular, MixedCell, PerCellPointRandom},
+    AdaptiveNoise, DynamicSampleable, Noise,
+    cell_noise::{Cellular, GradientCell, MixedCell, PerCellPointRandom, QuickGradients},
     cells::Grid,
+    common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
     rng::UValue,
 };
@@ -85,6 +86,13 @@ fn main() -> AppExit {
                             name: "Smooth value noise",
                             noise: Box::new(Noise::<
                                 MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Perlin noise",
+                            noise: Box::new(AdaptiveNoise::<
+                                GradientCell<Grid, Smoothstep, QuickGradients>,
+                                SNormToUNorm,
                             >::default()),
                         },
                     ],

@@ -15,6 +15,7 @@ extern crate alloc;
 
 pub mod cell_noise;
 pub mod cells;
+pub mod common_adapters;
 pub mod curves;
 pub mod rng;
 
@@ -304,7 +305,7 @@ pub trait DynamicSampleable<I: VectorSpace, T>: ConfigurableNoise + SampleableFo
 }
 
 /// This is the standard end interface of a [`NoiseFunction`].
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Noise<N> {
     /// The [`NoiseFunction`] powering this noise.
     pub noise: N,
@@ -312,6 +313,16 @@ pub struct Noise<N> {
     pub seed: RngContext,
     /// The frequency or scale of the [`Noise`].
     pub frequency: f32,
+}
+
+impl<N: Default> Default for Noise<N> {
+    fn default() -> Self {
+        Self {
+            noise: N::default(),
+            seed: RngContext::from_bits(0),
+            frequency: 1.0,
+        }
+    }
 }
 
 impl<N> ConfigurableNoise for Noise<N> {
@@ -359,6 +370,7 @@ impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for Noise<N> where
 }
 
 /// This is a interface of a [`NoiseFunction`] that allows followup action in another [`NoiseFunction`] `A`.
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct AdaptiveNoise<N, A> {
     /// The [`Noise`] driving the initial result.
     pub noise: Noise<N>,

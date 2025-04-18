@@ -107,7 +107,7 @@ impl GridSquare<Vec2, IVec2> {
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
         CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
-            offset: self.offset,
+            offset: self.offset - offset.as_vec2(),
         }
     }
 
@@ -190,7 +190,7 @@ impl GridSquare<Vec3, IVec3> {
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3> {
         CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
-            offset: self.offset,
+            offset: self.offset - offset.as_vec3(),
         }
     }
 
@@ -305,7 +305,7 @@ impl GridSquare<Vec3A, IVec3> {
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3A> {
         CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
-            offset: self.offset,
+            offset: self.offset - offset.as_vec3a(),
         }
     }
 
@@ -420,7 +420,7 @@ impl GridSquare<Vec4, IVec4> {
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec4) -> CellPoint<Vec4> {
         CellPoint {
             rough_id: rng.rand_u32(self.floored + offset),
-            offset: self.offset,
+            offset: self.offset - offset.as_vec4(),
         }
     }
 
