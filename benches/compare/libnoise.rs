@@ -1,5 +1,5 @@
 use super::SIZE;
-use criterion::*;
+use criterion::{measurement::WallTime, *};
 use libnoise::{Fbm, Generator as _, Perlin};
 
 pub fn benches(c: &mut Criterion) {
@@ -21,9 +21,15 @@ pub fn benches(c: &mut Criterion) {
             res
         });
     });
-    group.bench_function("fbm 8 octave perlin", |bencher| {
+    fbm_perlin(&mut group, 2);
+    fbm_perlin(&mut group, 8);
+}
+
+fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    group.bench_function(format!("fbm {octaves} octave perlin"), |bencher| {
         bencher.iter(|| {
-            let noise = Fbm::<2, Perlin<2>>::new(Perlin::<2>::new(0), 8, 1.0 / 32.0, 2.0, 0.5);
+            let noise =
+                Fbm::<2, Perlin<2>>::new(Perlin::<2>::new(0), octaves, 1.0 / 32.0, 2.0, 0.5);
             let mut res = 0.0;
             for x in 0..SIZE {
                 for y in 0..SIZE {

@@ -1,5 +1,5 @@
 use super::SIZE;
-use criterion::*;
+use criterion::{measurement::WallTime, *};
 use fastnoise_lite::{FastNoiseLite, FractalType, NoiseType};
 
 pub fn benches(c: &mut Criterion) {
@@ -23,12 +23,17 @@ pub fn benches(c: &mut Criterion) {
             res
         });
     });
-    group.bench_function("fbm 8 octaves perlin", |bencher| {
+    fbm_perlin(&mut group, 2);
+    fbm_perlin(&mut group, 8);
+}
+
+fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: i32) {
+    group.bench_function(format!("fbm {octaves} octave perlin"), |bencher| {
         bencher.iter(|| {
             let mut noise = FastNoiseLite::new();
             noise.set_noise_type(Some(NoiseType::Perlin));
             noise.set_fractal_type(Some(FractalType::FBm));
-            noise.octaves = 8;
+            noise.octaves = octaves;
             noise.lacunarity = 2.0;
             noise.gain = 0.5;
             noise.frequency = 1.0 / 32.0;

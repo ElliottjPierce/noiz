@@ -1,6 +1,6 @@
 use super::SIZE;
 use bevy_math::Vec2;
-use criterion::*;
+use criterion::{measurement::WallTime, *};
 use noiz::{
     AdaptiveNoise, ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence, SampleableFor,
@@ -37,7 +37,12 @@ pub fn benches(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("fbm 8 octave perlin", |bencher| {
+    fbm_perlin(&mut group, 2);
+    fbm_perlin(&mut group, 8);
+}
+
+fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    group.bench_function(format!("fbm {octaves} octave perlin"), |bencher| {
         bencher.iter(|| {
             let noise = AdaptiveNoise::<
                 LayeredNoise<
@@ -55,7 +60,7 @@ pub fn benches(c: &mut Criterion) {
                     FractalOctaves {
                         octave: Default::default(),
                         lacunarity: 1.8,
-                        octaves: 8,
+                        octaves,
                     },
                 )),
                 adapter: SNormToUNorm,
