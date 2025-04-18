@@ -8,8 +8,8 @@ use bevy::{
 use noiz::{
     AdaptiveNoise, DynamicSampleable, Noise,
     cell_noise::{
-        ApproximateUniformGradients, Cellular, FullSquarGradients, GradientCell, MixedCell,
-        PerCellPointRandom, QuickGradients,
+        ApproximateUniformGradients, Cellular, GradientCell, MixedCell, PerCellPointRandom,
+        QuickGradients,
     },
     cells::Grid,
     common_adapters::SNormToUNorm,
@@ -95,13 +95,6 @@ fn main() -> AppExit {
                             name: "Perlin noise",
                             noise: Box::new(AdaptiveNoise::<
                                 GradientCell<Grid, Smoothstep, QuickGradients>,
-                                SNormToUNorm,
-                            >::default()),
-                        },
-                        NoiseOption {
-                            name: "High Entropy Perlin noise",
-                            noise: Box::new(AdaptiveNoise::<
-                                GradientCell<Grid, Smoothstep, FullSquarGradients>,
                                 SNormToUNorm,
                             >::default()),
                         },

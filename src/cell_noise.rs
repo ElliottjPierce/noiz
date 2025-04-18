@@ -9,7 +9,7 @@ use crate::{
     cells::{
         CellPoint, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
     },
-    rng::{NoiseRng, RngContext},
+    rng::RngContext,
 };
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`NoiseFunction<CellPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
@@ -184,76 +184,6 @@ impl<
             value,
             gradient: gradient.into() + gradients,
         }
-    }
-}
-
-/// A simple [`GradientGenerator`] that uses white noise to generate each element of the gradient independently.
-///
-/// This does not correct for the bunching of directions caused by normalizing.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct FullSquarGradients;
-
-impl GradientGenerator<Vec2> for FullSquarGradients {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
-        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec2 {
-        Vec2::new(
-            NoiseRng(seed).rand_snorm(983475),
-            NoiseRng(seed).rand_snorm(2983754),
-        )
-    }
-}
-
-impl GradientGenerator<Vec3> for FullSquarGradients {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec3) -> f32 {
-        GradientGenerator::<Vec3>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec3 {
-        Vec3::new(
-            NoiseRng(seed).rand_snorm(983475),
-            NoiseRng(seed).rand_snorm(2983754),
-            NoiseRng(seed).rand_snorm(823732),
-        )
-    }
-}
-
-impl GradientGenerator<Vec3A> for FullSquarGradients {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec3A) -> f32 {
-        GradientGenerator::<Vec3A>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec3A {
-        Vec3A::new(
-            NoiseRng(seed).rand_snorm(983475),
-            NoiseRng(seed).rand_snorm(2983754),
-            NoiseRng(seed).rand_snorm(823732),
-        )
-    }
-}
-
-impl GradientGenerator<Vec4> for FullSquarGradients {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec4) -> f32 {
-        GradientGenerator::<Vec4>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec4 {
-        Vec4::new(
-            NoiseRng(seed).rand_snorm(983475),
-            NoiseRng(seed).rand_snorm(2983754),
-            NoiseRng(seed).rand_snorm(823732),
-            NoiseRng(seed).rand_snorm(208375),
-        )
     }
 }
 
