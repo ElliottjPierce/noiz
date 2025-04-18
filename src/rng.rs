@@ -338,15 +338,3 @@ impl NoiseFunction<u32> for IValue {
         NoiseRng::any_snorm(input)
     }
 }
-
-/// Assuming `x` is in 0..1, maps it to between -1..=1.
-#[inline(always)]
-pub fn unorm_to_snorm(x: f32) -> f32 {
-    (x - 0.5) * 2.0
-}
-
-/// Assuming `x` is in -1..=1, maps it to between 0..1.
-#[inline(always)]
-pub fn snorm_to_unorm(x: f32) -> f32 {
-    x * 0.5 + 0.5
-}

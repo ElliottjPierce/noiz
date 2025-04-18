@@ -45,6 +45,7 @@ pub fn benches(c: &mut Criterion) {
 }
 
 fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    let octaves = black_box(octaves);
     group.bench_function(format!("fbm {octaves} octave perlin"), |bencher| {
         bencher.iter(|| {
             let noise =
@@ -61,6 +62,7 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
 }
 
 fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    let octaves = black_box(octaves);
     group.bench_function(format!("fbm {octaves} octave value"), |bencher| {
         bencher.iter(|| {
             let noise = Fbm::<2, Value<2>>::new(Value::<2>::new(0), octaves, 1.0 / 32.0, 2.0, 0.5);

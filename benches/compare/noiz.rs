@@ -3,7 +3,7 @@ use bevy_math::Vec2;
 use criterion::{measurement::WallTime, *};
 use noiz::{
     ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
-    SampleableFor,
+    Sampleable, SampleableFor,
     cell_noise::{GradientCell, MixedCell, PerCellPointRandom, QuickGradients},
     cells::Grid,
     curves::Smoothstep,
@@ -46,9 +46,32 @@ pub fn benches(c: &mut Criterion) {
     fbm_value(&mut group, 1);
     fbm_value(&mut group, 2);
     fbm_value(&mut group, 8);
+
+    group.bench_function("manual fbm 8 octaves value", |bencher| {
+        bencher.iter(|| {
+            let noise = Noise::<MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>>::default();
+            let mut res = 0.0;
+            let ocraves = black_box(8u32);
+            for x in 0..SIZE {
+                for y in 0..SIZE {
+                    let mut loc = Vec2::new(x as f32, y as f32) / 32.0;
+                    let mut total = 0.0;
+                    let mut amp = 1.0;
+                    for _ in 0..ocraves {
+                        total += amp * noise.sample_for::<f32>(loc);
+                        loc *= 2.0;
+                        amp *= 0.5;
+                    }
+                    res += total / 1.999;
+                }
+            }
+            res
+        });
+    });
 }
 
 fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    let octaves = black_box(octaves);
     group.bench_function(format!("fbm {octaves} octave perlin"), |bencher| {
         bencher.iter(|| {
             let noise = Noise::<
@@ -72,6 +95,7 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
 }
 
 fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    let octaves = black_box(octaves);
     group.bench_function(format!("fbm {octaves} octave value"), |bencher| {
         bencher.iter(|| {
             let noise = Noise::<
