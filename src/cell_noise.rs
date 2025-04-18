@@ -1,13 +1,15 @@
 //! Contains logic for interpolating within a [`DomainCell`].
 
-use bevy_math::{Curve, VectorSpace, curve::derivatives::SampleDerivative};
+use bevy_math::{
+    Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace, curve::derivatives::SampleDerivative,
+};
 
 use crate::{
     NoiseFunction,
     cells::{
         CellPoint, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
     },
-    rng::RngContext,
+    rng::{NoiseRng, RngContext},
 };
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`NoiseFunction<CellPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
@@ -182,5 +184,184 @@ impl<
             value,
             gradient: gradient.into() + gradients,
         }
+    }
+}
+
+/// A simple [`GradientGenerator`] that uses white noise to generate each element of the gradient independently.
+///
+/// This does not correct for the bunching of directions caused by normalizing.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct FullSquarGradients;
+
+impl GradientGenerator<Vec2> for FullSquarGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
+        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec2 {
+        Vec2::new(
+            NoiseRng(seed).rand_snorm(983475),
+            NoiseRng(seed).rand_snorm(2983754),
+        )
+    }
+}
+
+impl GradientGenerator<Vec3> for FullSquarGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec3) -> f32 {
+        GradientGenerator::<Vec3>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec3 {
+        Vec3::new(
+            NoiseRng(seed).rand_snorm(983475),
+            NoiseRng(seed).rand_snorm(2983754),
+            NoiseRng(seed).rand_snorm(823732),
+        )
+    }
+}
+
+impl GradientGenerator<Vec3A> for FullSquarGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec3A) -> f32 {
+        GradientGenerator::<Vec3A>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec3A {
+        Vec3A::new(
+            NoiseRng(seed).rand_snorm(983475),
+            NoiseRng(seed).rand_snorm(2983754),
+            NoiseRng(seed).rand_snorm(823732),
+        )
+    }
+}
+
+impl GradientGenerator<Vec4> for FullSquarGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec4) -> f32 {
+        GradientGenerator::<Vec4>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec4 {
+        Vec4::new(
+            NoiseRng(seed).rand_snorm(983475),
+            NoiseRng(seed).rand_snorm(2983754),
+            NoiseRng(seed).rand_snorm(823732),
+            NoiseRng(seed).rand_snorm(208375),
+        )
+    }
+}
+
+/// Allows making a [`GradientGenerator`] by specifying how it's parts are made.
+pub trait GradElementGenerator {
+    /// Gets an element of a gradient in ±1 from this seed.
+    fn get_element(&self, seed: u8) -> f32;
+}
+
+impl<T: GradElementGenerator> GradientGenerator<Vec2> for T {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
+        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec2 {
+        Vec2::new(
+            self.get_element((seed >> 24) as u8),
+            self.get_element((seed >> 16) as u8),
+        )
+    }
+}
+
+impl<T: GradElementGenerator> GradientGenerator<Vec3> for T {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec3) -> f32 {
+        GradientGenerator::<Vec3>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec3 {
+        Vec3::new(
+            self.get_element((seed >> 24) as u8),
+            self.get_element((seed >> 16) as u8),
+            self.get_element((seed >> 8) as u8),
+        )
+    }
+}
+
+impl<T: GradElementGenerator> GradientGenerator<Vec3A> for T {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec3A) -> f32 {
+        GradientGenerator::<Vec3A>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec3A {
+        Vec3A::new(
+            self.get_element((seed >> 24) as u8),
+            self.get_element((seed >> 16) as u8),
+            self.get_element((seed >> 8) as u8),
+        )
+    }
+}
+
+impl<T: GradElementGenerator> GradientGenerator<Vec4> for T {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec4) -> f32 {
+        GradientGenerator::<Vec4>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec4 {
+        Vec4::new(
+            self.get_element((seed >> 24) as u8),
+            self.get_element((seed >> 16) as u8),
+            self.get_element((seed >> 8) as u8),
+            self.get_element(seed as u8),
+        )
+    }
+}
+
+/// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
+/// This is the fastest provided [`GradientGenerator`].
+///
+/// This does not correct for the bunching of directions caused by normalizing.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct QuickGradients;
+
+impl GradElementGenerator for QuickGradients {
+    #[inline]
+    fn get_element(&self, seed: u8) -> f32 {
+        // as i8 as a nop, and as f32 is probably faster than a array lookup or jump table.
+        (seed as i8) as f32 * (1.0 / 128.0)
+    }
+}
+
+/// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
+/// This is very similar to [`QuickGradients`].
+///
+/// This approximately corrects for the bunching of directions caused by normalizing.
+/// To do so, it maps it's distribution of points onto a cubic curve that distributes more values near ±0.5.
+/// That reduces the directional artifacts caused by higher densities of gradients in corners which are mapped to similar directions.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ApproximateUniformGradients;
+
+impl GradElementGenerator for ApproximateUniformGradients {
+    #[inline]
+    fn get_element(&self, seed: u8) -> f32 {
+        // try to bunch more values around ±0.5 so that there is less directional bunching.
+        let unorm = (seed >> 1) as f32 * (1.0 / 128.0);
+        let snorm = unorm * 2.0 - 1.0;
+        let corrected = snorm * snorm * snorm;
+        let corrected_unorm = corrected * 0.5 + 0.5;
+
+        // make it positive or negative
+        let sign = ((seed & 1) as u32) << 31;
+        f32::from_bits(corrected_unorm.to_bits() ^ sign)
     }
 }
