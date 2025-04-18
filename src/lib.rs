@@ -511,9 +511,10 @@ impl<I: VectorSpace, T: NoiseOperationFor<I, R, W>, R: NoiseResultContext, W: No
         result: &mut <R as NoiseResultContext>::Result,
         weights: &mut W,
     ) {
-        for _ in 0..self.octaves {
-            self.octave.do_noise_op(seeds, working_loc, result, weights);
+        self.octave.do_noise_op(seeds, working_loc, result, weights);
+        for _ in 1..self.octaves {
             *working_loc = *working_loc * self.lacunarity;
+            self.octave.do_noise_op(seeds, working_loc, result, weights);
         }
     }
 }
