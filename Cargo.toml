@@ -31,6 +31,19 @@ opt-level = 3
 [profile.test]
 opt-level = 1
 
+[profile.release]
+# Maximum Link Time Optimization for best performance
+lto = "fat"
+# Single codegen unit maximizes optimization opportunities
+codegen-units = 1
+# Disable incremental compilation for maximum optimization
+incremental = false
+opt-level = 3
+
+[build]
+rustflags = ["-O"]
+
+
 [lints.clippy]
 doc_markdown = "warn"
 manual_let_else = "warn"

@@ -30,6 +30,16 @@ impl Curve<f32> for Smoothstep {
 
     #[inline]
     fn sample_unchecked(&self, t: f32) -> f32 {
-        (3.0 * t * t) - (2.0 * t * t * t)
+        // let s = t * t;
+        // let d = 2.0 * t;
+        // (3.0 * s) - (d * s)
+        //
+        // t * t * (t * (-2.0) + 3.0)
+        //
+        // (3.0 * t * t) - (2.0 * t * t * t)
+
+        let s = t * t;
+        let d = 2.0 * t;
+        (3.0 * s) - (d * s)
     }
 }
