@@ -2,12 +2,12 @@ use super::SIZE;
 use bevy_math::Vec2;
 use criterion::{measurement::WallTime, *};
 use noiz::{
-    AdaptiveNoise, ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
-    Persistence, SampleableFor,
-    cell_noise::{GradientCell, QuickGradients},
+    ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
+    SampleableFor,
+    cell_noise::{GradientCell, MixedCell, PerCellPointRandom, QuickGradients},
     cells::Grid,
-    common_adapters::SNormToUNorm,
     curves::Smoothstep,
+    rng::UValue,
 };
 
 #[inline]
@@ -29,40 +29,66 @@ pub fn benches(c: &mut Criterion) {
 
     group.bench_function("perlin", |bencher| {
         bencher.iter(|| {
-            let noise = AdaptiveNoise::<
-                GradientCell<Grid, Smoothstep, QuickGradients>,
-                SNormToUNorm,
-            >::default();
+            let noise = Noise::<GradientCell<Grid, Smoothstep, QuickGradients>>::default();
             bench_2d(noise)
         });
     });
-
+    fbm_perlin(&mut group, 1);
     fbm_perlin(&mut group, 2);
     fbm_perlin(&mut group, 8);
+
+    group.bench_function("value", |bencher| {
+        bencher.iter(|| {
+            let noise = Noise::<MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>>::default();
+            bench_2d(noise)
+        });
+    });
+    fbm_value(&mut group, 1);
+    fbm_value(&mut group, 2);
+    fbm_value(&mut group, 8);
 }
 
 fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
     group.bench_function(format!("fbm {octaves} octave perlin"), |bencher| {
         bencher.iter(|| {
-            let noise = AdaptiveNoise::<
+            let noise = Noise::<
                 LayeredNoise<
                     Normed<f32>,
                     Persistence,
                     FractalOctaves<Octave<GradientCell<Grid, Smoothstep, QuickGradients>>>,
                 >,
-                SNormToUNorm,
-            > {
-                noise: Noise::from(LayeredNoise::new(
-                    Normed::default(),
-                    Persistence(0.6),
-                    FractalOctaves {
-                        octave: Default::default(),
-                        lacunarity: 1.8,
-                        octaves,
-                    },
-                )),
-                adapter: SNormToUNorm,
-            };
+            >::from(LayeredNoise::new(
+                Normed::default(),
+                Persistence(0.6),
+                FractalOctaves {
+                    octave: Default::default(),
+                    lacunarity: 1.8,
+                    octaves,
+                },
+            ));
+            bench_2d(noise)
+        });
+    });
+}
+
+fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    group.bench_function(format!("fbm {octaves} octave value"), |bencher| {
+        bencher.iter(|| {
+            let noise = Noise::<
+                LayeredNoise<
+                    Normed<f32>,
+                    Persistence,
+                    FractalOctaves<Octave<MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>>>,
+                >,
+            >::from(LayeredNoise::new(
+                Normed::default(),
+                Persistence(0.6),
+                FractalOctaves {
+                    octave: Default::default(),
+                    lacunarity: 1.8,
+                    octaves,
+                },
+            ));
             bench_2d(noise)
         });
     });
