@@ -105,6 +105,19 @@ impl<T: DomainCell> NoiseFunction<T> for PerCellRandom {
     }
 }
 
+/// A [`NoiseFunction`] that takes any [`CellPoint`] and produces a fully random `u32`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct PerCellPointRandom<N>(pub N);
+
+impl<T, N: NoiseFunction<u32>> NoiseFunction<CellPoint<T>> for PerCellPointRandom<N> {
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: CellPoint<T>, seeds: &mut RngContext) -> Self::Output {
+        self.0.evaluate(input.rough_id, seeds)
+    }
+}
+
 /// Represents a grid square.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GridSquare<F: VectorSpace, I> {

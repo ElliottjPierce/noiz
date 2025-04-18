@@ -64,9 +64,9 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }
 unsafe_op_in_unsafe_fn = "warn"
 unused_qualifications = "warn"
 
-# [[example]]
-# name = "show_noise"
-# path = "examples/show_noise.rs"
+[[example]]
+name = "show_noise"
+path = "examples/show_noise.rs"
 
 # [[bench]]
 # name = "compare"

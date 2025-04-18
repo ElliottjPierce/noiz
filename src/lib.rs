@@ -38,9 +38,16 @@ pub trait NoiseResult {
 }
 
 /// Signifies that the [`NoiseResult`] can finalize into type `T`.
-pub trait NoiseResultOf<T>: NoiseResult {
+pub trait NoiseResultOf<T> {
     /// Collapses all accumulated noise results into a finished product `T`.
     fn finish(self, rng: &mut RngContext) -> T;
+}
+
+impl<T: VectorSpace> NoiseResultOf<T> for T {
+    #[inline(always)]
+    fn finish(self, _rng: &mut RngContext) -> T {
+        self
+    }
 }
 
 /// Specifies that this [`NoiseResult`] can include values of type `V`.
@@ -187,6 +194,7 @@ impl<
 }
 
 /// Represents a [`NoiseFunction`] based on layers of [`NoiseOperation`]s.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LayeredNoise<R, W, N> {
     result_context: R,
     weight_settings: W,
@@ -295,6 +303,7 @@ pub trait DynamicSampleable<I: VectorSpace, T>: ConfigurableNoise + SampleableFo
 }
 
 /// This is the standard end interface of a [`NoiseFunction`].
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct Noise<N> {
     /// The [`NoiseFunction`] powering this noise.
     pub noise: N,
