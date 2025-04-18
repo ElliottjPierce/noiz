@@ -4,7 +4,7 @@ use criterion::{measurement::WallTime, *};
 use noiz::{
     AdaptiveNoise, ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence, SampleableFor,
-    cell_noise::{ApproximateUniformGradients, GradientCell, QuickGradients},
+    cell_noise::{GradientCell, QuickGradients},
     cells::Grid,
     common_adapters::SNormToUNorm,
     curves::Smoothstep,
@@ -48,9 +48,7 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 LayeredNoise<
                     Normed<f32>,
                     Persistence,
-                    FractalOctaves<
-                        Octave<GradientCell<Grid, Smoothstep, ApproximateUniformGradients>>,
-                    >,
+                    FractalOctaves<Octave<GradientCell<Grid, Smoothstep, QuickGradients>>>,
                 >,
                 SNormToUNorm,
             > {
