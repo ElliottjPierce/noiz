@@ -29,8 +29,8 @@ impl NoiseRng {
     #[inline(always)]
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
-        let a = (i ^ self.0).wrapping_mul(Self::KEY);
-        (a ^ i).wrapping_mul(Self::COEFFICIENT_KEYS[2])
+        let a = i.wrapping_mul(Self::KEY);
+        (a ^ i ^ self.0).wrapping_mul(Self::KEY)
 
         // let a = (i ^ (i >> 8)).wrapping_mul(Self::KEY);
         // let b = (a ^ self.0).wrapping_mul(Self::COEFFICIENT_KEYS[1]);
