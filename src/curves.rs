@@ -46,6 +46,7 @@ impl Curve<f32> for Smoothstep {
         // Benhmarks are great for perlin but bad for value
         // (3.0 * t * t) - (2.0 * t * t * t)
 
+        // TODO: Optimize this in rust 1.88 with fastmath
         let s = t * t;
         let d = 2.0 * t;
         (3.0 * s) - (d * s)
