@@ -28,11 +28,11 @@ impl NoiseRng {
     /// Based on `input`, generates a random `u32`.
     #[inline(always)]
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
-        let input = input.collapse_for_rng(); // salt with the seed
-        let a = (input ^ self.0).wrapping_mul(Self::KEY);
-        let b = (a ^ Self::COEFFICIENT_KEYS[2]).wrapping_mul(Self::COEFFICIENT_KEYS[1]);
-        let c = (b ^ Self::COEFFICIENT_KEYS[0]).wrapping_mul(Self::COEFFICIENT_KEYS[2]);
-        c ^ b
+        let i = input.collapse_for_rng(); // salt with the seed
+        let a = (i ^ (i >> 8)).wrapping_mul(Self::KEY);
+        let b = (a ^ self.0).wrapping_mul(Self::COEFFICIENT_KEYS[1]);
+        let c = (b ^ (b >> 8)).wrapping_mul(Self::COEFFICIENT_KEYS[2]);
+        c
     }
 
     /// Based on `input`, generates a random `f32` in range 0..1 and a byte of remanining entropy from the seed.
