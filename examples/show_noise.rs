@@ -265,6 +265,6 @@ fn update_system(
         let period = noise.period;
         let current = &mut noise.options[selected];
         current.display_image(images.get_mut(image).unwrap(), seed, period);
-        println!("Updated {}.", current.name);
+        println!("Updated {}, period: {}.", current.name, period);
     }
 }
