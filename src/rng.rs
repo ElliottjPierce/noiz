@@ -19,7 +19,7 @@ pub trait NoiseRngInput {
 }
 
 impl NoiseRng {
-    /// This is a large, nearly prime number with even bit distribution.
+    /// This is a large prime number with even bit distribution.
     /// This lets use use this as a multiplier in the rng.
     const KEY: u32 = 249_222_277;
     /// These keys are designed to help collapse different dimensions of inputs together.
