@@ -18,6 +18,10 @@ pub trait NoiseRngInput {
     fn collapse_for_rng(self) -> u32;
 }
 
+#[expect(
+    clippy::unusual_byte_groupings,
+    reason = "In float rng, we do bit tricks and want to show what each part does."
+)]
 impl NoiseRng {
     /// This is a large prime number with even bit distribution.
     /// This lets use use this as a multiplier in the rng.
@@ -47,13 +51,21 @@ impl NoiseRng {
     }
 
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
+    /// This only actually uses 16 of these 32 bits.
+    #[inline(always)]
+    pub fn any_rng_float_32(bits: u32) -> f32 {
+        /// The base value bits for the floats we make.
+        /// Positive sign, exponent of 0    , 16 value bits    7 bits as precision padding.
+        const BASE_VALUE: u32 = 0b0_01111111_00000000_00000000_0111111;
+        const BIT_MASK: u32 = !((u16::MAX as u32) << 7);
+        let result = BASE_VALUE | (bits & BIT_MASK);
+        f32::from_bits(result)
+    }
+
+    /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
     #[inline(always)]
     pub fn any_rng_float_16(bits: u16) -> f32 {
         /// The base value bits for the floats we make.
-        #[expect(
-            clippy::unusual_byte_groupings,
-            reason = "This shows what the bits mean."
-        )]
         /// Positive sign, exponent of 0    , 16 value bits    7 bits as precision padding.
         const BASE_VALUE: u32 = 0b0_01111111_00000000_00000000_0111111;
         let bits = bits as u32;
@@ -64,8 +76,12 @@ impl NoiseRng {
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
     #[inline(always)]
     pub fn any_rng_float_8(bits: u8) -> f32 {
-        // We use the more significant bits to make a broader range.
-        Self::any_rng_float_16((bits as u16) << 8 | 0b10101010)
+        /// The base value bits for the floats we make.
+        /// Positive sign, exponent of 0    , 8 value bits    15 bits as precision padding.
+        const BASE_VALUE: u32 = 0b0_01111111_00000000_010101010111111;
+        let bits = bits as u32;
+        let result = BASE_VALUE | (bits << 15);
+        f32::from_bits(result)
     }
 }
 
@@ -183,7 +199,7 @@ impl FastRandomMixed for UValue {
 
     #[inline]
     fn evaluate_pre_mix(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
-        NoiseRng::any_rng_float_16(random as u16)
+        NoiseRng::any_rng_float_32(random)
     }
 
     #[inline(always)]
@@ -202,7 +218,7 @@ impl FastRandomMixed for IValue {
 
     #[inline]
     fn evaluate_pre_mix(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
-        NoiseRng::any_rng_float_16(random as u16)
+        NoiseRng::any_rng_float_32(random)
     }
 
     #[inline(always)]
