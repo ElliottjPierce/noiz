@@ -9,7 +9,7 @@ use crate::{
     cells::{
         CellPoint, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
     },
-    rng::RngContext,
+    rng::NoiseRng,
 };
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`NoiseFunction<CellPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
@@ -33,10 +33,10 @@ impl<
     type Output = N::Output;
 
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.segment(input);
         segment.interpolate_within(
-            seeds.rng(),
+            *seeds,
             |point| self.noise.evaluate(point, seeds),
             &self.curve,
         )
@@ -53,10 +53,10 @@ impl<
     type Output = WithGradient<N::Output, <P::Cell as DiferentiableCell>::Gradient<N::Output>>;
 
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.segment(input);
         segment.interpolate_with_gradient(
-            seeds.rng(),
+            *seeds,
             |point| self.noise.evaluate(point, seeds),
             &self.curve,
         )
@@ -78,9 +78,9 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
     type Output = N::Output;
 
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.segment.segment(input);
-        self.noise.evaluate(segment.rough_id(seeds.rng()), seeds)
+        self.noise.evaluate(segment.rough_id(*seeds), seeds)
     }
 }
 
@@ -92,8 +92,8 @@ impl<T: DomainCell> NoiseFunction<T> for PerCellRandom {
     type Output = u32;
 
     #[inline]
-    fn evaluate(&self, input: T, seeds: &mut RngContext) -> Self::Output {
-        input.rough_id(seeds.rng())
+    fn evaluate(&self, input: T, seeds: &mut NoiseRng) -> Self::Output {
+        input.rough_id(*seeds)
     }
 }
 
@@ -105,7 +105,7 @@ impl<T, N: NoiseFunction<u32>> NoiseFunction<CellPoint<T>> for PerCellPointRando
     type Output = N::Output;
 
     #[inline]
-    fn evaluate(&self, input: CellPoint<T>, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: CellPoint<T>, seeds: &mut NoiseRng) -> Self::Output {
         self.0.evaluate(input.rough_id, seeds)
     }
 }
@@ -142,10 +142,10 @@ impl<
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.segment(input);
         segment.interpolate_within(
-            seeds.rng(),
+            *seeds,
             |point| {
                 self.gradients
                     .get_gradient_dot(point.rough_id, point.offset)
@@ -165,15 +165,15 @@ impl<
     type Output = WithGradient<f32, I>;
 
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.segment(input);
         let gradients = segment.interpolate_within(
-            seeds.rng(),
+            *seeds,
             |point| self.gradients.get_gradient(point.rough_id),
             &self.curve,
         );
         let WithGradient { value, gradient } = segment.interpolate_with_gradient(
-            seeds.rng(),
+            *seeds,
             |point| {
                 self.gradients
                     .get_gradient_dot(point.rough_id, point.offset)

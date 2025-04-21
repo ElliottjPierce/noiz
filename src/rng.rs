@@ -25,6 +25,19 @@ impl NoiseRng {
     /// These keys are designed to help collapse different dimensions of inputs together.
     const COEFFICIENT_KEYS: [u32; 3] = [189_221_569, 139_217_773, 149_243_933];
 
+    /// Determenisticly changes the seed significantly.
+    #[inline(always)]
+    pub fn re_seed(&mut self) {
+        self.0 *= Self::KEY;
+    }
+
+    /// Creates a new [`NoiseRng`] that has a seed that will operate independently of this one and others that have different `branch_id`s.
+    /// If you're not sure what id to use, use a constant and then call [`Self::re_seed`] before branching again.
+    #[inline(always)]
+    pub fn branch(&mut self, branch_id: u32) -> Self {
+        Self(self.rand_u32(branch_id))
+    }
+
     /// Based on `input`, generates a random `u32`.
     #[inline(always)]
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
@@ -156,61 +169,6 @@ impl NoiseRngInput for IVec4 {
     }
 }
 
-/// A context of [`NoiseRng`]s. This generates seeds and rngs.
-///
-/// This stores the seed of the RNG.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct RngContext {
-    rng: NoiseRng,
-    entropy: u32,
-}
-
-impl RngContext {
-    /// Provides the next [`NoiseRng`] to be generated.
-    #[inline(always)]
-    pub fn rng(&self) -> NoiseRng {
-        self.rng
-    }
-
-    /// Changes the rng to use another random seed.
-    #[inline(always)]
-    pub fn update_seed(&mut self) {
-        self.rng = NoiseRng(self.rng.rand_u32(self.entropy));
-    }
-
-    /// Creates a different [`RngContext`] that will yield values independent of this one.
-    #[inline(always)]
-    pub fn branch(&mut self) -> Self {
-        let result = Self::new(
-            self.rng().rand_u32(self.entropy),
-            NoiseRng(self.entropy).rand_u32(self.rng.0),
-        );
-        self.update_seed();
-        result
-    }
-
-    /// Creates a [`RngContext`] with this entropy and seed.
-    #[inline(always)]
-    pub fn new(seed: u32, entropy: u32) -> Self {
-        Self {
-            rng: NoiseRng(seed),
-            entropy,
-        }
-    }
-
-    /// Creates a [`RngContext`] with entropy and seed from these `bits`.
-    #[inline(always)]
-    pub fn from_bits(bits: u64) -> Self {
-        Self::new((bits >> 32) as u32, bits as u32)
-    }
-
-    /// Creates a [`RngContext`] with entropy and seed from these `bits`.
-    #[inline(always)]
-    pub fn to_bits(self) -> u64 {
-        ((self.rng.0 as u64) << 32) | (self.entropy as u64)
-    }
-}
-
 /// A [`NoiseFunction`] that takes any [`RngNoiseInput`] and produces a fully random `u32`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Random;
@@ -219,8 +177,8 @@ impl<T: NoiseRngInput> NoiseFunction<T> for Random {
     type Output = u32;
 
     #[inline]
-    fn evaluate(&self, input: T, seeds: &mut RngContext) -> Self::Output {
-        seeds.rng().rand_u32(input)
+    fn evaluate(&self, input: T, seeds: &mut NoiseRng) -> Self::Output {
+        seeds.rand_u32(input)
     }
 }
 
@@ -232,7 +190,7 @@ impl NoiseFunction<u32> for UValue {
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, input: u32, _seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: u32, _seeds: &mut NoiseRng) -> Self::Output {
         NoiseRng::any_unorm(input)
     }
 }
@@ -245,7 +203,7 @@ impl NoiseFunction<u32> for IValue {
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, input: u32, _seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: u32, _seeds: &mut NoiseRng) -> Self::Output {
         NoiseRng::any_snorm(input)
     }
 }

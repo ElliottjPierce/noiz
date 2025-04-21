@@ -8,7 +8,7 @@
 use core::marker::PhantomData;
 
 use bevy_math::VectorSpace;
-use rng::RngContext;
+use rng::NoiseRng;
 
 #[cfg(test)]
 extern crate alloc;
@@ -41,12 +41,12 @@ pub trait NoiseResult {
 /// Signifies that the [`NoiseResult`] can finalize into type `T`.
 pub trait NoiseResultOf<T> {
     /// Collapses all accumulated noise results into a finished product `T`.
-    fn finish(self, rng: &mut RngContext) -> T;
+    fn finish(self, rng: &mut NoiseRng) -> T;
 }
 
 impl<T: VectorSpace> NoiseResultOf<T> for T {
     #[inline(always)]
-    fn finish(self, _rng: &mut RngContext) -> T {
+    fn finish(self, _rng: &mut NoiseRng) -> T {
         self
     }
 }
@@ -90,7 +90,7 @@ pub trait NoiseOperationFor<I: VectorSpace, R: NoiseResultContext, W: NoiseWeigh
     /// Performs the noise operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
     fn do_noise_op(
         &self,
-        seeds: &mut RngContext,
+        seeds: &mut NoiseRng,
         working_loc: &mut I,
         result: &mut R::Result,
         weights: &mut W,
@@ -113,7 +113,7 @@ macro_rules! impl_all_operation_tuples {
             #[inline]
             fn do_noise_op(
                 &self,
-                seeds: &mut RngContext,
+                seeds: &mut NoiseRng,
                 working_loc: &mut I,
                 result: &mut R::Result,
                 weights: &mut W,
@@ -152,13 +152,13 @@ pub trait NoiseFunction<I> {
     type Output;
 
     /// Evaluates the function at `input`.
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output;
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output;
 }
 
 impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>> NoiseFunction<I> for (T0, T1) {
     type Output = T1::Output;
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let input = self.0.evaluate(input, seeds);
         self.1.evaluate(input, seeds)
     }
@@ -169,7 +169,7 @@ impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>, T2: NoiseFunction<T
 {
     type Output = T2::Output;
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let input = self.0.evaluate(input, seeds);
         let input = self.1.evaluate(input, seeds);
         self.2.evaluate(input, seeds)
@@ -186,7 +186,7 @@ impl<
 {
     type Output = T3::Output;
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let input = self.0.evaluate(input, seeds);
         let input = self.1.evaluate(input, seeds);
         let input = self.2.evaluate(input, seeds);
@@ -231,7 +231,7 @@ impl<
     type Output = R::Result;
 
     #[inline]
-    fn evaluate(&self, mut input: I, seeds: &mut RngContext) -> Self::Output {
+    fn evaluate(&self, mut input: I, seeds: &mut NoiseRng) -> Self::Output {
         let mut weights = self.weight_settings.start_weights();
         let mut result = self.result_context.start_result();
         self.noise
@@ -242,12 +242,11 @@ impl<
 
 /// Specifies that this noise is configurable.
 pub trait ConfigurableNoise {
-    /// Sets the seed of the noise as a `u64`.
-    /// Note that for single octave noises or those that don't call [`RngContext::update_seed`], the lower 32 likely will not be meaningful.
-    fn set_seed(&mut self, seed: u64);
+    /// Sets the seed of the noise as a `u32`.
+    fn set_seed(&mut self, seed: u32);
 
-    /// Gets the seed of the noise as a `u64`.
-    fn get_seed(&mut self) -> u64;
+    /// Gets the seed of the noise as a `u32`.
+    fn get_seed(&mut self) -> u32;
 
     /// Sets the scale of the noise via its frequency.
     fn set_frequency(&mut self, frequency: f32);
@@ -274,7 +273,7 @@ pub trait Sampleable<I: VectorSpace> {
     /// Samples the [`Noise`] at `loc`, returning the raw [`NoiseResult`] and the rng used for the sample.
     /// This result may be incomplete and may depend on some cleanup to make the result meaningful.
     /// Use this with caution.
-    fn sample_raw(&self, loc: I) -> (Self::Result, RngContext);
+    fn sample_raw(&self, loc: I) -> (Self::Result, NoiseRng);
 
     /// Samples the noise at `loc` for a result of type `T`. This is a convenience over [`SampleableFor`] since it doesn't require `T` to be written in the trait.
     #[inline]
@@ -310,7 +309,7 @@ pub struct Noise<N> {
     /// The [`NoiseFunction`] powering this noise.
     pub noise: N,
     /// The seed of the [`Noise`].
-    pub seed: RngContext,
+    pub seed: NoiseRng,
     /// The frequency or scale of the [`Noise`].
     pub frequency: f32,
 }
@@ -319,7 +318,7 @@ impl<N: Default> Default for Noise<N> {
     fn default() -> Self {
         Self {
             noise: N::default(),
-            seed: RngContext::from_bits(0),
+            seed: NoiseRng(0),
             frequency: 1.0,
         }
     }
@@ -329,19 +328,19 @@ impl<N> From<N> for Noise<N> {
     fn from(value: N) -> Self {
         Self {
             noise: value,
-            seed: RngContext::from_bits(0),
+            seed: NoiseRng(0),
             frequency: 1.0,
         }
     }
 }
 
 impl<N> ConfigurableNoise for Noise<N> {
-    fn set_seed(&mut self, seed: u64) {
-        self.seed = RngContext::from_bits(seed);
+    fn set_seed(&mut self, seed: u32) {
+        self.seed = NoiseRng(seed);
     }
 
-    fn get_seed(&mut self) -> u64 {
-        self.seed.to_bits()
+    fn get_seed(&mut self) -> u32 {
+        self.seed.0
     }
 
     fn set_frequency(&mut self, frequency: f32) {
@@ -357,7 +356,7 @@ impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
     type Result = N::Output;
 
     #[inline]
-    fn sample_raw(&self, loc: I) -> (Self::Result, RngContext) {
+    fn sample_raw(&self, loc: I) -> (Self::Result, NoiseRng) {
         let mut seeds = self.seed;
         let result = self.noise.evaluate(loc * self.frequency, &mut seeds);
         (result, seeds)
@@ -389,11 +388,11 @@ pub struct AdaptiveNoise<N, A> {
 }
 
 impl<N, A> ConfigurableNoise for AdaptiveNoise<N, A> {
-    fn set_seed(&mut self, seed: u64) {
+    fn set_seed(&mut self, seed: u32) {
         self.noise.set_seed(seed);
     }
 
-    fn get_seed(&mut self) -> u64 {
+    fn get_seed(&mut self) -> u32 {
         self.noise.get_seed()
     }
 
@@ -418,7 +417,7 @@ impl<I: VectorSpace, N: NoiseFunction<I>, A> Sampleable<I> for AdaptiveNoise<N, 
     type Result = N::Output;
 
     #[inline]
-    fn sample_raw(&self, loc: I) -> (Self::Result, RngContext) {
+    fn sample_raw(&self, loc: I) -> (Self::Result, NoiseRng) {
         self.noise.sample_raw(loc)
     }
 }
@@ -463,14 +462,14 @@ impl<
     #[inline]
     fn do_noise_op(
         &self,
-        seeds: &mut RngContext,
+        seeds: &mut NoiseRng,
         working_loc: &mut I,
         result: &mut <R as NoiseResultContext>::Result,
         weights: &mut W,
     ) {
         let octave_result = self.0.evaluate(*working_loc, seeds);
         result.include_value(octave_result, weights.next_weight());
-        seeds.update_seed();
+        seeds.re_seed();
     }
 }
 
@@ -506,7 +505,7 @@ impl<I: VectorSpace, T: NoiseOperationFor<I, R, W>, R: NoiseResultContext, W: No
     #[inline]
     fn do_noise_op(
         &self,
-        seeds: &mut RngContext,
+        seeds: &mut NoiseRng,
         working_loc: &mut I,
         result: &mut <R as NoiseResultContext>::Result,
         weights: &mut W,
@@ -621,7 +620,7 @@ impl<T: VectorSpace, I: Into<T>> NoiseResultFor<I> for NormedResult<T> {
 
 impl<T: VectorSpace, O: From<T>> NoiseResultOf<O> for NormedResult<T> {
     #[inline]
-    fn finish(self, _rng: &mut RngContext) -> O {
+    fn finish(self, _rng: &mut NoiseRng) -> O {
         O::from(self.running_total / self.total_weights)
     }
 }

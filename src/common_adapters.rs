@@ -17,7 +17,7 @@ macro_rules! impl_vector_spaces {
             type Output = $n;
 
             #[inline]
-            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::RngContext) -> Self::Output {
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 input * $half + $half
             }
         }
@@ -26,7 +26,7 @@ macro_rules! impl_vector_spaces {
             type Output = $n;
 
             #[inline]
-            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::RngContext) -> Self::Output {
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 (input - $half) * $two
             }
         }

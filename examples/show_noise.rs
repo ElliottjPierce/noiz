@@ -26,7 +26,7 @@ pub struct NoiseOption {
 
 impl NoiseOption {
     /// Displays the noise on the image.
-    pub fn display_image(&mut self, image: &mut Image, seed: u64, period: f32) {
+    pub fn display_image(&mut self, image: &mut Image, seed: u32, period: f32) {
         self.noise.set_seed(seed);
         self.noise.set_period(period);
         let width = image.width();
@@ -52,7 +52,7 @@ pub struct NoiseOptions {
     options: Vec<NoiseOption>,
     selected: usize,
     image: Handle<Image>,
-    seed: u64,
+    seed: u32,
     period: f32,
 }
 
@@ -225,7 +225,7 @@ fn update_system(
     let mut changed = false;
     // A big number to more quickly change the seed of the rng.
     // If we used 1, this would only produce a visual change for multi-octave noise.
-    let seed_jump = 120983745238u64;
+    let seed_jump = 83745238u32;
 
     if input.just_pressed(KeyCode::ArrowRight) {
         noise.selected = (noise.selected.wrapping_add(1)) % noise.options.len();
