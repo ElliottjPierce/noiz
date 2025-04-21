@@ -4,7 +4,7 @@ use criterion::{measurement::WallTime, *};
 use noiz::{
     ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
     Sampleable, SampleableFor,
-    cell_noise::{GradientCell, MixedCell, PerCellPointRandom, QuickGradients},
+    cell_noise::{GradientCell, MixedCell, QuickGradients},
     cells::Grid,
     curves::Smoothstep,
     rng::UValue,
@@ -39,7 +39,7 @@ pub fn benches(c: &mut Criterion) {
 
     group.bench_function("value", |bencher| {
         bencher.iter(|| {
-            let noise = Noise::<MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>>::default();
+            let noise = Noise::<MixedCell<Grid, Smoothstep, UValue>>::default();
             bench_2d(noise)
         });
     });
@@ -49,7 +49,7 @@ pub fn benches(c: &mut Criterion) {
 
     group.bench_function("manual fbm 8 octaves value", |bencher| {
         bencher.iter(|| {
-            let noise = Noise::<MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>>::default();
+            let noise = Noise::<MixedCell<Grid, Smoothstep, UValue>>::default();
             let mut res = 0.0;
             let ocraves = black_box(8u32);
             for x in 0..SIZE {
@@ -102,7 +102,7 @@ fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 LayeredNoise<
                     Normed<f32>,
                     Persistence,
-                    FractalOctaves<Octave<MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>>>,
+                    FractalOctaves<Octave<MixedCell<Grid, Smoothstep, UValue>>>,
                 >,
             >::from(LayeredNoise::new(
                 Normed::default(),

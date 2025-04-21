@@ -187,3 +187,56 @@ impl NoiseFunction<u32> for IValue {
         NoiseRng::finalize_rng_float_snorm(NoiseRng::any_rng_float_16((input >> 16) as u16))
     }
 }
+
+/// Represents some type that can convert some random bits into an output, mix it up, and then perform some finalization on it.
+pub trait FastRandomMixed {
+    /// The output of the function.
+    type Output;
+
+    /// Evaluates some random bits to some output quickly.
+    fn evaluate(&self, random: u32, seeds: &mut NoiseRng) -> Self::Output;
+
+    /// Finishes the evaluation, performing a map from the `post_mix` to some final domain.
+    fn finish_value(&self, post_mix: Self::Output) -> Self::Output;
+
+    /// Returns the derivative of [`FastRandomMixed::finish_value`].
+    fn finishing_derivative(&self) -> f32;
+}
+
+impl FastRandomMixed for UValue {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
+        NoiseRng::any_rng_float_16(random as u16)
+    }
+
+    #[inline]
+    fn finish_value(&self, post_mix: Self::Output) -> Self::Output {
+        NoiseRng::finalize_rng_float_unorm(post_mix)
+    }
+
+    #[inline]
+    fn finishing_derivative(&self) -> f32 {
+        1.0
+    }
+}
+
+impl FastRandomMixed for IValue {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
+        NoiseRng::any_rng_float_16(random as u16)
+    }
+
+    #[inline]
+    fn finish_value(&self, post_mix: Self::Output) -> Self::Output {
+        NoiseRng::finalize_rng_float_snorm(post_mix)
+    }
+
+    #[inline]
+    fn finishing_derivative(&self) -> f32 {
+        2.0
+    }
+}

@@ -6,62 +6,9 @@ use bevy_math::{
 
 use crate::{
     NoiseFunction,
-    cells::{
-        CellPoint, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
-    },
-    rng::NoiseRng,
+    cells::{DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient},
+    rng::{FastRandomMixed, NoiseRng},
 };
-
-/// A [`NoiseFunction`] that mixes a value sourced from a [`NoiseFunction<CellPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct MixedCell<P, C, N, const DIFFERENTIATE: bool = false> {
-    /// The [`Partitioner`].
-    pub cells: P,
-    /// The [`NoiseFunction<CellPoint>`].
-    pub noise: N,
-    /// The [`Curve`].
-    pub curve: C,
-}
-
-impl<
-    I: VectorSpace,
-    P: Partitioner<I, Cell: InterpolatableCell>,
-    C: Curve<f32>,
-    N: NoiseFunction<CellPoint<I>, Output: VectorSpace>,
-> NoiseFunction<I> for MixedCell<P, C, N, false>
-{
-    type Output = N::Output;
-
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.segment(input);
-        segment.interpolate_within(
-            *seeds,
-            |point| self.noise.evaluate(point, seeds),
-            &self.curve,
-        )
-    }
-}
-
-impl<
-    I: VectorSpace,
-    P: Partitioner<I, Cell: DiferentiableCell>,
-    C: SampleDerivative<f32>,
-    N: NoiseFunction<CellPoint<I>, Output: VectorSpace>,
-> NoiseFunction<I> for MixedCell<P, C, N, true>
-{
-    type Output = WithGradient<N::Output, <P::Cell as DiferentiableCell>::Gradient<N::Output>>;
-
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.segment(input);
-        segment.interpolate_with_gradient(
-            *seeds,
-            |point| self.noise.evaluate(point, seeds),
-            &self.curve,
-        )
-    }
-}
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
@@ -84,6 +31,63 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
     }
 }
 
+/// A [`NoiseFunction`] that mixes a value sourced from a [`NoiseFunction<CellPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct MixedCell<P, C, N, const DIFFERENTIATE: bool = false> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`NoiseFunction<CellPoint>`].
+    pub noise: N,
+    /// The [`Curve`].
+    pub curve: C,
+}
+
+impl<
+    I: VectorSpace,
+    P: Partitioner<I, Cell: InterpolatableCell>,
+    C: Curve<f32>,
+    N: FastRandomMixed<Output: VectorSpace>,
+> NoiseFunction<I> for MixedCell<P, C, N, false>
+{
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.segment(input);
+        let raw = segment.interpolate_within(
+            *seeds,
+            |point| self.noise.evaluate(point.rough_id, seeds),
+            &self.curve,
+        );
+        self.noise.finish_value(raw)
+    }
+}
+
+impl<
+    I: VectorSpace,
+    P: Partitioner<I, Cell: DiferentiableCell>,
+    C: SampleDerivative<f32>,
+    N: FastRandomMixed<Output: VectorSpace>,
+> NoiseFunction<I> for MixedCell<P, C, N, true>
+{
+    type Output = WithGradient<N::Output, <P::Cell as DiferentiableCell>::Gradient<N::Output>>;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.segment(input);
+        let WithGradient { value, gradient } = segment.interpolate_with_gradient(
+            *seeds,
+            |point| self.noise.evaluate(point.rough_id, seeds),
+            &self.curve,
+            self.noise.finishing_derivative(),
+        );
+        WithGradient {
+            value: self.noise.finish_value(value),
+            gradient,
+        }
+    }
+}
+
 /// A [`NoiseFunction`] that takes any [`DomainCell`] and produces a fully random `u32`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct PerCellRandom;
@@ -94,19 +98,6 @@ impl<T: DomainCell> NoiseFunction<T> for PerCellRandom {
     #[inline]
     fn evaluate(&self, input: T, seeds: &mut NoiseRng) -> Self::Output {
         input.rough_id(*seeds)
-    }
-}
-
-/// A [`NoiseFunction`] that takes any [`CellPoint`] and produces a random value via a [`NoiseFunction<u32>`] `N`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct PerCellPointRandom<N>(pub N);
-
-impl<T, N: NoiseFunction<u32>> NoiseFunction<CellPoint<T>> for PerCellPointRandom<N> {
-    type Output = N::Output;
-
-    #[inline]
-    fn evaluate(&self, input: CellPoint<T>, seeds: &mut NoiseRng) -> Self::Output {
-        self.0.evaluate(input.rough_id, seeds)
     }
 }
 
@@ -179,6 +170,7 @@ impl<
                     .get_gradient_dot(point.rough_id, point.offset)
             },
             &self.curve,
+            1.0,
         );
         WithGradient {
             value,

@@ -41,6 +41,7 @@ pub trait DiferentiableCell: InterpolatableCell {
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
+        gradient_scale: f32,
     ) -> Self::Gradient<T>;
 
     /// Combines [`interpolate_within`](InterpolatableCell::interpolate_within) and [`interpolation_gradient`](DiferentiableCell::interpolation_gradient).
@@ -49,6 +50,7 @@ pub trait DiferentiableCell: InterpolatableCell {
         rng: NoiseRng,
         mut f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
+        gradient_scale: f32,
     ) -> WithGradient<T, Self::Gradient<T>> {
         WithGradient {
             #[expect(
@@ -56,7 +58,7 @@ pub trait DiferentiableCell: InterpolatableCell {
                 reason = "It's not redundant. It prevents a move."
             )]
             value: self.interpolate_within(rng, |p| f(p), curve),
-            gradient: self.interpolation_gradient(rng, f, curve),
+            gradient: self.interpolation_gradient(rng, f, curve, gradient_scale),
         }
     }
 }
@@ -164,6 +166,7 @@ impl DiferentiableCell for GridSquare<Vec2, IVec2> {
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
+        gradient_scale: f32,
     ) -> Self::Gradient<T> {
         // points
         let [ld, lu, rd, ru] = self.corners_map(rng, f);
@@ -181,7 +184,7 @@ impl DiferentiableCell for GridSquare<Vec2, IVec2> {
         // lerp
         let dx = ld_rd.lerp(lu_ru, mix_y.value) * mix_x.derivative;
         let dy = ld_lu.lerp(rd_ru, mix_x.value) * mix_y.derivative;
-        [dx, dy]
+        [dx * gradient_scale, dy * gradient_scale]
     }
 }
 
@@ -255,6 +258,7 @@ impl DiferentiableCell for GridSquare<Vec3, IVec3> {
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
+        gradient_scale: f32,
     ) -> Self::Gradient<T> {
         // points
         let [ldb, ldf, lub, luf, rdb, rdf, rub, ruf] = self.corners_map(rng, f);
@@ -296,7 +300,11 @@ impl DiferentiableCell for GridSquare<Vec3, IVec3> {
             l.lerp(r, mix_x.value)
         } * mix_z.derivative;
 
-        [dx, dy, dz]
+        [
+            dx * gradient_scale,
+            dy * gradient_scale,
+            dz * gradient_scale,
+        ]
     }
 }
 
@@ -370,6 +378,7 @@ impl DiferentiableCell for GridSquare<Vec3A, IVec3> {
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
+        gradient_scale: f32,
     ) -> Self::Gradient<T> {
         // points
         let [ldb, ldf, lub, luf, rdb, rdf, rub, ruf] = self.corners_map(rng, f);
@@ -411,7 +420,11 @@ impl DiferentiableCell for GridSquare<Vec3A, IVec3> {
             l.lerp(r, mix_x.value)
         } * mix_z.derivative;
 
-        [dx, dy, dz]
+        [
+            dx * gradient_scale,
+            dy * gradient_scale,
+            dz * gradient_scale,
+        ]
     }
 }
 
@@ -518,6 +531,7 @@ impl DiferentiableCell for GridSquare<Vec4, IVec4> {
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
         curve: &impl SampleDerivative<f32>,
+        gradient_scale: f32,
     ) -> Self::Gradient<T> {
         // points
         let [
@@ -617,7 +631,12 @@ impl DiferentiableCell for GridSquare<Vec4, IVec4> {
             let u = lu.lerp(ru, mix_x.value);
             d.lerp(u, mix_y.value)
         } * mix_w.derivative;
-        [dx, dy, dz, dw]
+        [
+            dx * gradient_scale,
+            dy * gradient_scale,
+            dz * gradient_scale,
+            dw * gradient_scale,
+        ]
     }
 }
 

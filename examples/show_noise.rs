@@ -8,10 +8,7 @@ use bevy::{
 use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
-    cell_noise::{
-        ApproximateUniformGradients, Cellular, GradientCell, MixedCell, PerCellPointRandom,
-        QuickGradients,
-    },
+    cell_noise::{ApproximateUniformGradients, Cellular, GradientCell, MixedCell, QuickGradients},
     cells::Grid,
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
@@ -83,13 +80,13 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Basic value noise",
                             noise: Box::new(Noise::<
-                                MixedCell<Grid, Linear, PerCellPointRandom<UValue>>,
+                                MixedCell<Grid, Linear, UValue>,
                             >::default()),
                         },
                         NoiseOption {
                             name: "Smooth value noise",
                             noise: Box::new(Noise::<
-                                MixedCell<Grid, Smoothstep, PerCellPointRandom<UValue>>,
+                                MixedCell<Grid, Smoothstep, UValue>,
                             >::default()),
                         },
                         NoiseOption {
