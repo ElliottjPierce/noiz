@@ -44,11 +44,6 @@ impl NoiseRng {
         let i = input.collapse_for_rng();
         let a = i.wrapping_mul(Self::KEY);
         (a ^ i ^ self.0).wrapping_mul(Self::KEY)
-
-        // let a = (i ^ (i >> 8)).wrapping_mul(Self::KEY);
-        // let b = (a ^ self.0).wrapping_mul(Self::COEFFICIENT_KEYS[1]);
-        // let c = (b ^ (b >> 8)).wrapping_mul(Self::COEFFICIENT_KEYS[2]);
-        // c
     }
 
     /// Based on `input`, generates a random `f32` in range 0..1 and a byte of remanining entropy from the seed.
