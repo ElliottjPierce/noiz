@@ -56,7 +56,7 @@ impl<
         let segment = self.cells.segment(input);
         let raw = segment.interpolate_within(
             *seeds,
-            |point| self.noise.evaluate(point.rough_id, seeds),
+            |point| self.noise.evaluate_pre_mix(point.rough_id, seeds),
             &self.curve,
         );
         self.noise.finish_value(raw)
@@ -77,7 +77,7 @@ impl<
         let segment = self.cells.segment(input);
         let WithGradient { value, gradient } = segment.interpolate_with_gradient(
             *seeds,
-            |point| self.noise.evaluate(point.rough_id, seeds),
+            |point| self.noise.evaluate_pre_mix(point.rough_id, seeds),
             &self.curve,
             self.noise.finishing_derivative(),
         );

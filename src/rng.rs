@@ -46,18 +46,6 @@ impl NoiseRng {
         (a ^ i ^ self.0).wrapping_mul(Self::KEY)
     }
 
-    /// Based on `input`, generates a random `f32` in range (0, 1).
-    #[inline(always)]
-    pub fn rand_unorm(&self, input: impl NoiseRngInput) -> f32 {
-        Self::finalize_rng_float_unorm(Self::any_rng_float_16((self.rand_u32(input) >> 16) as u16))
-    }
-
-    /// Based on `input`, generates a random `f32` in range (-1, 1).
-    #[inline(always)]
-    pub fn rand_snorm(&self, input: impl NoiseRngInput) -> f32 {
-        Self::finalize_rng_float_snorm(Self::any_rng_float_16((self.rand_u32(input) >> 16) as u16))
-    }
-
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
     #[inline(always)]
     pub fn any_rng_float_16(bits: u16) -> f32 {
@@ -78,19 +66,6 @@ impl NoiseRng {
     pub fn any_rng_float_8(bits: u8) -> f32 {
         // We use the more significant bits to make a broader range.
         Self::any_rng_float_16((bits as u16) << 8 | 0b10101010)
-    }
-
-    /// For this rng float `x` in range (1, 2), maps it to a float in range (0, 1)
-    #[inline(always)]
-    pub fn finalize_rng_float_unorm(x: f32) -> f32 {
-        x - 1.0
-    }
-
-    /// For this rng float `x` in range (1, 2), maps it to a float in range (-1, 1).
-    /// If `x` is ultimately from some form of [`Self::any_rng_float_16`], this will not be 0 either.
-    #[inline(always)]
-    pub fn finalize_rng_float_snorm(x: f32) -> f32 {
-        (x - 1.5) * 2.0
     }
 }
 
@@ -170,8 +145,8 @@ impl NoiseFunction<u32> for UValue {
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, input: u32, _seeds: &mut NoiseRng) -> Self::Output {
-        NoiseRng::finalize_rng_float_unorm(NoiseRng::any_rng_float_16((input >> 16) as u16))
+    fn evaluate(&self, input: u32, seeds: &mut NoiseRng) -> Self::Output {
+        self.finish_value(self.evaluate_pre_mix(input, seeds))
     }
 }
 
@@ -183,8 +158,8 @@ impl NoiseFunction<u32> for IValue {
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, input: u32, _seeds: &mut NoiseRng) -> Self::Output {
-        NoiseRng::finalize_rng_float_snorm(NoiseRng::any_rng_float_16((input >> 16) as u16))
+    fn evaluate(&self, input: u32, seeds: &mut NoiseRng) -> Self::Output {
+        self.finish_value(self.evaluate_pre_mix(input, seeds))
     }
 }
 
@@ -194,7 +169,7 @@ pub trait FastRandomMixed {
     type Output;
 
     /// Evaluates some random bits to some output quickly.
-    fn evaluate(&self, random: u32, seeds: &mut NoiseRng) -> Self::Output;
+    fn evaluate_pre_mix(&self, random: u32, seeds: &mut NoiseRng) -> Self::Output;
 
     /// Finishes the evaluation, performing a map from the `post_mix` to some final domain.
     fn finish_value(&self, post_mix: Self::Output) -> Self::Output;
@@ -207,16 +182,16 @@ impl FastRandomMixed for UValue {
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
+    fn evaluate_pre_mix(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
         NoiseRng::any_rng_float_16(random as u16)
     }
 
-    #[inline]
+    #[inline(always)]
     fn finish_value(&self, post_mix: Self::Output) -> Self::Output {
-        NoiseRng::finalize_rng_float_unorm(post_mix)
+        post_mix - 1.0
     }
 
-    #[inline]
+    #[inline(always)]
     fn finishing_derivative(&self) -> f32 {
         1.0
     }
@@ -226,16 +201,16 @@ impl FastRandomMixed for IValue {
     type Output = f32;
 
     #[inline]
-    fn evaluate(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
+    fn evaluate_pre_mix(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
         NoiseRng::any_rng_float_16(random as u16)
     }
 
-    #[inline]
+    #[inline(always)]
     fn finish_value(&self, post_mix: Self::Output) -> Self::Output {
-        NoiseRng::finalize_rng_float_snorm(post_mix)
+        (post_mix - 1.5) * 2.0
     }
 
-    #[inline]
+    #[inline(always)]
     fn finishing_derivative(&self) -> f32 {
         2.0
     }
