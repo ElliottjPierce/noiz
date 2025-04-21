@@ -28,7 +28,7 @@ impl NoiseRng {
     /// Determenisticly changes the seed significantly.
     #[inline(always)]
     pub fn re_seed(&mut self) {
-        self.0 *= Self::KEY;
+        self.0 = Self::KEY.wrapping_mul(self.0);
     }
 
     /// Creates a new [`NoiseRng`] that has a seed that will operate independently of this one and others that have different `branch_id`s.
