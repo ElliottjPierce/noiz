@@ -3,11 +3,11 @@ use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 
 use crate::NoiseFunction;
 
-/// Maps vectors from (-1,1) to 0..1.
+/// Maps vectors from (-1,1) to (0, 1).
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct SNormToUNorm;
 
-/// Maps vectors from 0..1 to (-1,1).
+/// Maps vectors from (0, 1) to (-1,1).
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct UNormToSNorm;
 

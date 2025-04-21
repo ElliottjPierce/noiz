@@ -46,66 +46,51 @@ impl NoiseRng {
         (a ^ i ^ self.0).wrapping_mul(Self::KEY)
     }
 
-    /// Based on `input`, generates a random `f32` in range 0..1 and a byte of remanining entropy from the seed.
-    #[inline(always)]
-    pub fn rand_unorm_with_entropy(&self, input: impl NoiseRngInput) -> (f32, u8) {
-        Self::any_unorm_with_entropy(self.rand_u32(input))
-    }
-
-    /// Based on `input`, generates a random `f32` in range (-1, 1) and a byte of remanining entropy from the seed.
-    /// Note that the sign of the snorm can be determined by the least bit of the returned `u8`.
-    #[inline(always)]
-    pub fn rand_snorm_with_entropy(&self, input: impl NoiseRngInput) -> (f32, u8) {
-        Self::any_snorm_with_entropy(self.rand_u32(input))
-    }
-
-    /// Based on `input`, generates a random `f32` in range 0..1.
+    /// Based on `input`, generates a random `f32` in range (0, 1).
     #[inline(always)]
     pub fn rand_unorm(&self, input: impl NoiseRngInput) -> f32 {
-        Self::any_unorm(self.rand_u32(input))
+        Self::finalize_rng_float_unorm(Self::any_rng_float_16((self.rand_u32(input) >> 16) as u16))
     }
 
     /// Based on `input`, generates a random `f32` in range (-1, 1).
     #[inline(always)]
     pub fn rand_snorm(&self, input: impl NoiseRngInput) -> f32 {
-        Self::any_snorm(self.rand_u32(input))
+        Self::finalize_rng_float_snorm(Self::any_rng_float_16((self.rand_u32(input) >> 16) as u16))
     }
 
-    /// Based on `bits`, generates an arbitrary `f32` in range 0..1 and a byte of remanining entropy.
+    /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
     #[inline(always)]
-    pub fn any_unorm_with_entropy(bits: u32) -> (f32, u8) {
-        // adapted from rand's `StandardUniform`
-
-        let fraction_bits = 23;
-        let float_size = size_of::<f32>() as u32 * 8;
-        let precision = fraction_bits + 1;
-        let scale = 1f32 / ((1u32 << precision) as f32);
-
-        // We use a right shift instead of a mask, because the upper bits tend to be more "random" and it has the same performance.
-        let value = bits >> (float_size - precision);
-        (scale * value as f32, bits as u8)
+    pub fn any_rng_float_16(bits: u16) -> f32 {
+        /// The base value bits for the floats we make.
+        #[expect(
+            clippy::unusual_byte_groupings,
+            reason = "This shows what the bits mean."
+        )]
+        /// Positive sign, exponent of 0    , 16 value bits    7 bits as precision padding.
+        const BASE_VALUE: u32 = 0b0_01111111_00000000_00000000_0111111;
+        let bits = bits as u32;
+        let result = BASE_VALUE | (bits << 7);
+        f32::from_bits(result)
     }
 
-    /// Based on `bits`, generates an arbitrary`f32` in range (-1, 1) and a byte of remanining entropy.
-    /// Note that the sign of the snorm can be determined by the least bit of the returned `u8`.
+    /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
     #[inline(always)]
-    pub fn any_snorm_with_entropy(bits: u32) -> (f32, u8) {
-        let (unorm, entropy) = Self::any_unorm_with_entropy(bits);
-        // Use the least bit of entropy as the sign bit
-        let snorm = f32::from_bits(unorm.to_bits() ^ ((entropy as u32) << 31));
-        (snorm, entropy)
+    pub fn any_rng_float_8(bits: u8) -> f32 {
+        // We use the more significant bits to make a broader range.
+        Self::any_rng_float_16((bits as u16) << 8 | 0b10101010)
     }
 
-    /// Based on `bits`, generates an arbitrary `f32` in range 0..1.
+    /// For this rng float `x` in range (1, 2), maps it to a float in range (0, 1)
     #[inline(always)]
-    pub fn any_unorm(bits: u32) -> f32 {
-        Self::any_unorm_with_entropy(bits).0
+    pub fn finalize_rng_float_unorm(x: f32) -> f32 {
+        x - 1.0
     }
 
-    /// Based on `bits`, generates an arbitrary `f32` in range (-1, 1).
+    /// For this rng float `x` in range (1, 2), maps it to a float in range (-1, 1).
+    /// If `x` is ultimately from some form of [`Self::any_rng_float_16`], this will not be 0 either.
     #[inline(always)]
-    pub fn any_snorm(bits: u32) -> f32 {
-        Self::any_snorm_with_entropy(bits).0
+    pub fn finalize_rng_float_snorm(x: f32) -> f32 {
+        (x - 1.5) * 2.0
     }
 }
 
@@ -177,7 +162,7 @@ impl<T: NoiseRngInput> NoiseFunction<T> for Random {
     }
 }
 
-/// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range 0..1.
+/// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (0, 1).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct UValue;
 
@@ -186,7 +171,7 @@ impl NoiseFunction<u32> for UValue {
 
     #[inline]
     fn evaluate(&self, input: u32, _seeds: &mut NoiseRng) -> Self::Output {
-        NoiseRng::any_unorm(input)
+        NoiseRng::finalize_rng_float_unorm(NoiseRng::any_rng_float_16((input >> 16) as u16))
     }
 }
 
@@ -199,6 +184,6 @@ impl NoiseFunction<u32> for IValue {
 
     #[inline]
     fn evaluate(&self, input: u32, _seeds: &mut NoiseRng) -> Self::Output {
-        NoiseRng::any_snorm(input)
+        NoiseRng::finalize_rng_float_snorm(NoiseRng::any_rng_float_16((input >> 16) as u16))
     }
 }
