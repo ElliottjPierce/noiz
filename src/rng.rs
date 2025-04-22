@@ -45,8 +45,11 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
-        let a = (i.rotate_left(11) ^ i).wrapping_mul(i).wrapping_add(self.0);
-        (a.rotate_right(11) ^ a).wrapping_mul(a)
+        let a = (i.rotate_left(11) ^ i)
+            .wrapping_mul(i)
+            // TODO: precompute in seed
+            .wrapping_add(self.0 | (Self::KEY >> 8));
+        a.rotate_right(11).wrapping_mul(a)
 
         // let a = i.rotate_left(11) ^ i;
         // let b = a.wrapping_mul(!i).wrapping_add(self.0);
@@ -109,7 +112,7 @@ impl NoiseRngInput for u32 {
 impl NoiseRngInput for UVec2 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x.wrapping_add(self.y.rotate_right(24))
+        self.x.wrapping_add(self.y.rotate_right(8))
     }
 }
 
@@ -118,7 +121,7 @@ impl NoiseRngInput for UVec3 {
     fn collapse_for_rng(self) -> u32 {
         self.x
             .wrapping_add(self.y.rotate_right(8))
-            .wrapping_add(self.z.rotate_right(16))
+            .wrapping_add(self.z.rotate_right(24))
     }
 }
 
@@ -127,8 +130,8 @@ impl NoiseRngInput for UVec4 {
     fn collapse_for_rng(self) -> u32 {
         self.x
             .wrapping_add(self.y.rotate_right(8))
-            .wrapping_add(self.z.rotate_right(16))
-            .wrapping_add(self.w.rotate_right(24))
+            .wrapping_add(self.z.rotate_right(24))
+            .wrapping_add(self.w.rotate_right(16))
     }
 }
 
