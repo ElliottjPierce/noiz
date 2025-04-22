@@ -45,7 +45,10 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
-        let a = i.rotate_left(11).wrapping_mul(i).wrapping_add(self.0) ^ Self::KEY;
+        let a = i
+            .rotate_left(11)
+            .wrapping_mul(i ^ Self::KEY)
+            .wrapping_add(self.0);
         a.rotate_right(11).wrapping_mul(a)
 
         // let a = i.rotate_left(11) ^ i;
