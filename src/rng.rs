@@ -26,8 +26,6 @@ impl NoiseRng {
     /// This is a large prime number with even bit distribution.
     /// This lets use use this as a multiplier in the rng.
     const KEY: u32 = 249_222_277;
-    /// These keys are designed to help collapse different dimensions of inputs together.
-    const COEFFICIENT_KEYS: [u32; 3] = [189_221_569, 139_217_773, 149_243_933];
 
     /// Determenisticly changes the seed significantly.
     #[inline(always)]
@@ -47,7 +45,8 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
         let a = i.wrapping_mul(Self::KEY);
-        (a ^ i ^ self.0).wrapping_mul(Self::KEY)
+        let b = i.rotate_right(16) ^ self.0;
+        (a ^ b).wrapping_mul(Self::KEY)
     }
 
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
@@ -95,8 +94,7 @@ impl NoiseRngInput for u32 {
 impl NoiseRngInput for UVec2 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x
-            .wrapping_add(self.y.wrapping_mul(NoiseRng::COEFFICIENT_KEYS[0]))
+        self.x.wrapping_add(self.y.rotate_right(24))
     }
 }
 
@@ -104,8 +102,8 @@ impl NoiseRngInput for UVec3 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
         self.x
-            .wrapping_add(self.y.wrapping_mul(NoiseRng::COEFFICIENT_KEYS[0]))
-            .wrapping_add(self.z.wrapping_mul(NoiseRng::COEFFICIENT_KEYS[1]))
+            .wrapping_add(self.y.rotate_right(8))
+            .wrapping_add(self.z.rotate_right(16))
     }
 }
 
@@ -113,9 +111,9 @@ impl NoiseRngInput for UVec4 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
         self.x
-            .wrapping_add(self.y.wrapping_mul(NoiseRng::COEFFICIENT_KEYS[0]))
-            .wrapping_add(self.z.wrapping_mul(NoiseRng::COEFFICIENT_KEYS[1]))
-            .wrapping_add(self.w.wrapping_mul(NoiseRng::COEFFICIENT_KEYS[2]))
+            .wrapping_add(self.y.rotate_right(8))
+            .wrapping_add(self.z.rotate_right(16))
+            .wrapping_add(self.w.rotate_right(24))
     }
 }
 
