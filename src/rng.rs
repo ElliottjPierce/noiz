@@ -45,11 +45,11 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
-        let a = (i.rotate_left(11) ^ i)
-            .wrapping_mul(i)
-            // TODO: precompute in seed
-            .wrapping_add(self.0 | (Self::KEY >> 8));
-        a.rotate_right(11).wrapping_mul(a)
+        // let a = (i.rotate_left(11) ^ i)
+        //     .wrapping_mul(i)
+        //     // TODO: precompute in seed
+        //     .wrapping_add(self.0 | (Self::KEY >> 8));
+        // a.rotate_right(11).wrapping_mul(a)
 
         // let a = i.rotate_left(11) ^ i;
         // let b = a.wrapping_mul(!i).wrapping_add(self.0);
@@ -63,8 +63,14 @@ impl NoiseRng {
 
         // WIP ok
         // let a = i.rotate_left(7) ^ i;
-        // let b = i.rotate_right(11).wrapping_sub(i);
-        // (b).wrapping_mul(a).wrapping_add(self.0)
+        // let b = a.rotate_right(11) ^ a;
+        // let c = b.rotate_left(11) ^ b;
+        // c.wrapping_mul(b.wrapping_add(self.0))
+
+        let a = (i.wrapping_add(self.0) as u64) << 32 | (i ^ Self::KEY) as u64;
+        let b = a.rotate_right(22).wrapping_mul(a);
+        let c = b.rotate_right(32) ^ b;
+        c as u32
     }
 
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
