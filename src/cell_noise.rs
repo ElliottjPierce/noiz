@@ -194,8 +194,7 @@ impl GradientGenerator<Vec2> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec2 {
-        // SAFETY: Ensured by bit shift
-        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }.xy()
+        get_table_grad(seed).xy()
     }
 }
 
@@ -207,8 +206,7 @@ impl GradientGenerator<Vec3> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec3 {
-        // SAFETY: Ensured by bit shift
-        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }.xyz()
+        get_table_grad(seed).xyz()
     }
 }
 
@@ -220,10 +218,7 @@ impl GradientGenerator<Vec3A> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec3A {
-        // SAFETY: Ensured by bit shift
-        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
-            .xyz()
-            .into()
+        get_table_grad(seed).xyz().into()
     }
 }
 
@@ -235,9 +230,14 @@ impl GradientGenerator<Vec4> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec4 {
-        // SAFETY: Ensured by bit shift
-        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
+        get_table_grad(seed)
     }
+}
+
+#[inline]
+fn get_table_grad(seed: u32) -> Vec4 {
+    // SAFETY: Ensured by bit shift
+    unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
 }
 
 /// A table of gradient vectors (not normalized).
