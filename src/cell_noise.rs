@@ -31,12 +31,12 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
     }
 }
 
-/// A [`NoiseFunction`] that mixes a value sourced from a [`NoiseFunction<CellPoint>`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// A [`NoiseFunction`] that mixes a value sourced from a [`FastRandomMixed`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct MixedCell<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
-    /// The [`NoiseFunction<CellPoint>`].
+    /// The [`FastRandomMixed`].
     pub noise: N,
     /// The [`Curve`].
     pub curve: C,
@@ -88,16 +88,72 @@ impl<
     }
 }
 
-/// A [`NoiseFunction`] that takes any [`DomainCell`] and produces a fully random `u32`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct PerCellRandom;
+/// Allows blending between different [`CellPoint`](crate::cells::CellPoint)s.
+pub trait Blender<I: VectorSpace, V> {
+    /// Weighs the `value` by the offset of the sampled point to the point that generated the value.
+    ///
+    /// Usually this will scale the `value` bassed on the length of `offset`.
+    fn weigh_value(&self, value: V, offset: I) -> V;
 
-impl<T: DomainCell> NoiseFunction<T> for PerCellRandom {
-    type Output = u32;
+    /// Given some weighted values, combines them into one, performing any final actions needed.
+    fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V;
+}
+
+/// A [`NoiseFunction`] that blends values sourced from a [`FastRandomMixed`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct BlendCell<P, B, N, const DIFFERENTIATE: bool = false> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`FastRandomMixed`].
+    pub noise: N,
+    /// The [`Blender`].
+    pub blender: B,
+}
+
+impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: FastRandomMixed>
+    NoiseFunction<I> for BlendCell<P, B, N, false>
+{
+    type Output = N::Output;
 
     #[inline]
-    fn evaluate(&self, input: T, seeds: &mut NoiseRng) -> Self::Output {
-        input.rough_id(*seeds)
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.partition(input);
+        let weighted = segment.iter_points(*seeds).map(|p| {
+            let value = self.noise.evaluate_pre_mix(p.rough_id, seeds);
+            self.blender.weigh_value(value, p.offset)
+        });
+        self.noise
+            .finish_value(self.blender.collect_weighted(weighted))
+    }
+}
+
+impl<
+    I: VectorSpace,
+    P: Partitioner<I>,
+    B: Blender<I, WithGradient<N::Output, I>>,
+    N: FastRandomMixed,
+> NoiseFunction<I> for BlendCell<P, B, N, true>
+{
+    type Output = WithGradient<N::Output, I>;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.partition(input);
+        let weighted = segment.iter_points(*seeds).map(|p| {
+            let value = self.noise.evaluate_pre_mix(p.rough_id, seeds);
+            self.blender.weigh_value(
+                WithGradient {
+                    value,
+                    gradient: -p.offset,
+                },
+                p.offset,
+            )
+        });
+        let WithGradient { value, gradient } = self.blender.collect_weighted(weighted);
+        WithGradient {
+            value: self.noise.finish_value(value),
+            gradient: gradient * self.noise.finishing_derivative(),
+        }
     }
 }
 
