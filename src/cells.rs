@@ -696,8 +696,8 @@ impl Partitioner<Vec4> for Grid {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SimplexCell<F: VectorSpace, I>(pub GridSquare<F, I>);
 
-// const SIMPLEX_SKEW_FACTOR_2D: f32 = 0.366_025_42;
-// const SIMPLEX_UNSKEW_FACTOR_2D: f32 = 0.211_324_87;
+const SIMPLEX_SKEW_FACTOR_2D: f32 = 0.366_025_42;
+const SIMPLEX_UNSKEW_FACTOR_2D: f32 = 0.211_324_87;
 
 impl SimplexCell<Vec2, IVec2> {
     #[inline]
@@ -706,24 +706,25 @@ impl SimplexCell<Vec2, IVec2> {
     }
 
     #[inline]
-    fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec2, diagonal_away: f32) -> CellPoint<Vec2> {
         CellPoint {
             rough_id: rng.rand_u32(self.0.floored + offset),
-            offset: self.0.offset - offset.as_vec2(),
+            offset: self.0.offset - offset.as_vec2()
+                + Vec2::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_2D),
         }
     }
 
     #[inline]
     fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec2>) -> T) -> [T; 3] {
-        const SIMPLEX_TRAVERSAL_LUT: [IVec2; 2] = [IVec2::new(1, 0), IVec2::new(0, 1)];
+        const SIMPLEX_POINTS: [IVec2; 2] = [IVec2::new(1, 0), IVec2::new(0, 1)];
         let simpex_traversal =
             // SAFETY: The value is always in bounds
-            unsafe { *SIMPLEX_TRAVERSAL_LUT.get_unchecked(self.simplex_id() as usize) };
+            unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
         // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
         [
-            f(self.point_at_offset(rng, IVec2::ZERO)),
-            f(self.point_at_offset(rng, simpex_traversal)),
-            f(self.point_at_offset(rng, IVec2::ONE)),
+            f(self.point_at_offset(rng, IVec2::ZERO, 0.0)),
+            f(self.point_at_offset(rng, simpex_traversal, 1.0)),
+            f(self.point_at_offset(rng, IVec2::ONE, 2.0)),
         ]
     }
 }
@@ -751,6 +752,13 @@ impl Partitioner<Vec2> for SimplexGrid {
 
     #[inline]
     fn segment(&self, full: Vec2) -> Self::Cell {
-        SimplexCell(Grid.segment(full))
+        let skewed = full + Vec2::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_2D);
+        let skewed_floored = skewed.floor();
+        let offset = full - skewed_floored
+            + Vec2::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_2D);
+        SimplexCell(GridSquare {
+            floored: skewed_floored.as_ivec2(),
+            offset,
+        })
     }
 }
