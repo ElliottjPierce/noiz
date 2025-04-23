@@ -9,7 +9,7 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{Cellular, GradientCell, MixedCell, QuickGradients},
-    cells::Grid,
+    cells::{Grid, SimplexGrid},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
     rng::UValue,
@@ -76,6 +76,10 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Basic white noise",
                             noise: Box::new(Noise::<Cellular<Grid, UValue>>::default()),
+                        },
+                        NoiseOption {
+                            name: "Simlex white noise",
+                            noise: Box::new(Noise::<Cellular<SimplexGrid, UValue>>::default()),
                         },
                         NoiseOption {
                             name: "Basic value noise",

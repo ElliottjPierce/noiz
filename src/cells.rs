@@ -733,7 +733,7 @@ impl DomainCell for SimplexCell<Vec2, IVec2> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        rng.rand_u32(self.0.floored.collapse_for_rng() ^ self.simplex_id())
+        rng.rand_u32(self.0.floored.collapse_for_rng() ^ (self.simplex_id() << 16))
     }
 
     #[inline]
@@ -745,3 +745,12 @@ impl DomainCell for SimplexCell<Vec2, IVec2> {
 /// A [`Partitioner`] that produces various [`SimplexCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplexGrid;
+
+impl Partitioner<Vec2> for SimplexGrid {
+    type Cell = SimplexCell<Vec2, IVec2>;
+
+    #[inline]
+    fn segment(&self, full: Vec2) -> Self::Cell {
+        SimplexCell(Grid.segment(full))
+    }
+}
