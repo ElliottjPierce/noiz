@@ -4,7 +4,7 @@ use criterion::{measurement::WallTime, *};
 use noiz::{
     ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
     Sampleable, SampleableFor,
-    cell_noise::{GradientCell, MixedCell, QuickGradients},
+    cell_noise::{MixCellGradients, MixCellValues, QuickGradients},
     cells::OrthoGrid,
     curves::Smoothstep,
     rng::UValue,
@@ -29,7 +29,7 @@ pub fn benches(c: &mut Criterion) {
 
     group.bench_function("perlin", |bencher| {
         bencher.iter(|| {
-            let noise = Noise::<GradientCell<OrthoGrid, Smoothstep, QuickGradients>>::default();
+            let noise = Noise::<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>>::default();
             bench_2d(noise)
         });
     });
@@ -39,7 +39,7 @@ pub fn benches(c: &mut Criterion) {
 
     group.bench_function("value", |bencher| {
         bencher.iter(|| {
-            let noise = Noise::<MixedCell<OrthoGrid, Smoothstep, UValue>>::default();
+            let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default();
             bench_2d(noise)
         });
     });
@@ -49,7 +49,7 @@ pub fn benches(c: &mut Criterion) {
 
     group.bench_function("manual fbm 8 octaves value", |bencher| {
         bencher.iter(|| {
-            let noise = Noise::<MixedCell<OrthoGrid, Smoothstep, UValue>>::default();
+            let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default();
             let mut res = 0.0;
             let ocraves = black_box(8u32);
             for x in 0..SIZE {
@@ -78,7 +78,7 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 LayeredNoise<
                     Normed<f32>,
                     Persistence,
-                    FractalOctaves<Octave<GradientCell<OrthoGrid, Smoothstep, QuickGradients>>>,
+                    FractalOctaves<Octave<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>>>,
                 >,
             >::from(LayeredNoise::new(
                 Normed::default(),
@@ -102,7 +102,7 @@ fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 LayeredNoise<
                     Normed<f32>,
                     Persistence,
-                    FractalOctaves<Octave<MixedCell<OrthoGrid, Smoothstep, UValue>>>,
+                    FractalOctaves<Octave<MixCellValues<OrthoGrid, Smoothstep, UValue>>>,
                 >,
             >::from(LayeredNoise::new(
                 Normed::default(),

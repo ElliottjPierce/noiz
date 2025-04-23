@@ -8,7 +8,7 @@ use bevy::{
 use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
-    cell_noise::{Cellular, GradientCell, MixedCell, QuickGradients},
+    cell_noise::{Cellular, MixCellGradients, MixCellValues, QuickGradients},
     cells::{OrthoGrid, SimplexGrid},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
@@ -84,19 +84,19 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Basic value noise",
                             noise: Box::new(
-                                Noise::<MixedCell<OrthoGrid, Linear, UValue>>::default(),
+                                Noise::<MixCellValues<OrthoGrid, Linear, UValue>>::default(),
                             ),
                         },
                         NoiseOption {
                             name: "Smooth value noise",
                             noise: Box::new(
-                                Noise::<MixedCell<OrthoGrid, Smoothstep, UValue>>::default(),
+                                Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default(),
                             ),
                         },
                         NoiseOption {
                             name: "Perlin noise",
                             noise: Box::new(AdaptiveNoise::<
-                                GradientCell<OrthoGrid, Smoothstep, QuickGradients>,
+                                MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
                                 SNormToUNorm,
                             >::default()),
                         },
@@ -107,7 +107,9 @@ fn main() -> AppExit {
                                     Normed<f32>,
                                     Persistence,
                                     FractalOctaves<
-                                        Octave<GradientCell<OrthoGrid, Smoothstep, QuickGradients>>,
+                                        Octave<
+                                            MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                        >,
                                     >,
                                 >,
                                 SNormToUNorm,

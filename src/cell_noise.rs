@@ -33,7 +33,7 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`FastRandomMixed`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct MixedCell<P, C, N, const DIFFERENTIATE: bool = false> {
+pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`FastRandomMixed`].
@@ -47,7 +47,7 @@ impl<
     P: Partitioner<I, Cell: InterpolatableCell>,
     C: Curve<f32>,
     N: FastRandomMixed<Output: VectorSpace>,
-> NoiseFunction<I> for MixedCell<P, C, N, false>
+> NoiseFunction<I> for MixCellValues<P, C, N, false>
 {
     type Output = N::Output;
 
@@ -68,7 +68,7 @@ impl<
     P: Partitioner<I, Cell: DiferentiableCell>,
     C: SampleDerivative<f32>,
     N: FastRandomMixed<Output: VectorSpace>,
-> NoiseFunction<I> for MixedCell<P, C, N, true>
+> NoiseFunction<I> for MixCellValues<P, C, N, true>
 {
     type Output = WithGradient<N::Output, <P::Cell as DiferentiableCell>::Gradient<N::Output>>;
 
@@ -101,7 +101,7 @@ pub trait Blender<I: VectorSpace, V> {
 
 /// A [`NoiseFunction`] that blends values sourced from a [`FastRandomMixed`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct BlendCell<P, B, N, const DIFFERENTIATE: bool = false> {
+pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`FastRandomMixed`].
@@ -111,7 +111,7 @@ pub struct BlendCell<P, B, N, const DIFFERENTIATE: bool = false> {
 }
 
 impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: FastRandomMixed>
-    NoiseFunction<I> for BlendCell<P, B, N, false>
+    NoiseFunction<I> for BlendCellValues<P, B, N, false>
 {
     type Output = N::Output;
 
@@ -132,7 +132,7 @@ impl<
     P: Partitioner<I>,
     B: Blender<I, WithGradient<N::Output, I>>,
     N: FastRandomMixed,
-> NoiseFunction<I> for BlendCell<P, B, N, true>
+> NoiseFunction<I> for BlendCellValues<P, B, N, true>
 {
     type Output = WithGradient<N::Output, I>;
 
@@ -170,7 +170,7 @@ pub trait GradientGenerator<I: VectorSpace> {
 
 /// A [`NoiseFunction`] that integrates gradients sourced from a [`GradientGenerator`] `G` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct GradientCell<P, C, G, const DIFFERENTIATE: bool = false> {
+pub struct MixCellGradients<P, C, G, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`GradientGenerator`].
@@ -184,7 +184,7 @@ impl<
     P: Partitioner<I, Cell: InterpolatableCell>,
     C: Curve<f32>,
     G: GradientGenerator<I>,
-> NoiseFunction<I> for GradientCell<P, C, G, false>
+> NoiseFunction<I> for MixCellGradients<P, C, G, false>
 {
     type Output = f32;
 
@@ -207,7 +207,7 @@ impl<
     P: Partitioner<I, Cell: DiferentiableCell<Gradient<f32>: Into<I>>>,
     C: SampleDerivative<f32>,
     G: GradientGenerator<I>,
-> NoiseFunction<I> for GradientCell<P, C, G, true>
+> NoiseFunction<I> for MixCellGradients<P, C, G, true>
 {
     type Output = WithGradient<f32, I>;
 
