@@ -743,6 +743,126 @@ impl DomainCell for SimplexCell<Vec2, IVec2> {
     }
 }
 
+const SIMPLEX_SKEW_FACTOR_3D: f32 = 0.333_333_34;
+const SIMPLEX_UNSKEW_FACTOR_3D: f32 = 0.166_666_67;
+
+impl SimplexCell<Vec3, IVec3> {
+    #[inline]
+    fn simplex_id(&self) -> u32 {
+        (((self.0.offset.x > self.0.offset.y) as u32) << 2)
+            | (((self.0.offset.y > self.0.offset.z) as u32) << 1)
+            | ((self.0.offset.x > self.0.offset.z) as u32)
+    }
+
+    #[inline]
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec3, diagonal_away: f32) -> CellPoint<Vec3> {
+        CellPoint {
+            rough_id: rng.rand_u32(self.0.floored + offset),
+            offset: self.0.offset - offset.as_vec3()
+                + Vec3::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_3D),
+        }
+    }
+
+    #[inline]
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec3>) -> T) -> [T; 4] {
+        const SIMPLEX_POINTS: [[IVec3; 2]; 8] = [
+            [IVec3::new(0, 0, 1), IVec3::new(0, 1, 1)], // 0: zyx
+            [IVec3::new(0, 0, 0), IVec3::new(0, 0, 0)], // 1: pad
+            [IVec3::new(0, 1, 0), IVec3::new(0, 1, 1)], // 2: yzx
+            [IVec3::new(0, 1, 0), IVec3::new(1, 1, 0)], // 3: yxz
+            [IVec3::new(0, 0, 1), IVec3::new(1, 0, 1)], // 4: zxy
+            [IVec3::new(1, 0, 0), IVec3::new(1, 0, 1)], // 5: xzy
+            [IVec3::new(0, 0, 0), IVec3::new(0, 0, 0)], // 6: pad
+            [IVec3::new(1, 0, 0), IVec3::new(1, 1, 0)], // 7: xyz
+        ];
+        let simpex_traversal =
+            // SAFETY: The value is always in bounds
+            unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
+        // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
+        [
+            f(self.point_at_offset(rng, IVec3::ZERO, 0.0)),
+            f(self.point_at_offset(rng, simpex_traversal[0], 1.0)),
+            f(self.point_at_offset(rng, simpex_traversal[1], 2.0)),
+            f(self.point_at_offset(rng, IVec3::ONE, 3.0)),
+        ]
+    }
+}
+
+impl DomainCell for SimplexCell<Vec3, IVec3> {
+    type Full = Vec3;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        rng.rand_u32(self.0.floored.collapse_for_rng() ^ (self.simplex_id() << 16))
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.corners_map(rng, |c| c).into_iter()
+    }
+}
+
+impl SimplexCell<Vec3A, IVec3> {
+    #[inline]
+    fn simplex_id(&self) -> u32 {
+        (((self.0.offset.x > self.0.offset.y) as u32) << 2)
+            | (((self.0.offset.y > self.0.offset.z) as u32) << 1)
+            | ((self.0.offset.x > self.0.offset.z) as u32)
+    }
+
+    #[inline]
+    fn point_at_offset(
+        &self,
+        rng: NoiseRng,
+        offset: IVec3,
+        diagonal_away: f32,
+    ) -> CellPoint<Vec3A> {
+        CellPoint {
+            rough_id: rng.rand_u32(self.0.floored + offset),
+            offset: self.0.offset - offset.as_vec3a()
+                + Vec3A::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_3D),
+        }
+    }
+
+    #[inline]
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec3A>) -> T) -> [T; 4] {
+        const SIMPLEX_POINTS: [[IVec3; 2]; 8] = [
+            [IVec3::new(0, 0, 1), IVec3::new(0, 1, 1)], // 0: zyx
+            [IVec3::new(0, 0, 0), IVec3::new(0, 0, 0)], // 1: pad
+            [IVec3::new(0, 1, 0), IVec3::new(0, 1, 1)], // 2: yzx
+            [IVec3::new(0, 1, 0), IVec3::new(1, 1, 0)], // 3: yxz
+            [IVec3::new(0, 0, 1), IVec3::new(1, 0, 1)], // 4: zxy
+            [IVec3::new(1, 0, 0), IVec3::new(1, 0, 1)], // 5: xzy
+            [IVec3::new(0, 0, 0), IVec3::new(0, 0, 0)], // 6: pad
+            [IVec3::new(1, 0, 0), IVec3::new(1, 1, 0)], // 7: xyz
+        ];
+        let simpex_traversal =
+            // SAFETY: The value is always in bounds
+            unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
+        // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
+        [
+            f(self.point_at_offset(rng, IVec3::ZERO, 0.0)),
+            f(self.point_at_offset(rng, simpex_traversal[0], 1.0)),
+            f(self.point_at_offset(rng, simpex_traversal[1], 2.0)),
+            f(self.point_at_offset(rng, IVec3::ONE, 3.0)),
+        ]
+    }
+}
+
+impl DomainCell for SimplexCell<Vec3A, IVec3> {
+    type Full = Vec3A;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        rng.rand_u32(self.0.floored.collapse_for_rng() ^ (self.simplex_id() << 16))
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.corners_map(rng, |c| c).into_iter()
+    }
+}
+
 /// A [`Partitioner`] that produces various [`SimplexCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplexGrid;
@@ -758,6 +878,38 @@ impl Partitioner<Vec2> for SimplexGrid {
             + Vec2::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_2D);
         SimplexCell(GridSquare {
             floored: skewed_floored.as_ivec2(),
+            offset,
+        })
+    }
+}
+
+impl Partitioner<Vec3> for SimplexGrid {
+    type Cell = SimplexCell<Vec3, IVec3>;
+
+    #[inline]
+    fn segment(&self, full: Vec3) -> Self::Cell {
+        let skewed = full + Vec3::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_3D);
+        let skewed_floored = skewed.floor();
+        let offset = full - skewed_floored
+            + Vec3::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_3D);
+        SimplexCell(GridSquare {
+            floored: skewed_floored.as_ivec3(),
+            offset,
+        })
+    }
+}
+
+impl Partitioner<Vec3A> for SimplexGrid {
+    type Cell = SimplexCell<Vec3A, IVec3>;
+
+    #[inline]
+    fn segment(&self, full: Vec3A) -> Self::Cell {
+        let skewed = full + Vec3A::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_3D);
+        let skewed_floored = skewed.floor();
+        let offset = full - skewed_floored
+            + Vec3A::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_3D);
+        SimplexCell(GridSquare {
+            floored: skewed_floored.as_ivec3(),
             offset,
         })
     }
