@@ -863,6 +863,126 @@ impl DomainCell for SimplexCell<Vec3A, IVec3> {
     }
 }
 
+const SIMPLEX_SKEW_FACTOR_4D: f32 = 0.309_017;
+const SIMPLEX_UNSKEW_FACTOR_4D: f32 = 0.138_196_6;
+
+impl SimplexCell<Vec4, IVec4> {
+    #[inline]
+    fn simplex_id(&self) -> u32 {
+        (((self.0.offset.x > self.0.offset.y) as u32) << 5)
+            | (((self.0.offset.x > self.0.offset.z) as u32) << 4)
+            | (((self.0.offset.y > self.0.offset.z) as u32) << 3)
+            | (((self.0.offset.x > self.0.offset.w) as u32) << 2)
+            | (((self.0.offset.y > self.0.offset.w) as u32) << 1)
+            | ((self.0.offset.z > self.0.offset.w) as u32)
+    }
+
+    #[inline]
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec4, diagonal_away: f32) -> CellPoint<Vec4> {
+        CellPoint {
+            rough_id: rng.rand_u32(self.0.floored + offset),
+            offset: self.0.offset - offset.as_vec4()
+                + Vec4::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_4D),
+        }
+    }
+
+    #[inline]
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec4>) -> T) -> [T; 5] {
+        #[rustfmt::skip]
+        const SIMPLEX_POINTS: [[IVec4; 3]; 64] = [
+            [IVec4::new(0, 0, 0, 1), IVec4::new(0, 0, 1, 1), IVec4::new(0, 1, 1, 1)], // 00: wzyx
+            [IVec4::new(0, 0, 1, 0), IVec4::new(0, 0, 1, 1), IVec4::new(0, 1, 1, 1)], // 01: zwyx
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 02: pad
+            [IVec4::new(0, 0, 1, 0), IVec4::new(0, 1, 1, 0), IVec4::new(0, 1, 1, 1)], // 03: zywx
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 04: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 05: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 06: pad
+            [IVec4::new(0, 0, 1, 0), IVec4::new(0, 1, 1, 0), IVec4::new(1, 1, 1, 0)], // 07: zyxw
+            [IVec4::new(0, 0, 0, 1), IVec4::new(0, 1, 0, 1), IVec4::new(0, 1, 1, 1)], // 08: wyzx
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 09: pad
+            [IVec4::new(0, 1, 0, 0), IVec4::new(0, 1, 0, 1), IVec4::new(0, 1, 1, 1)], // 10: ywzx
+            [IVec4::new(0, 1, 0, 0), IVec4::new(0, 1, 1, 0), IVec4::new(0, 1, 1, 1)], // 11: yzwx
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 12: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 13: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 14: pad
+            [IVec4::new(0, 1, 0, 0), IVec4::new(0, 1, 1, 0), IVec4::new(1, 1, 1, 0)], // 15: yzxw
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 16: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 17: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 18: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 19: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 20: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 21: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 22: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 23: pad
+            [IVec4::new(0, 0, 0, 1), IVec4::new(0, 1, 0, 1), IVec4::new(1, 1, 0, 1)], // 24: wyxz
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 25: pad
+            [IVec4::new(0, 1, 0, 0), IVec4::new(0, 1, 0, 1), IVec4::new(1, 1, 0, 1)], // 26: ywxz
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 27: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 28: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 29: pad
+            [IVec4::new(0, 1, 0, 0), IVec4::new(1, 1, 0, 0), IVec4::new(1, 1, 0, 1)], // 30: yxwz
+            [IVec4::new(0, 1, 0, 0), IVec4::new(1, 1, 0, 0), IVec4::new(1, 1, 1, 0)], // 31: yxzw
+            [IVec4::new(0, 0, 0, 1), IVec4::new(0, 0, 1, 1), IVec4::new(1, 0, 1, 1)], // 32: wzxy
+            [IVec4::new(0, 0, 1, 0), IVec4::new(0, 0, 1, 1), IVec4::new(1, 0, 1, 1)], // 33: zwxy
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 34: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 35: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 36: pad
+            [IVec4::new(0, 0, 1, 0), IVec4::new(1, 0, 1, 0), IVec4::new(1, 0, 1, 1)], // 37: zxwy
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 38: pad
+            [IVec4::new(0, 0, 1, 0), IVec4::new(1, 0, 1, 0), IVec4::new(1, 1, 1, 0)], // 39: zxyw
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 40: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 41: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 42: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 43: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 44: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 45: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 46: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 47: pad
+            [IVec4::new(0, 0, 0, 1), IVec4::new(1, 0, 0, 1), IVec4::new(1, 0, 1, 1)], // 48: wxzy
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 49: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 50: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 51: pad
+            [IVec4::new(1, 0, 0, 0), IVec4::new(1, 0, 0, 1), IVec4::new(1, 0, 1, 1)], // 52: xwzy
+            [IVec4::new(1, 0, 0, 0), IVec4::new(1, 0, 1, 0), IVec4::new(1, 0, 1, 1)], // 53: xzwy
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 54: pad
+            [IVec4::new(1, 0, 0, 0), IVec4::new(1, 0, 1, 0), IVec4::new(1, 1, 1, 0)], // 55: xzyw
+            [IVec4::new(0, 0, 0, 1), IVec4::new(1, 0, 0, 1), IVec4::new(1, 1, 0, 1)], // 56: wxyz
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 57: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 58: pad
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 59: pad
+            [IVec4::new(1, 0, 0, 0), IVec4::new(1, 0, 0, 1), IVec4::new(1, 1, 0, 1)], // 60: xwyz
+            [IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0), IVec4::new(0, 0, 0, 0)], // 61: pad
+            [IVec4::new(1, 0, 0, 0), IVec4::new(1, 1, 0, 0), IVec4::new(1, 1, 0, 1)], // 62: xywz
+            [IVec4::new(1, 0, 0, 0), IVec4::new(1, 1, 0, 0), IVec4::new(1, 1, 1, 0)], // 63: xyzw
+        ];
+        let simpex_traversal =
+            // SAFETY: The value is always in bounds
+            unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
+        // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
+        [
+            f(self.point_at_offset(rng, IVec4::ZERO, 0.0)),
+            f(self.point_at_offset(rng, simpex_traversal[0], 1.0)),
+            f(self.point_at_offset(rng, simpex_traversal[1], 2.0)),
+            f(self.point_at_offset(rng, simpex_traversal[2], 3.0)),
+            f(self.point_at_offset(rng, IVec4::ONE, 4.0)),
+        ]
+    }
+}
+
+impl DomainCell for SimplexCell<Vec4, IVec4> {
+    type Full = Vec4;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        rng.rand_u32(self.0.floored.collapse_for_rng() ^ (self.simplex_id() << 16))
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.corners_map(rng, |c| c).into_iter()
+    }
+}
+
 /// A [`Partitioner`] that produces various [`SimplexCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplexGrid;
@@ -910,6 +1030,22 @@ impl Partitioner<Vec3A> for SimplexGrid {
             + Vec3A::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_3D);
         SimplexCell(GridSquare {
             floored: skewed_floored.as_ivec3(),
+            offset,
+        })
+    }
+}
+
+impl Partitioner<Vec4> for SimplexGrid {
+    type Cell = SimplexCell<Vec4, IVec4>;
+
+    #[inline]
+    fn segment(&self, full: Vec4) -> Self::Cell {
+        let skewed = full + Vec4::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_4D);
+        let skewed_floored = skewed.floor();
+        let offset = full - skewed_floored
+            + Vec4::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_4D);
+        SimplexCell(GridSquare {
+            floored: skewed_floored.as_ivec4(),
             offset,
         })
     }
