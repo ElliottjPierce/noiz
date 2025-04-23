@@ -302,7 +302,8 @@ impl GradientGenerator<Vec2> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec2 {
-        get_table_grad(seed).xy()
+        // SAFETY: Ensured by bit shift. Bit shift is better than bit and since the rng is cheap and puts more entropy in higher bits.
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 30) as usize) }.xy()
     }
 }
 
@@ -314,7 +315,8 @@ impl GradientGenerator<Vec3> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec3 {
-        get_table_grad(seed).xyz()
+        // SAFETY: Ensured by bit shift. Bit shift is better than bit and since the rng is cheap and puts more entropy in higher bits.
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 28) as usize) }.xyz()
     }
 }
 
@@ -326,7 +328,10 @@ impl GradientGenerator<Vec3A> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec3A {
-        get_table_grad(seed).xyz().into()
+        // SAFETY: Ensured by bit shift. Bit shift is better than bit and since the rng is cheap and puts more entropy in higher bits.
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 28) as usize) }
+            .xyz()
+            .into()
     }
 }
 
@@ -338,112 +343,67 @@ impl GradientGenerator<Vec4> for QuickGradients {
 
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec4 {
-        get_table_grad(seed)
+        // SAFETY: Ensured by bit shift. Bit shift is better than bit and since the rng is cheap and puts more entropy in higher bits.
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 27) as usize) }
     }
-}
-
-#[inline]
-fn get_table_grad(seed: u32) -> Vec4 {
-    // SAFETY: Ensured by bit shift. Bit shift is better than bit and since the rng is cheap and puts more entropy in higher bits.
-    unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
 }
 
 /// A table of gradient vectors (not normalized).
 /// This is meant to fit in a single page of memory and be reused by any kind of vector.
 ///
+/// The first 4 are usable in 2d; the first 16 are usable in 3d (first 4 are repeated in the last 4, so only 12 are unique)
+///
 /// Inspired by a similar table in libnoise.
-const GRADIENT_TABLE: [Vec4; 64] = [
-    Vec4::new(0.5, -1.0, -1.0, -1.0),
-    Vec4::new(-1.0, 0.5, -1.0, -1.0),
-    Vec4::new(-1.0, -1.0, 0.5, -1.0),
-    Vec4::new(-1.0, -1.0, -1.0, 0.5),
-    Vec4::new(0.5, 1.0, -1.0, -1.0),
-    Vec4::new(1.0, 0.5, -1.0, -1.0),
-    Vec4::new(1.0, -1.0, 0.5, -1.0),
-    Vec4::new(1.0, -1.0, -1.0, 0.5),
-    Vec4::new(0.5, -1.0, 1.0, -1.0),
-    Vec4::new(-1.0, 0.5, 1.0, -1.0),
-    Vec4::new(-1.0, 1.0, 0.5, -1.0),
-    Vec4::new(-1.0, 1.0, -1.0, 0.5),
-    Vec4::new(0.5, 1.0, 1.0, -1.0),
-    Vec4::new(1.0, 0.5, 1.0, -1.0),
-    Vec4::new(1.0, 1.0, 0.5, -1.0),
-    Vec4::new(1.0, 1.0, -1.0, 0.5),
-    Vec4::new(0.5, -1.0, -1.0, 1.0),
-    Vec4::new(-1.0, 0.5, -1.0, 1.0),
-    Vec4::new(-1.0, -1.0, 0.5, 1.0),
-    Vec4::new(-1.0, -1.0, 1.0, 0.5),
-    Vec4::new(0.5, 1.0, -1.0, 1.0),
-    Vec4::new(1.0, 0.5, -1.0, 1.0),
-    Vec4::new(1.0, -1.0, 0.5, 1.0),
-    Vec4::new(1.0, -1.0, 1.0, 0.5),
-    Vec4::new(0.5, -1.0, 1.0, 1.0),
-    Vec4::new(-1.0, 0.5, 1.0, 1.0),
-    Vec4::new(-1.0, 1.0, 0.5, 1.0),
-    Vec4::new(-1.0, 1.0, 1.0, 0.5),
-    Vec4::new(0.5, 1.0, 1.0, 1.0),
-    Vec4::new(1.0, 0.5, 1.0, 1.0),
-    Vec4::new(1.0, 1.0, 0.5, 1.0),
-    Vec4::new(1.0, 1.0, 1.0, 0.5),
-    Vec4::new(-0.5, -1.0, -1.0, -1.0),
-    Vec4::new(-1.0, -0.5, -1.0, -1.0),
-    Vec4::new(-1.0, -1.0, -0.5, -1.0),
-    Vec4::new(-1.0, -1.0, -1.0, -0.5),
-    Vec4::new(-0.5, 1.0, -1.0, -1.0),
-    Vec4::new(1.0, -0.5, -1.0, -1.0),
-    Vec4::new(1.0, -1.0, -0.5, -1.0),
-    Vec4::new(1.0, -1.0, -1.0, -0.5),
-    Vec4::new(-0.5, -1.0, 1.0, -1.0),
-    Vec4::new(-1.0, -0.5, 1.0, -1.0),
-    Vec4::new(-1.0, 1.0, -0.5, -1.0),
-    Vec4::new(-1.0, 1.0, -1.0, -0.5),
-    Vec4::new(-0.5, 1.0, 1.0, -1.0),
-    Vec4::new(1.0, -0.5, 1.0, -1.0),
-    Vec4::new(1.0, 1.0, -0.5, -1.0),
-    Vec4::new(1.0, 1.0, -1.0, -0.5),
-    Vec4::new(-0.5, -1.0, -1.0, 1.0),
-    Vec4::new(-1.0, -0.5, -1.0, 1.0),
-    Vec4::new(-1.0, -1.0, -0.5, 1.0),
-    Vec4::new(-1.0, -1.0, 1.0, -0.5),
-    Vec4::new(-0.5, 1.0, -1.0, 1.0),
-    Vec4::new(1.0, -0.5, -1.0, 1.0),
-    Vec4::new(1.0, -1.0, -0.5, 1.0),
-    Vec4::new(1.0, -1.0, 1.0, -0.5),
-    Vec4::new(-0.5, -1.0, 1.0, 1.0),
-    Vec4::new(-1.0, -0.5, 1.0, 1.0),
-    Vec4::new(-1.0, 1.0, -0.5, 1.0),
-    Vec4::new(-1.0, 1.0, 1.0, -0.5),
-    Vec4::new(-0.5, 1.0, 1.0, 1.0),
-    Vec4::new(1.0, -0.5, 1.0, 1.0),
-    Vec4::new(1.0, 1.0, -0.5, 1.0),
-    Vec4::new(1.0, 1.0, 1.0, -0.5),
+const GRADIENT_TABLE: [Vec4; 32] = [
+    // 2d combinations (4)
+    Vec4::new(0.0, -1.0, -1.0, -1.0),
+    Vec4::new(0.0, 1.0, -1.0, -1.0),
+    Vec4::new(-1.0, 0.0, -1.0, -1.0),
+    Vec4::new(1.0, 0.0, -1.0, -1.0),
+    // 3d combinations (12, 8 more)
+    Vec4::new(0.0, -1.0, 1.0, -1.0),
+    Vec4::new(0.0, 1.0, 1.0, -1.0),
+    Vec4::new(-1.0, 0.0, 1.0, -1.0),
+    Vec4::new(1.0, 0.0, 1.0, -1.0),
+    // where z = 0
+    Vec4::new(1.0, 1.0, 0.0, -1.0),
+    Vec4::new(-1.0, 1.0, 0.0, -1.0),
+    Vec4::new(1.0, -1.0, 0.0, -1.0),
+    Vec4::new(-1.0, -1.0, 0.0, -1.0),
+    // 4d combinations (32, 20 more)
+    Vec4::new(0.0, -1.0, -1.0, 1.0),
+    Vec4::new(0.0, 1.0, -1.0, 1.0),
+    Vec4::new(-1.0, 0.0, -1.0, 1.0),
+    Vec4::new(1.0, 0.0, -1.0, 1.0), // These first 4 need 0 in x, y, or so we can use binary & to get the index.
+    Vec4::new(0.0, -1.0, 1.0, 1.0),
+    Vec4::new(0.0, 1.0, 1.0, 1.0),
+    Vec4::new(-1.0, 0.0, 1.0, 1.0),
+    Vec4::new(1.0, 0.0, 1.0, 1.0),
+    Vec4::new(1.0, 1.0, 0.0, 1.0),
+    Vec4::new(-1.0, 1.0, 0.0, 1.0),
+    Vec4::new(1.0, -1.0, 0.0, 1.0),
+    Vec4::new(-1.0, -1.0, 0.0, 1.0),
+    // where w = 0
+    Vec4::new(1.0, 1.0, 1.0, 0.0),
+    Vec4::new(1.0, 1.0, -1.0, 0.0),
+    Vec4::new(1.0, -1.0, 1.0, 0.0),
+    Vec4::new(1.0, -1.0, -1.0, 0.0),
+    Vec4::new(-1.0, 1.0, 1.0, 0.0),
+    Vec4::new(-1.0, 1.0, -1.0, 0.0),
+    Vec4::new(-1.0, -1.0, 1.0, 0.0),
+    Vec4::new(-1.0, -1.0, -1.0, 0.0),
 ];
 
 /// A [`GradientGenerator`] for [`SimplexGrid`](crate::cells::SimplexGrid).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplexGrads;
 
-impl GradientGenerator<Vec2> for SimplexGrads {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
-        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec2 {
-        // SAFETY: Ensured by bit shift
-        unsafe {
-            *[Vec2::X, Vec2::Y, Vec2::NEG_X, Vec2::NEG_Y].get_unchecked((seed >> 30) as usize)
-        }
-    }
-}
-
 /// A [`Blender`] for [`SimplexGrid`](crate::cells::SimplexGrid).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplecticBlend;
 
 const SIMPLECTIC_R_SQUARED: f32 = 0.5;
-const SIMPLEX_NORMALIZATION_FACTOR_2D: f32 = 99.836_85;
+const SIMPLEX_NORMALIZATION_FACTOR_2D: f32 = 32.0;
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for SimplecticBlend {
     #[inline]
