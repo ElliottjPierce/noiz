@@ -236,7 +236,7 @@ impl GradientGenerator<Vec4> for QuickGradients {
 
 #[inline]
 fn get_table_grad(seed: u32) -> Vec4 {
-    // SAFETY: Ensured by bit shift
+    // SAFETY: Ensured by bit shift. Bit shift is better than bit and since the rng is cheap and puts more entropy in higher bits.
     unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
 }
 

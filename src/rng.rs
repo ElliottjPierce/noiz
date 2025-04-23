@@ -41,6 +41,7 @@ impl NoiseRng {
     }
 
     /// Based on `input`, generates a random `u32`.
+    /// Note that there will be more entropy in higher bits than others.
     #[inline(always)]
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
