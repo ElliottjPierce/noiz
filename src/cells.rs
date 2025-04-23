@@ -5,7 +5,7 @@ use bevy_math::{
     curve::derivatives::SampleDerivative,
 };
 
-use crate::rng::NoiseRng;
+use crate::rng::{NoiseRng, NoiseRngInput};
 
 /// Represents a portion or cell of some larger domain and a position within that cell.
 pub trait DomainCell {
@@ -691,3 +691,57 @@ impl Partitioner<Vec4> for Grid {
         }
     }
 }
+
+/// Represents a simplex grid cell as its skewed base grid square.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SimplexCell<F: VectorSpace, I>(pub GridSquare<F, I>);
+
+// const SIMPLEX_SKEW_FACTOR_2D: f32 = 0.366_025_42;
+// const SIMPLEX_UNSKEW_FACTOR_2D: f32 = 0.211_324_87;
+
+impl SimplexCell<Vec2, IVec2> {
+    #[inline]
+    fn simplex_id(&self) -> u32 {
+        (self.0.offset.x > self.0.offset.y) as u32
+    }
+
+    #[inline]
+    fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
+        CellPoint {
+            rough_id: rng.rand_u32(self.0.floored + offset),
+            offset: self.0.offset - offset.as_vec2(),
+        }
+    }
+
+    #[inline]
+    fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec2>) -> T) -> [T; 3] {
+        const SIMPLEX_TRAVERSAL_LUT: [IVec2; 2] = [IVec2::new(1, 0), IVec2::new(0, 1)];
+        let simpex_traversal =
+            // SAFETY: The value is always in bounds
+            unsafe { *SIMPLEX_TRAVERSAL_LUT.get_unchecked(self.simplex_id() as usize) };
+        // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
+        [
+            f(self.point_at_offset(rng, IVec2::ZERO)),
+            f(self.point_at_offset(rng, simpex_traversal)),
+            f(self.point_at_offset(rng, IVec2::ONE)),
+        ]
+    }
+}
+
+impl DomainCell for SimplexCell<Vec2, IVec2> {
+    type Full = Vec2;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        rng.rand_u32(self.0.floored.collapse_for_rng() ^ self.simplex_id())
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.corners_map(rng, |c| c).into_iter()
+    }
+}
+
+/// A [`Partitioner`] that produces various [`SimplexCell`]s.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SimplexGrid;
