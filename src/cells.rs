@@ -87,24 +87,24 @@ pub trait Partitioner<T: VectorSpace> {
     /// The [`DomainCell`] this segmenter produces.
     type Cell: DomainCell<Full = T>;
 
-    /// Constructs this segment based on its full location.
-    fn segment(&self, full: T) -> Self::Cell;
+    /// Partitions the vector space `T` into [`DomainCell`]s, providing the cell that `full` is in.
+    fn partition(&self, full: T) -> Self::Cell;
 }
 
-/// Represents a grid square.
+/// Represents a hyper cube of some N dimensions.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct GridSquare<F: VectorSpace, I> {
+pub struct SquareCell<F: VectorSpace, I> {
     /// The least corner of this grid square.
     pub floored: I,
     /// The positive offset from [`floored`](Self::floored) to the point in the grid square.
     pub offset: F,
 }
 
-/// A [`Partitioner`] that produces various [`GridSquare`]s.
+/// A [`Partitioner`] that produces various [`SquareCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct Grid;
+pub struct OrthoGrid;
 
-impl GridSquare<Vec2, IVec2> {
+impl SquareCell<Vec2, IVec2> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
         CellPoint {
@@ -124,7 +124,7 @@ impl GridSquare<Vec2, IVec2> {
     }
 }
 
-impl DomainCell for GridSquare<Vec2, IVec2> {
+impl DomainCell for SquareCell<Vec2, IVec2> {
     type Full = Vec2;
 
     #[inline]
@@ -138,7 +138,7 @@ impl DomainCell for GridSquare<Vec2, IVec2> {
     }
 }
 
-impl InterpolatableCell for GridSquare<Vec2, IVec2> {
+impl InterpolatableCell for SquareCell<Vec2, IVec2> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -157,7 +157,7 @@ impl InterpolatableCell for GridSquare<Vec2, IVec2> {
     }
 }
 
-impl DiferentiableCell for GridSquare<Vec2, IVec2> {
+impl DiferentiableCell for SquareCell<Vec2, IVec2> {
     type Gradient<D> = [D; 2];
 
     #[inline]
@@ -188,7 +188,7 @@ impl DiferentiableCell for GridSquare<Vec2, IVec2> {
     }
 }
 
-impl GridSquare<Vec3, IVec3> {
+impl SquareCell<Vec3, IVec3> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3> {
         CellPoint {
@@ -212,7 +212,7 @@ impl GridSquare<Vec3, IVec3> {
     }
 }
 
-impl DomainCell for GridSquare<Vec3, IVec3> {
+impl DomainCell for SquareCell<Vec3, IVec3> {
     type Full = Vec3;
 
     #[inline]
@@ -226,7 +226,7 @@ impl DomainCell for GridSquare<Vec3, IVec3> {
     }
 }
 
-impl InterpolatableCell for GridSquare<Vec3, IVec3> {
+impl InterpolatableCell for SquareCell<Vec3, IVec3> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -249,7 +249,7 @@ impl InterpolatableCell for GridSquare<Vec3, IVec3> {
     }
 }
 
-impl DiferentiableCell for GridSquare<Vec3, IVec3> {
+impl DiferentiableCell for SquareCell<Vec3, IVec3> {
     type Gradient<D> = [D; 3];
 
     #[inline]
@@ -308,7 +308,7 @@ impl DiferentiableCell for GridSquare<Vec3, IVec3> {
     }
 }
 
-impl GridSquare<Vec3A, IVec3> {
+impl SquareCell<Vec3A, IVec3> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3A> {
         CellPoint {
@@ -332,7 +332,7 @@ impl GridSquare<Vec3A, IVec3> {
     }
 }
 
-impl DomainCell for GridSquare<Vec3A, IVec3> {
+impl DomainCell for SquareCell<Vec3A, IVec3> {
     type Full = Vec3A;
 
     #[inline]
@@ -346,7 +346,7 @@ impl DomainCell for GridSquare<Vec3A, IVec3> {
     }
 }
 
-impl InterpolatableCell for GridSquare<Vec3A, IVec3> {
+impl InterpolatableCell for SquareCell<Vec3A, IVec3> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -369,7 +369,7 @@ impl InterpolatableCell for GridSquare<Vec3A, IVec3> {
     }
 }
 
-impl DiferentiableCell for GridSquare<Vec3A, IVec3> {
+impl DiferentiableCell for SquareCell<Vec3A, IVec3> {
     type Gradient<D> = [D; 3];
 
     #[inline]
@@ -428,7 +428,7 @@ impl DiferentiableCell for GridSquare<Vec3A, IVec3> {
     }
 }
 
-impl GridSquare<Vec4, IVec4> {
+impl SquareCell<Vec4, IVec4> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec4) -> CellPoint<Vec4> {
         CellPoint {
@@ -460,7 +460,7 @@ impl GridSquare<Vec4, IVec4> {
     }
 }
 
-impl DomainCell for GridSquare<Vec4, IVec4> {
+impl DomainCell for SquareCell<Vec4, IVec4> {
     type Full = Vec4;
 
     #[inline]
@@ -474,7 +474,7 @@ impl DomainCell for GridSquare<Vec4, IVec4> {
     }
 }
 
-impl InterpolatableCell for GridSquare<Vec4, IVec4> {
+impl InterpolatableCell for SquareCell<Vec4, IVec4> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -522,7 +522,7 @@ impl InterpolatableCell for GridSquare<Vec4, IVec4> {
     }
 }
 
-impl DiferentiableCell for GridSquare<Vec4, IVec4> {
+impl DiferentiableCell for SquareCell<Vec4, IVec4> {
     type Gradient<D> = [D; 4];
 
     #[inline]
@@ -640,52 +640,52 @@ impl DiferentiableCell for GridSquare<Vec4, IVec4> {
     }
 }
 
-impl Partitioner<Vec2> for Grid {
-    type Cell = GridSquare<Vec2, IVec2>;
+impl Partitioner<Vec2> for OrthoGrid {
+    type Cell = SquareCell<Vec2, IVec2>;
 
     #[inline]
-    fn segment(&self, full: Vec2) -> Self::Cell {
+    fn partition(&self, full: Vec2) -> Self::Cell {
         let floor = full.floor();
-        GridSquare {
+        SquareCell {
             floored: floor.as_ivec2(),
             offset: full - floor,
         }
     }
 }
 
-impl Partitioner<Vec3> for Grid {
-    type Cell = GridSquare<Vec3, IVec3>;
+impl Partitioner<Vec3> for OrthoGrid {
+    type Cell = SquareCell<Vec3, IVec3>;
 
     #[inline]
-    fn segment(&self, full: Vec3) -> Self::Cell {
+    fn partition(&self, full: Vec3) -> Self::Cell {
         let floor = full.floor();
-        GridSquare {
+        SquareCell {
             floored: floor.as_ivec3(),
             offset: full - floor,
         }
     }
 }
 
-impl Partitioner<Vec3A> for Grid {
-    type Cell = GridSquare<Vec3A, IVec3>;
+impl Partitioner<Vec3A> for OrthoGrid {
+    type Cell = SquareCell<Vec3A, IVec3>;
 
     #[inline]
-    fn segment(&self, full: Vec3A) -> Self::Cell {
+    fn partition(&self, full: Vec3A) -> Self::Cell {
         let floor = full.floor();
-        GridSquare {
+        SquareCell {
             floored: floor.as_ivec3(),
             offset: full - floor,
         }
     }
 }
 
-impl Partitioner<Vec4> for Grid {
-    type Cell = GridSquare<Vec4, IVec4>;
+impl Partitioner<Vec4> for OrthoGrid {
+    type Cell = SquareCell<Vec4, IVec4>;
 
     #[inline]
-    fn segment(&self, full: Vec4) -> Self::Cell {
+    fn partition(&self, full: Vec4) -> Self::Cell {
         let floor = full.floor();
-        GridSquare {
+        SquareCell {
             floored: floor.as_ivec4(),
             offset: full - floor,
         }
@@ -694,7 +694,7 @@ impl Partitioner<Vec4> for Grid {
 
 /// Represents a simplex grid cell as its skewed base grid square.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SimplexCell<F: VectorSpace, I>(pub GridSquare<F, I>);
+pub struct SimplexCell<F: VectorSpace, I>(pub SquareCell<F, I>);
 
 const SIMPLEX_SKEW_FACTOR_2D: f32 = 0.366_025_42;
 const SIMPLEX_UNSKEW_FACTOR_2D: f32 = 0.211_324_87;
@@ -991,12 +991,12 @@ impl Partitioner<Vec2> for SimplexGrid {
     type Cell = SimplexCell<Vec2, IVec2>;
 
     #[inline]
-    fn segment(&self, full: Vec2) -> Self::Cell {
+    fn partition(&self, full: Vec2) -> Self::Cell {
         let skewed = full + Vec2::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_2D);
         let skewed_floored = skewed.floor();
         let offset = full - skewed_floored
             + Vec2::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_2D);
-        SimplexCell(GridSquare {
+        SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec2(),
             offset,
         })
@@ -1007,12 +1007,12 @@ impl Partitioner<Vec3> for SimplexGrid {
     type Cell = SimplexCell<Vec3, IVec3>;
 
     #[inline]
-    fn segment(&self, full: Vec3) -> Self::Cell {
+    fn partition(&self, full: Vec3) -> Self::Cell {
         let skewed = full + Vec3::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_3D);
         let skewed_floored = skewed.floor();
         let offset = full - skewed_floored
             + Vec3::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_3D);
-        SimplexCell(GridSquare {
+        SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec3(),
             offset,
         })
@@ -1023,12 +1023,12 @@ impl Partitioner<Vec3A> for SimplexGrid {
     type Cell = SimplexCell<Vec3A, IVec3>;
 
     #[inline]
-    fn segment(&self, full: Vec3A) -> Self::Cell {
+    fn partition(&self, full: Vec3A) -> Self::Cell {
         let skewed = full + Vec3A::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_3D);
         let skewed_floored = skewed.floor();
         let offset = full - skewed_floored
             + Vec3A::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_3D);
-        SimplexCell(GridSquare {
+        SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec3(),
             offset,
         })
@@ -1039,12 +1039,12 @@ impl Partitioner<Vec4> for SimplexGrid {
     type Cell = SimplexCell<Vec4, IVec4>;
 
     #[inline]
-    fn segment(&self, full: Vec4) -> Self::Cell {
+    fn partition(&self, full: Vec4) -> Self::Cell {
         let skewed = full + Vec4::splat(full.element_sum() * SIMPLEX_SKEW_FACTOR_4D);
         let skewed_floored = skewed.floor();
         let offset = full - skewed_floored
             + Vec4::splat(skewed_floored.element_sum() * SIMPLEX_UNSKEW_FACTOR_4D);
-        SimplexCell(GridSquare {
+        SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec4(),
             offset,
         })

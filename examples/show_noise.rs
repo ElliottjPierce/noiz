@@ -9,7 +9,7 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{Cellular, GradientCell, MixedCell, QuickGradients},
-    cells::{Grid, SimplexGrid},
+    cells::{OrthoGrid, SimplexGrid},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
     rng::UValue,
@@ -75,7 +75,7 @@ fn main() -> AppExit {
                     options: vec![
                         NoiseOption {
                             name: "Basic white noise",
-                            noise: Box::new(Noise::<Cellular<Grid, UValue>>::default()),
+                            noise: Box::new(Noise::<Cellular<OrthoGrid, UValue>>::default()),
                         },
                         NoiseOption {
                             name: "Simlex white noise",
@@ -83,20 +83,20 @@ fn main() -> AppExit {
                         },
                         NoiseOption {
                             name: "Basic value noise",
-                            noise: Box::new(Noise::<
-                                MixedCell<Grid, Linear, UValue>,
-                            >::default()),
+                            noise: Box::new(
+                                Noise::<MixedCell<OrthoGrid, Linear, UValue>>::default(),
+                            ),
                         },
                         NoiseOption {
                             name: "Smooth value noise",
-                            noise: Box::new(Noise::<
-                                MixedCell<Grid, Smoothstep, UValue>,
-                            >::default()),
+                            noise: Box::new(
+                                Noise::<MixedCell<OrthoGrid, Smoothstep, UValue>>::default(),
+                            ),
                         },
                         NoiseOption {
                             name: "Perlin noise",
                             noise: Box::new(AdaptiveNoise::<
-                                GradientCell<Grid, Smoothstep, QuickGradients>,
+                                GradientCell<OrthoGrid, Smoothstep, QuickGradients>,
                                 SNormToUNorm,
                             >::default()),
                         },
@@ -107,13 +107,7 @@ fn main() -> AppExit {
                                     Normed<f32>,
                                     Persistence,
                                     FractalOctaves<
-                                        Octave<
-                                            GradientCell<
-                                                Grid,
-                                                Smoothstep,
-                                                QuickGradients,
-                                            >,
-                                        >,
+                                        Octave<GradientCell<OrthoGrid, Smoothstep, QuickGradients>>,
                                     >,
                                 >,
                                 SNormToUNorm,

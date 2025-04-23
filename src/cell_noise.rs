@@ -26,7 +26,7 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.segment.segment(input);
+        let segment = self.segment.partition(input);
         self.noise.evaluate(segment.rough_id(*seeds), seeds)
     }
 }
@@ -53,7 +53,7 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.segment(input);
+        let segment = self.cells.partition(input);
         let raw = segment.interpolate_within(
             *seeds,
             |point| self.noise.evaluate_pre_mix(point.rough_id, seeds),
@@ -74,7 +74,7 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.segment(input);
+        let segment = self.cells.partition(input);
         let WithGradient { value, gradient } = segment.interpolate_with_gradient(
             *seeds,
             |point| self.noise.evaluate_pre_mix(point.rough_id, seeds),
@@ -134,7 +134,7 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.segment(input);
+        let segment = self.cells.partition(input);
         segment.interpolate_within(
             *seeds,
             |point| {
@@ -157,7 +157,7 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.segment(input);
+        let segment = self.cells.partition(input);
         let gradients = segment.interpolate_within(
             *seeds,
             |point| self.gradients.get_gradient(point.rough_id),
