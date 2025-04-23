@@ -1,5 +1,7 @@
 //! Contains logic for interpolating within a [`DomainCell`].
 
+use core::ops::{AddAssign, Mul};
+
 use bevy_math::{
     Curve, Vec2, Vec3, Vec3A, Vec4, Vec4Swizzles, VectorSpace, curve::derivatives::SampleDerivative,
 };
@@ -110,7 +112,7 @@ pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     pub blender: B,
 }
 
-impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: FastRandomMixed>
+impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: NoiseFunction<u32>>
     NoiseFunction<I> for BlendCellValues<P, B, N, false>
 {
     type Output = N::Output;
@@ -119,11 +121,10 @@ impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: FastRandomM
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.partition(input);
         let weighted = segment.iter_points(*seeds).map(|p| {
-            let value = self.noise.evaluate_pre_mix(p.rough_id, seeds);
+            let value = self.noise.evaluate(p.rough_id, seeds);
             self.blender.weigh_value(value, p.offset)
         });
-        self.noise
-            .finish_value(self.blender.collect_weighted(weighted))
+        self.blender.collect_weighted(weighted)
     }
 }
 
@@ -131,7 +132,7 @@ impl<
     I: VectorSpace,
     P: Partitioner<I>,
     B: Blender<I, WithGradient<N::Output, I>>,
-    N: FastRandomMixed,
+    N: NoiseFunction<u32>,
 > NoiseFunction<I> for BlendCellValues<P, B, N, true>
 {
     type Output = WithGradient<N::Output, I>;
@@ -140,7 +141,8 @@ impl<
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.partition(input);
         let weighted = segment.iter_points(*seeds).map(|p| {
-            let value = self.noise.evaluate_pre_mix(p.rough_id, seeds);
+            let value = self.noise.evaluate(p.rough_id, seeds);
+            // TODO: Verify that this gradient is correct. Does the blender naturally do this correctly?
             self.blender.weigh_value(
                 WithGradient {
                     value,
@@ -149,11 +151,7 @@ impl<
                 p.offset,
             )
         });
-        let WithGradient { value, gradient } = self.blender.collect_weighted(weighted);
-        WithGradient {
-            value: self.noise.finish_value(value),
-            gradient: gradient * self.noise.finishing_derivative(),
-        }
+        self.blender.collect_weighted(weighted)
     }
 }
 
@@ -366,3 +364,32 @@ const GRADIENT_TABLE: [Vec4; 64] = [
     Vec4::new(1.0, 1.0, -0.5, 1.0),
     Vec4::new(1.0, 1.0, 1.0, -0.5),
 ];
+
+/// A [`Blender`] for [`SimplexGrid`](crate::cells::SimplexGrid).
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SimplecticBlend;
+
+const SIMPLECTIC_R_SQUARED: f32 = 0.5;
+const SIMPLEX_NORMALIZATION_FACTOR_2D: f32 = 99.836_85;
+
+impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for SimplecticBlend {
+    #[inline]
+    fn weigh_value(&self, value: V, offset: Vec2) -> V {
+        let t = SIMPLECTIC_R_SQUARED - offset.length_squared();
+        let weight = if t <= 0.0 {
+            0.0
+        } else {
+            SIMPLEX_NORMALIZATION_FACTOR_2D * t * t * t * t * t * t * t
+        };
+        value * weight
+    }
+
+    #[inline]
+    fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V {
+        let mut sum = V::default();
+        for v in weighed {
+            sum += v;
+        }
+        sum
+    }
+}

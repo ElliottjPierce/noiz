@@ -8,7 +8,9 @@ use bevy::{
 use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
-    cell_noise::{Cellular, MixCellGradients, MixCellValues, QuickGradients},
+    cell_noise::{
+        BlendCellValues, Cellular, MixCellGradients, MixCellValues, QuickGradients, SimplecticBlend,
+    },
     cells::{OrthoGrid, SimplexGrid},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
@@ -92,6 +94,12 @@ fn main() -> AppExit {
                             noise: Box::new(
                                 Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default(),
                             ),
+                        },
+                        NoiseOption {
+                            name: "Simlex value noise",
+                            noise: Box::new(Noise::<
+                                BlendCellValues<SimplexGrid, SimplecticBlend, UValue>,
+                            >::default()),
                         },
                         NoiseOption {
                             name: "Perlin noise",

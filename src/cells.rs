@@ -702,7 +702,7 @@ const SIMPLEX_UNSKEW_FACTOR_2D: f32 = 0.211_324_87;
 impl SimplexCell<Vec2, IVec2> {
     #[inline]
     fn simplex_id(&self) -> u32 {
-        (self.0.offset.x > self.0.offset.y) as u32
+        (self.0.offset.x < self.0.offset.y) as u32
     }
 
     #[inline]
