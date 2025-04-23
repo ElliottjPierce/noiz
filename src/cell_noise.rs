@@ -1,7 +1,7 @@
 //! Contains logic for interpolating within a [`DomainCell`].
 
 use bevy_math::{
-    Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace, curve::derivatives::SampleDerivative,
+    Curve, Vec2, Vec3, Vec3A, Vec4, Vec4Swizzles, VectorSpace, curve::derivatives::SampleDerivative,
 };
 
 use crate::{
@@ -179,76 +179,6 @@ impl<
     }
 }
 
-/// Allows making a [`GradientGenerator`] by specifying how it's parts are made.
-pub trait GradElementGenerator {
-    /// Gets an element of a gradient in ±1 from this seed.
-    fn get_element(&self, seed: u8) -> f32;
-}
-
-impl<T: GradElementGenerator> GradientGenerator<Vec2> for T {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
-        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec2 {
-        Vec2::new(
-            self.get_element((seed >> 24) as u8),
-            self.get_element((seed >> 16) as u8),
-        )
-    }
-}
-
-impl<T: GradElementGenerator> GradientGenerator<Vec3> for T {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec3) -> f32 {
-        GradientGenerator::<Vec3>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec3 {
-        Vec3::new(
-            self.get_element((seed >> 24) as u8),
-            self.get_element((seed >> 16) as u8),
-            self.get_element((seed >> 8) as u8),
-        )
-    }
-}
-
-impl<T: GradElementGenerator> GradientGenerator<Vec3A> for T {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec3A) -> f32 {
-        GradientGenerator::<Vec3A>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec3A {
-        Vec3A::new(
-            self.get_element((seed >> 24) as u8),
-            self.get_element((seed >> 16) as u8),
-            self.get_element((seed >> 8) as u8),
-        )
-    }
-}
-
-impl<T: GradElementGenerator> GradientGenerator<Vec4> for T {
-    #[inline]
-    fn get_gradient_dot(&self, seed: u32, offset: Vec4) -> f32 {
-        GradientGenerator::<Vec4>::get_gradient(self, seed).dot(offset)
-    }
-
-    #[inline]
-    fn get_gradient(&self, seed: u32) -> Vec4 {
-        Vec4::new(
-            self.get_element((seed >> 24) as u8),
-            self.get_element((seed >> 16) as u8),
-            self.get_element((seed >> 8) as u8),
-            self.get_element(seed as u8),
-        )
-    }
-}
-
 /// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
 /// This is the fastest provided [`GradientGenerator`].
 ///
@@ -256,34 +186,127 @@ impl<T: GradElementGenerator> GradientGenerator<Vec4> for T {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct QuickGradients;
 
-impl GradElementGenerator for QuickGradients {
+impl GradientGenerator<Vec2> for QuickGradients {
     #[inline]
-    fn get_element(&self, seed: u8) -> f32 {
-        // as i8 as a nop, and as f32 is probably faster than a array lookup or jump table.
-        (seed as i8) as f32 * (1.0 / 128.0)
+    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
+        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec2 {
+        // SAFETY: Ensured by bit shift
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }.xy()
     }
 }
 
-/// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
-/// This is very similar to [`QuickGradients`].
+impl GradientGenerator<Vec3> for QuickGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec3) -> f32 {
+        GradientGenerator::<Vec3>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec3 {
+        // SAFETY: Ensured by bit shift
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }.xyz()
+    }
+}
+
+impl GradientGenerator<Vec3A> for QuickGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec3A) -> f32 {
+        GradientGenerator::<Vec3A>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec3A {
+        // SAFETY: Ensured by bit shift
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
+            .xyz()
+            .into()
+    }
+}
+
+impl GradientGenerator<Vec4> for QuickGradients {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec4) -> f32 {
+        GradientGenerator::<Vec4>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec4 {
+        // SAFETY: Ensured by bit shift
+        unsafe { *GRADIENT_TABLE.get_unchecked((seed >> 26) as usize) }
+    }
+}
+
+/// A table of gradient vectors (not normalized).
+/// This is meant to fit in a single page of memory and be reused by any kind of vector.
 ///
-/// This approximately corrects for the bunching of directions caused by normalizing.
-/// To do so, it maps it's distribution of points onto a cubic curve that distributes more values near ±0.5.
-/// That reduces the directional artifacts caused by higher densities of gradients in corners which are mapped to similar directions.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct ApproximateUniformGradients;
-
-impl GradElementGenerator for ApproximateUniformGradients {
-    #[inline]
-    fn get_element(&self, seed: u8) -> f32 {
-        // try to bunch more values around ±0.5 so that there is less directional bunching.
-        let unorm = (seed >> 1) as f32 * (1.0 / 128.0);
-        let snorm = unorm * 2.0 - 1.0;
-        let corrected = snorm * snorm * snorm;
-        let corrected_unorm = corrected * 0.5 + 0.5;
-
-        // make it positive or negative
-        let sign = ((seed & 1) as u32) << 31;
-        f32::from_bits(corrected_unorm.to_bits() ^ sign)
-    }
-}
+/// Inspired by a similar table in libnoise.
+const GRADIENT_TABLE: [Vec4; 64] = [
+    Vec4::new(0.5, -1.0, -1.0, -1.0),
+    Vec4::new(-1.0, 0.5, -1.0, -1.0),
+    Vec4::new(-1.0, -1.0, 0.5, -1.0),
+    Vec4::new(-1.0, -1.0, -1.0, 0.5),
+    Vec4::new(0.5, 1.0, -1.0, -1.0),
+    Vec4::new(1.0, 0.5, -1.0, -1.0),
+    Vec4::new(1.0, -1.0, 0.5, -1.0),
+    Vec4::new(1.0, -1.0, -1.0, 0.5),
+    Vec4::new(0.5, -1.0, 1.0, -1.0),
+    Vec4::new(-1.0, 0.5, 1.0, -1.0),
+    Vec4::new(-1.0, 1.0, 0.5, -1.0),
+    Vec4::new(-1.0, 1.0, -1.0, 0.5),
+    Vec4::new(0.5, 1.0, 1.0, -1.0),
+    Vec4::new(1.0, 0.5, 1.0, -1.0),
+    Vec4::new(1.0, 1.0, 0.5, -1.0),
+    Vec4::new(1.0, 1.0, -1.0, 0.5),
+    Vec4::new(0.5, -1.0, -1.0, 1.0),
+    Vec4::new(-1.0, 0.5, -1.0, 1.0),
+    Vec4::new(-1.0, -1.0, 0.5, 1.0),
+    Vec4::new(-1.0, -1.0, 1.0, 0.5),
+    Vec4::new(0.5, 1.0, -1.0, 1.0),
+    Vec4::new(1.0, 0.5, -1.0, 1.0),
+    Vec4::new(1.0, -1.0, 0.5, 1.0),
+    Vec4::new(1.0, -1.0, 1.0, 0.5),
+    Vec4::new(0.5, -1.0, 1.0, 1.0),
+    Vec4::new(-1.0, 0.5, 1.0, 1.0),
+    Vec4::new(-1.0, 1.0, 0.5, 1.0),
+    Vec4::new(-1.0, 1.0, 1.0, 0.5),
+    Vec4::new(0.5, 1.0, 1.0, 1.0),
+    Vec4::new(1.0, 0.5, 1.0, 1.0),
+    Vec4::new(1.0, 1.0, 0.5, 1.0),
+    Vec4::new(1.0, 1.0, 1.0, 0.5),
+    Vec4::new(-0.5, -1.0, -1.0, -1.0),
+    Vec4::new(-1.0, -0.5, -1.0, -1.0),
+    Vec4::new(-1.0, -1.0, -0.5, -1.0),
+    Vec4::new(-1.0, -1.0, -1.0, -0.5),
+    Vec4::new(-0.5, 1.0, -1.0, -1.0),
+    Vec4::new(1.0, -0.5, -1.0, -1.0),
+    Vec4::new(1.0, -1.0, -0.5, -1.0),
+    Vec4::new(1.0, -1.0, -1.0, -0.5),
+    Vec4::new(-0.5, -1.0, 1.0, -1.0),
+    Vec4::new(-1.0, -0.5, 1.0, -1.0),
+    Vec4::new(-1.0, 1.0, -0.5, -1.0),
+    Vec4::new(-1.0, 1.0, -1.0, -0.5),
+    Vec4::new(-0.5, 1.0, 1.0, -1.0),
+    Vec4::new(1.0, -0.5, 1.0, -1.0),
+    Vec4::new(1.0, 1.0, -0.5, -1.0),
+    Vec4::new(1.0, 1.0, -1.0, -0.5),
+    Vec4::new(-0.5, -1.0, -1.0, 1.0),
+    Vec4::new(-1.0, -0.5, -1.0, 1.0),
+    Vec4::new(-1.0, -1.0, -0.5, 1.0),
+    Vec4::new(-1.0, -1.0, 1.0, -0.5),
+    Vec4::new(-0.5, 1.0, -1.0, 1.0),
+    Vec4::new(1.0, -0.5, -1.0, 1.0),
+    Vec4::new(1.0, -1.0, -0.5, 1.0),
+    Vec4::new(1.0, -1.0, 1.0, -0.5),
+    Vec4::new(-0.5, -1.0, 1.0, 1.0),
+    Vec4::new(-1.0, -0.5, 1.0, 1.0),
+    Vec4::new(-1.0, 1.0, -0.5, 1.0),
+    Vec4::new(-1.0, 1.0, 1.0, -0.5),
+    Vec4::new(-0.5, 1.0, 1.0, 1.0),
+    Vec4::new(1.0, -0.5, 1.0, 1.0),
+    Vec4::new(1.0, 1.0, -0.5, 1.0),
+    Vec4::new(1.0, 1.0, 1.0, -0.5),
+];
