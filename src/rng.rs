@@ -5,7 +5,7 @@ use bevy_math::{IVec2, IVec3, IVec4, UVec2, UVec3, UVec4};
 
 use crate::NoiseFunction;
 
-/// A seeded RNG inspired by [FxHash](https://crates.io/crates/fxhash).
+/// A seeded RNG.
 /// This is similar to a hash function, but does not use std's hash traits, as those produce `u64` outputs only.
 ///
 /// This stores the seed of the RNG.
@@ -45,17 +45,17 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
-        // let a = i
-        //     .rotate_left(11)
-        //     .wrapping_mul(i ^ Self::KEY)
-        //     .wrapping_add(self.0);
-        // a.rotate_right(11).wrapping_mul(a)
-
-        // Good hash. Pretty fast. Not as fast as others.
         let a = i.rotate_left(11) ^ i ^ self.0;
         let b = a.wrapping_mul(a);
         let c = b.rotate_right(11);
         c.wrapping_mul(c)
+
+        // Good hash. Pretty fast. Not as fast as others.
+        // let a = i
+        //     .rotate_left(11)
+        //     .wrapping_mul(i ^ Self::KEY) // XOR just to move the 0 mul
+        //     .wrapping_add(self.0);
+        // a.rotate_right(11).wrapping_mul(a)
 
         // WIP ok hash. Try to use only one mul, but nor worth it.
         // let a = i.rotate_left(7) ^ i;
