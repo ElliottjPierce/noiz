@@ -9,7 +9,8 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{
-        BlendCellValues, Cellular, MixCellGradients, MixCellValues, QuickGradients, SimplecticBlend,
+        BlendCellGradients, BlendCellValues, Cellular, MixCellGradients, MixCellValues,
+        QuickGradients, SimplecticBlend, SimplexGrads,
     },
     cells::{OrthoGrid, SimplexGrid},
     common_adapters::SNormToUNorm,
@@ -109,6 +110,13 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         NoiseOption {
+                            name: "Simlex noise",
+                            noise: Box::new(AdaptiveNoise::<
+                                BlendCellGradients<SimplexGrid, SimplecticBlend, SimplexGrads>,
+                                SNormToUNorm,
+                            >::default()),
+                        },
+                        NoiseOption {
                             name: "Fractal Perlin noise",
                             noise: Box::new(AdaptiveNoise::<
                                 LayeredNoise<
@@ -117,6 +125,36 @@ fn main() -> AppExit {
                                     FractalOctaves<
                                         Octave<
                                             MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            > {
+                                noise: Noise::from(LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                )),
+                                adapter: SNormToUNorm,
+                            }),
+                        },
+                        NoiseOption {
+                            name: "Fractal Simplex noise",
+                            noise: Box::new(AdaptiveNoise::<
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                SimplexGrads,
+                                            >,
                                         >,
                                     >,
                                 >,

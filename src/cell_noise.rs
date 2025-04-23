@@ -233,6 +233,60 @@ impl<
     }
 }
 
+/// A [`NoiseFunction`] that blends gradients sourced from a [`GradientGenerator`] `G` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct BlendCellGradients<P, B, G, const DIFFERENTIATE: bool = false> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`GradientGenerator`].
+    pub gradients: G,
+    /// The [`Blender`].
+    pub blender: B,
+}
+
+impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, f32>, G: GradientGenerator<I>>
+    NoiseFunction<I> for BlendCellGradients<P, B, G, false>
+{
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.partition(input);
+        let weighted = segment.iter_points(*seeds).map(|p| {
+            let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
+            self.blender.weigh_value(dot, p.offset)
+        });
+        self.blender.collect_weighted(weighted)
+    }
+}
+
+impl<
+    I: VectorSpace,
+    P: Partitioner<I>,
+    B: Blender<I, WithGradient<f32, I>>,
+    G: GradientGenerator<I>,
+> NoiseFunction<I> for BlendCellGradients<P, B, G, true>
+{
+    type Output = WithGradient<f32, I>;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.partition(input);
+        let weighted = segment.iter_points(*seeds).map(|p| {
+            let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
+            // TODO: Verify that this gradient is correct. Does the blender naturally do this correctly?
+            self.blender.weigh_value(
+                WithGradient {
+                    value: dot,
+                    gradient: -p.offset,
+                },
+                p.offset,
+            )
+        });
+        self.blender.collect_weighted(weighted)
+    }
+}
+
 /// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
 /// This is the fastest provided [`GradientGenerator`].
 ///
@@ -365,6 +419,25 @@ const GRADIENT_TABLE: [Vec4; 64] = [
     Vec4::new(1.0, 1.0, 1.0, -0.5),
 ];
 
+/// A [`GradientGenerator`] for [`SimplexGrid`](crate::cells::SimplexGrid).
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SimplexGrads;
+
+impl GradientGenerator<Vec2> for SimplexGrads {
+    #[inline]
+    fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
+        GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
+    }
+
+    #[inline]
+    fn get_gradient(&self, seed: u32) -> Vec2 {
+        // SAFETY: Ensured by bit shift
+        unsafe {
+            *[Vec2::X, Vec2::Y, Vec2::NEG_X, Vec2::NEG_Y].get_unchecked((seed >> 30) as usize)
+        }
+    }
+}
+
 /// A [`Blender`] for [`SimplexGrid`](crate::cells::SimplexGrid).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplecticBlend;
@@ -379,7 +452,7 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for Simp
         let weight = if t <= 0.0 {
             0.0
         } else {
-            SIMPLEX_NORMALIZATION_FACTOR_2D * t * t * t * t * t * t * t
+            SIMPLEX_NORMALIZATION_FACTOR_2D * t * t * t * t
         };
         value * weight
     }
