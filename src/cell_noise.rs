@@ -97,6 +97,10 @@ pub trait Blender<I: VectorSpace, V> {
     /// Usually this will scale the `value` bassed on the length of `offset`.
     fn weigh_value(&self, value: V, offset: I) -> V;
 
+    /// When the value is computed as the dot product of the `offset` passed to [`weigh_value`](Blender::weigh_value), the value is already weighted to some extent.
+    /// This counteracts that weight by opperating on the already weighted value.
+    fn counter_dot_product(&self, value: V) -> V;
+
     /// Given some weighted values, combines them into one, performing any final actions needed.
     fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V;
 }
@@ -256,7 +260,8 @@ impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, f32>, G: GradientGenerator
             let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
             self.blender.weigh_value(dot, p.offset)
         });
-        self.blender.collect_weighted(weighted)
+        self.blender
+            .counter_dot_product(self.blender.collect_weighted(weighted))
     }
 }
 
@@ -283,7 +288,8 @@ impl<
                 p.offset,
             )
         });
-        self.blender.collect_weighted(weighted)
+        self.blender
+            .counter_dot_product(self.blender.collect_weighted(weighted))
     }
 }
 
@@ -348,8 +354,9 @@ impl GradientGenerator<Vec4> for QuickGradients {
     }
 }
 
-/// A table of gradient vectors (not normalized).
+/// A table of normalized gradient vectors.
 /// This is meant to fit in a single page of memory and be reused by any kind of vector.
+/// Only -1, 0, and 1 are used so that the float multiplication is faster.
 ///
 /// The first 4 are usable in 2d; the first 16 are usable in 3d (first 4 are repeated in the last 4, so only 12 are unique)
 ///
@@ -403,18 +410,25 @@ pub struct SimplexGrads;
 pub struct SimplecticBlend;
 
 const SIMPLECTIC_R_SQUARED: f32 = 0.5;
-const SIMPLEX_NORMALIZATION_FACTOR_2D: f32 = 32.0;
+const SIMPLECTIC_R_EFFECT: f32 = (1.0 / SIMPLECTIC_R_SQUARED)
+    * (1.0 / SIMPLECTIC_R_SQUARED)
+    * (1.0 / SIMPLECTIC_R_SQUARED)
+    * (1.0 / SIMPLECTIC_R_SQUARED);
+
+fn general_simplex_weight(length_sqrd: f32) -> f32 {
+    let weight_unorm = (SIMPLECTIC_R_SQUARED - length_sqrd) * (1.0 / SIMPLECTIC_R_SQUARED);
+    if weight_unorm <= 0.0 {
+        0.0
+    } else {
+        let s = weight_unorm * weight_unorm;
+        s * s
+    }
+}
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for SimplecticBlend {
     #[inline]
     fn weigh_value(&self, value: V, offset: Vec2) -> V {
-        let t = SIMPLECTIC_R_SQUARED - offset.length_squared();
-        let weight = if t <= 0.0 {
-            0.0
-        } else {
-            SIMPLEX_NORMALIZATION_FACTOR_2D * t * t * t * t
-        };
-        value * weight
+        value * general_simplex_weight(offset.length_squared())
     }
 
     #[inline]
@@ -424,5 +438,73 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for Simp
             sum += v;
         }
         sum
+    }
+
+    #[inline]
+    fn counter_dot_product(&self, value: V) -> V {
+        value * (99.836_85 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    }
+}
+
+impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3, V> for SimplecticBlend {
+    #[inline]
+    fn weigh_value(&self, value: V, offset: Vec3) -> V {
+        value * general_simplex_weight(offset.length_squared())
+    }
+
+    #[inline]
+    fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V {
+        let mut sum = V::default();
+        for v in weighed {
+            sum += v;
+        }
+        sum
+    }
+
+    #[inline]
+    fn counter_dot_product(&self, value: V) -> V {
+        value * (76.883_76 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    }
+}
+
+impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3A, V> for SimplecticBlend {
+    #[inline]
+    fn weigh_value(&self, value: V, offset: Vec3A) -> V {
+        value * general_simplex_weight(offset.length_squared())
+    }
+
+    #[inline]
+    fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V {
+        let mut sum = V::default();
+        for v in weighed {
+            sum += v;
+        }
+        sum
+    }
+
+    #[inline]
+    fn counter_dot_product(&self, value: V) -> V {
+        value * (76.883_76 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    }
+}
+
+impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec4, V> for SimplecticBlend {
+    #[inline]
+    fn weigh_value(&self, value: V, offset: Vec4) -> V {
+        value * general_simplex_weight(offset.length_squared())
+    }
+
+    #[inline]
+    fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V {
+        let mut sum = V::default();
+        for v in weighed {
+            sum += v;
+        }
+        sum
+    }
+
+    #[inline]
+    fn counter_dot_product(&self, value: V) -> V {
+        value * (62.795_597 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
     }
 }
