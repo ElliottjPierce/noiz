@@ -20,10 +20,6 @@ pub trait NoiseRngInput {
     fn collapse_for_rng(self) -> u32;
 }
 
-#[expect(
-    clippy::unusual_byte_groupings,
-    reason = "In float rng, we do bit tricks and want to show what each part does."
-)]
 impl NoiseRng {
     /// This is a large prime number with even bit distribution.
     /// This lets use use this as a multiplier in the rng.
@@ -76,6 +72,13 @@ impl NoiseRng {
         // let c = b.rotate_right(32) ^ b;
         // c as u32
     }
+}
+
+mod float_rng {
+    #![expect(
+        clippy::unusual_byte_groupings,
+        reason = "In float rng, we do bit tricks and want to show what each part does."
+    )]
 
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 2), with enough precision padding that other operations should not spiral out of range.
     /// This only actually uses 16 of these 32 bits.
@@ -111,6 +114,7 @@ impl NoiseRng {
         f32::from_bits(result)
     }
 }
+pub use float_rng::*;
 
 impl NoiseRngInput for u32 {
     #[inline(always)]
@@ -280,24 +284,24 @@ macro_rules! impl_norms {
     };
 }
 
-impl_norms!(f32, NoiseRng::any_rng_float_32);
+impl_norms!(f32, any_rng_float_32);
 impl_norms!(Vec2, |bits| Vec2::new(
-    NoiseRng::any_rng_float_16((bits >> 16) as u16),
-    NoiseRng::any_rng_float_16(bits as u16),
+    any_rng_float_16((bits >> 16) as u16),
+    any_rng_float_16(bits as u16),
 ));
 impl_norms!(Vec3, |bits| Vec3::new(
-    NoiseRng::any_rng_float_8((bits >> 24) as u8),
-    NoiseRng::any_rng_float_8((bits >> 16) as u8),
-    NoiseRng::any_rng_float_8((bits >> 8) as u8),
+    any_rng_float_8((bits >> 24) as u8),
+    any_rng_float_8((bits >> 16) as u8),
+    any_rng_float_8((bits >> 8) as u8),
 ));
 impl_norms!(Vec3A, |bits| Vec3A::new(
-    NoiseRng::any_rng_float_8((bits >> 24) as u8),
-    NoiseRng::any_rng_float_8((bits >> 16) as u8),
-    NoiseRng::any_rng_float_8((bits >> 8) as u8),
+    any_rng_float_8((bits >> 24) as u8),
+    any_rng_float_8((bits >> 16) as u8),
+    any_rng_float_8((bits >> 8) as u8),
 ));
 impl_norms!(Vec4, |bits| Vec4::new(
-    NoiseRng::any_rng_float_8((bits >> 24) as u8),
-    NoiseRng::any_rng_float_8((bits >> 16) as u8),
-    NoiseRng::any_rng_float_8((bits >> 8) as u8),
-    NoiseRng::any_rng_float_8(bits as u8),
+    any_rng_float_8((bits >> 24) as u8),
+    any_rng_float_8((bits >> 16) as u8),
+    any_rng_float_8((bits >> 8) as u8),
+    any_rng_float_8(bits as u8),
 ));
