@@ -1,6 +1,8 @@
 //! Defines RNG for noise especially.
 //! This does not use the `rand` crate to enable more control and performance optimizations.
 
+use core::marker::PhantomData;
+
 use bevy_math::{IVec2, IVec3, IVec4, UVec2, UVec3, UVec4};
 
 use crate::NoiseFunction;
@@ -164,16 +166,49 @@ impl NoiseRngInput for IVec4 {
     }
 }
 
+/// A version of [`AnyValueFromBits`] that is for a specific value type.
+pub trait ConcreteAnyValueFromBits: AnyValueFromBits<Self::Concrete> {
+    /// The type that this generates values for.
+    type Concrete;
+}
+
 /// A [`NoiseFunction`] that takes any [`RngNoiseInput`] and produces a fully random `u32`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct Random;
+pub struct Random<R, T>(pub R, pub PhantomData<T>);
 
-impl<T: NoiseRngInput> NoiseFunction<T> for Random {
-    type Output = u32;
+impl<O, R: AnyValueFromBits<O>> AnyValueFromBits<O> for Random<R, O> {
+    #[inline(always)]
+    fn linear_equivalent_value(&self, bits: u32) -> O {
+        self.0.linear_equivalent_value(bits)
+    }
+
+    #[inline(always)]
+    fn finish_linear_equivalent_value(&self, value: O) -> O {
+        self.0.finish_linear_equivalent_value(value)
+    }
+
+    #[inline(always)]
+    fn finishing_derivative(&self) -> f32 {
+        self.0.finishing_derivative()
+    }
+
+    #[inline(always)]
+    fn any_value(&self, bits: u32) -> O {
+        self.0.any_value(bits)
+    }
+}
+
+impl<O, R: AnyValueFromBits<O>> ConcreteAnyValueFromBits for Random<R, O> {
+    type Concrete = O;
+}
+
+impl<I: NoiseRngInput, O, R: AnyValueFromBits<O>> NoiseFunction<I> for Random<R, O> {
+    type Output = O;
 
     #[inline]
-    fn evaluate(&self, input: T, seeds: &mut NoiseRng) -> Self::Output {
-        seeds.rand_u32(input)
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let bits = seeds.rand_u32(input);
+        self.0.any_value(bits)
     }
 }
 
@@ -181,54 +216,40 @@ impl<T: NoiseRngInput> NoiseFunction<T> for Random {
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct UValue;
 
-impl NoiseFunction<u32> for UValue {
-    type Output = f32;
-
-    #[inline]
-    fn evaluate(&self, input: u32, seeds: &mut NoiseRng) -> Self::Output {
-        self.finish_value(self.evaluate_pre_mix(input, seeds))
-    }
-}
-
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (-1, 1).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct IValue;
 
-impl NoiseFunction<u32> for IValue {
-    type Output = f32;
+/// Represents some type that can convert some random bits into an output `T`.
+pub trait AnyValueFromBits<T> {
+    /// Produces a value `T` from `bits` that can be linearly mapped back to the proper distriburion.
+    ///
+    /// This is useful if you want to linearly mix or blend these values together, only remapping them at the end.
+    fn linear_equivalent_value(&self, bits: u32) -> T;
 
+    /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](linear_equivalent_value::AnyValueFromBits)
+    fn finish_linear_equivalent_value(&self, value: T) -> T;
+
+    /// Returns the derivative of [`finish_linear_equivalent_value`](AnyValueFromBits::finish_linear_equivalent_value).
+    /// This is a single `f32` since the function is always linear.
+    fn finishing_derivative(&self) -> f32;
+
+    /// Generates a valid value in this distriburion.
     #[inline]
-    fn evaluate(&self, input: u32, seeds: &mut NoiseRng) -> Self::Output {
-        self.finish_value(self.evaluate_pre_mix(input, seeds))
+    fn any_value(&self, bits: u32) -> T {
+        self.finish_linear_equivalent_value(self.linear_equivalent_value(bits))
     }
 }
 
-/// Represents some type that can convert some random bits into an output, mix it up, and then perform some finalization on it.
-pub trait FastRandomMixed {
-    /// The output of the function.
-    type Output;
-
-    /// Evaluates some random bits to some output quickly.
-    fn evaluate_pre_mix(&self, random: u32, seeds: &mut NoiseRng) -> Self::Output;
-
-    /// Finishes the evaluation, performing a map from the `post_mix` to some final domain.
-    fn finish_value(&self, post_mix: Self::Output) -> Self::Output;
-
-    /// Returns the derivative of [`FastRandomMixed::finish_value`].
-    fn finishing_derivative(&self) -> f32;
-}
-
-impl FastRandomMixed for UValue {
-    type Output = f32;
-
+impl AnyValueFromBits<f32> for UValue {
     #[inline]
-    fn evaluate_pre_mix(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
+    fn linear_equivalent_value(&self, random: u32) -> f32 {
         NoiseRng::any_rng_float_32(random)
     }
 
     #[inline(always)]
-    fn finish_value(&self, post_mix: Self::Output) -> Self::Output {
-        post_mix - 1.0
+    fn finish_linear_equivalent_value(&self, value: f32) -> f32 {
+        value - 1.0
     }
 
     #[inline(always)]
@@ -237,17 +258,15 @@ impl FastRandomMixed for UValue {
     }
 }
 
-impl FastRandomMixed for IValue {
-    type Output = f32;
-
+impl AnyValueFromBits<f32> for IValue {
     #[inline]
-    fn evaluate_pre_mix(&self, random: u32, _seeds: &mut NoiseRng) -> Self::Output {
+    fn linear_equivalent_value(&self, random: u32) -> f32 {
         NoiseRng::any_rng_float_32(random)
     }
 
     #[inline(always)]
-    fn finish_value(&self, post_mix: Self::Output) -> Self::Output {
-        (post_mix - 1.5) * 2.0
+    fn finish_linear_equivalent_value(&self, value: f32) -> f32 {
+        value * 2.0 - 3.0
     }
 
     #[inline(always)]
