@@ -51,15 +51,30 @@ macro_rules! benches_nD {
         group.warm_up_time(core::time::Duration::from_millis(500));
         group.measurement_time(core::time::Duration::from_secs(4));
 
-        fbm_perlin(&mut group, 1);
+        group.bench_function(format!("perlin"), |bencher| {
+            bencher.iter(|| {
+                let noise = Perlin::new(Perlin::DEFAULT_SEED);
+                $bencher!(noise)
+            });
+        });
         fbm_perlin(&mut group, 2);
         fbm_perlin(&mut group, 8);
 
-        fbm_simplex(&mut group, 1);
+        group.bench_function(format!("simplex"), |bencher| {
+            bencher.iter(|| {
+                let noise = Simplex::new(Simplex::DEFAULT_SEED);
+                $bencher!(noise)
+            });
+        });
         fbm_simplex(&mut group, 2);
         fbm_simplex(&mut group, 8);
 
-        fbm_value(&mut group, 1);
+        group.bench_function(format!("value"), |bencher| {
+            bencher.iter(|| {
+                let noise = Value::new(Value::DEFAULT_SEED);
+                $bencher!(noise)
+            });
+        });
         fbm_value(&mut group, 2);
         fbm_value(&mut group, 8);
 

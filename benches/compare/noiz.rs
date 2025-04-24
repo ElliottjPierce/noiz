@@ -83,7 +83,6 @@ macro_rules! benches_nD {
                 $bencher(noise)
             });
         });
-        fbm_perlin(&mut group, 1);
         fbm_perlin(&mut group, 2);
         fbm_perlin(&mut group, 8);
 
@@ -95,7 +94,6 @@ macro_rules! benches_nD {
                 $bencher(noise)
             });
         });
-        fbm_simplex(&mut group, 1);
         fbm_simplex(&mut group, 2);
         fbm_simplex(&mut group, 8);
 
@@ -105,7 +103,6 @@ macro_rules! benches_nD {
                 $bencher(noise)
             });
         });
-        fbm_value(&mut group, 1);
         fbm_value(&mut group, 2);
         fbm_value(&mut group, 8);
 
