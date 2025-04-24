@@ -20,4 +20,8 @@ criterion_group!(
     fastnoise_lite::benches
 );
 
-const SIZE: u32 = 2048;
+// These are the sizes of each axis for each dimension.
+// The values are pickes so that the total samples per dimension are roughly the same.
+const SIZE_2D: u32 = 1024;
+const SIZE_3D: u32 = 101;
+const SIZE_4D: u32 = 32;

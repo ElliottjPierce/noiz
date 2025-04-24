@@ -1,4 +1,4 @@
-use super::SIZE;
+use super::SIZE_2D;
 use bevy_math::Vec2;
 use criterion::{measurement::WallTime, *};
 use noiz::{
@@ -16,8 +16,8 @@ use noiz::{
 fn bench_2d(mut noise: impl SampleableFor<Vec2, f32> + ConfigurableNoise) -> f32 {
     noise.set_period(32.0);
     let mut res = 0.0;
-    for x in 0..SIZE {
-        for y in 0..SIZE {
+    for x in 0..SIZE_2D {
+        for y in 0..SIZE_2D {
             res += noise.sample(Vec2::new(x as f32, y as f32));
         }
     }
@@ -66,8 +66,8 @@ pub fn benches(c: &mut Criterion) {
             let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default();
             let mut res = 0.0;
             let ocraves = black_box(8u32);
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     let mut loc = Vec2::new(x as f32, y as f32) / 32.0;
                     let mut total = 0.0;
                     let mut amp = 1.0;

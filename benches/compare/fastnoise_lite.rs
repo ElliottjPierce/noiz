@@ -1,4 +1,4 @@
-use super::SIZE;
+use super::SIZE_2D;
 use criterion::{measurement::WallTime, *};
 use fastnoise_lite::{FastNoiseLite, FractalType, NoiseType};
 
@@ -15,8 +15,8 @@ pub fn benches(c: &mut Criterion) {
             noise.frequency = 1.0 / 32.0;
             noise.octaves = 1;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get_noise_2d(x as f32, y as f32);
                 }
             }
@@ -34,8 +34,8 @@ pub fn benches(c: &mut Criterion) {
             noise.frequency = 1.0 / 32.0;
             noise.octaves = 1;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get_noise_2d(x as f32, y as f32);
                 }
             }
@@ -53,8 +53,8 @@ pub fn benches(c: &mut Criterion) {
             noise.frequency = 1.0 / 32.0;
             noise.octaves = 1;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get_noise_2d(x as f32, y as f32);
                 }
             }
@@ -77,8 +77,8 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: i32) {
             noise.gain = 0.5;
             noise.frequency = 1.0 / 32.0;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get_noise_2d(x as f32, y as f32);
                 }
             }
@@ -99,8 +99,8 @@ fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: i32) {
             noise.gain = 0.5;
             noise.frequency = 1.0 / 32.0;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get_noise_2d(x as f32, y as f32);
                 }
             }
@@ -121,8 +121,8 @@ fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: i32) {
             noise.gain = 0.5;
             noise.frequency = 1.0 / 32.0;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get_noise_2d(x as f32, y as f32);
                 }
             }

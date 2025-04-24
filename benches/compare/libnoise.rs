@@ -1,4 +1,4 @@
-use super::SIZE;
+use super::SIZE_2D;
 use criterion::{measurement::WallTime, *};
 use libnoise::{Fbm, Generator as _, Perlin, Simplex, Value};
 
@@ -12,8 +12,8 @@ pub fn benches(c: &mut Criterion) {
             let noise = Perlin::<2>::new(0);
             let frequency = 1.0 / 32.0;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise
                         .sample([(x as f32 * frequency) as f64, (y as f32 * frequency) as f64]);
                 }
@@ -30,8 +30,8 @@ pub fn benches(c: &mut Criterion) {
             let noise = Simplex::<2>::new(0);
             let frequency = 1.0 / 32.0;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise
                         .sample([(x as f32 * frequency) as f64, (y as f32 * frequency) as f64]);
                 }
@@ -48,8 +48,8 @@ pub fn benches(c: &mut Criterion) {
             let noise = Value::<2>::new(0);
             let frequency = 1.0 / 32.0;
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise
                         .sample([(x as f32 * frequency) as f64, (y as f32 * frequency) as f64]);
                 }
@@ -69,8 +69,8 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let noise =
                 Fbm::<2, Perlin<2>>::new(Perlin::<2>::new(0), octaves, 1.0 / 32.0, 2.0, 0.5);
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.sample([x as f64, y as f64]);
                 }
             }
@@ -86,8 +86,8 @@ fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let noise =
                 Fbm::<2, Simplex<2>>::new(Simplex::<2>::new(0), octaves, 1.0 / 32.0, 2.0, 0.5);
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.sample([x as f64, y as f64]);
                 }
             }
@@ -102,8 +102,8 @@ fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
         bencher.iter(|| {
             let noise = Fbm::<2, Value<2>>::new(Value::<2>::new(0), octaves, 1.0 / 32.0, 2.0, 0.5);
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.sample([x as f64, y as f64]);
                 }
             }

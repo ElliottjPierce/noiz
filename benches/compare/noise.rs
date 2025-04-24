@@ -1,4 +1,4 @@
-use super::SIZE;
+use super::SIZE_2D;
 use criterion::{measurement::WallTime, *};
 use noise::{self as noise_rs, Fbm, Simplex, Value};
 use noise_rs::{NoiseFn, Perlin};
@@ -41,8 +41,8 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 Perlin::new(Perlin::DEFAULT_SEED),
             ]);
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get([x as f64, y as f64]);
                 }
             }
@@ -71,8 +71,8 @@ fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 Simplex::new(Simplex::DEFAULT_SEED),
             ]);
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get([x as f64, y as f64]);
                 }
             }
@@ -101,8 +101,8 @@ fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 Value::new(Value::DEFAULT_SEED),
             ]);
             let mut res = 0.0;
-            for x in 0..SIZE {
-                for y in 0..SIZE {
+            for x in 0..SIZE_2D {
+                for y in 0..SIZE_2D {
                     res += noise.get([x as f64, y as f64]);
                 }
             }
