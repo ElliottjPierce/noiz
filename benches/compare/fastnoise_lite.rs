@@ -1,4 +1,4 @@
-use super::{SIZE_2D, SIZE_3D};
+use super::{FREQUENCY, LACUNARITY, PERSISTENCE, SIZE_2D, SIZE_3D};
 use criterion::{measurement::WallTime, *};
 use fastnoise_lite::{FastNoiseLite, FractalType, NoiseType};
 
@@ -39,7 +39,7 @@ macro_rules! benches_nD {
                 let mut noise = FastNoiseLite::new();
                 noise.set_noise_type(Some(NoiseType::Perlin));
                 noise.set_fractal_type(None);
-                noise.frequency = 1.0 / 32.0;
+                noise.frequency = FREQUENCY;
                 noise.octaves = 1;
                 $bencher!(noise)
             });
@@ -52,7 +52,7 @@ macro_rules! benches_nD {
                 let mut noise = FastNoiseLite::new();
                 noise.set_noise_type(Some(NoiseType::OpenSimplex2));
                 noise.set_fractal_type(None);
-                noise.frequency = 1.0 / 32.0;
+                noise.frequency = FREQUENCY;
                 noise.octaves = 1;
                 $bencher!(noise)
             });
@@ -65,7 +65,7 @@ macro_rules! benches_nD {
                 let mut noise = FastNoiseLite::new();
                 noise.set_noise_type(Some(NoiseType::ValueCubic));
                 noise.set_fractal_type(None);
-                noise.frequency = 1.0 / 32.0;
+                noise.frequency = FREQUENCY;
                 noise.octaves = 1;
                 $bencher!(noise)
             });
@@ -81,9 +81,9 @@ macro_rules! benches_nD {
                     noise.set_noise_type(Some(NoiseType::Perlin));
                     noise.set_fractal_type(Some(FractalType::FBm));
                     noise.octaves = octaves;
-                    noise.lacunarity = 2.0;
-                    noise.gain = 0.5;
-                    noise.frequency = 1.0 / 32.0;
+                    noise.lacunarity = LACUNARITY;
+                    noise.gain = PERSISTENCE;
+                    noise.frequency = FREQUENCY;
                     $bencher!(noise)
                 });
             });
@@ -97,9 +97,9 @@ macro_rules! benches_nD {
                     noise.set_noise_type(Some(NoiseType::OpenSimplex2));
                     noise.set_fractal_type(Some(FractalType::FBm));
                     noise.octaves = octaves;
-                    noise.lacunarity = 2.0;
-                    noise.gain = 0.5;
-                    noise.frequency = 1.0 / 32.0;
+                    noise.lacunarity = LACUNARITY;
+                    noise.gain = PERSISTENCE;
+                    noise.frequency = FREQUENCY;
                     $bencher!(noise)
                 });
             });
@@ -113,9 +113,9 @@ macro_rules! benches_nD {
                     noise.set_noise_type(Some(NoiseType::ValueCubic));
                     noise.set_fractal_type(Some(FractalType::FBm));
                     noise.octaves = octaves;
-                    noise.lacunarity = 2.0;
-                    noise.gain = 0.5;
-                    noise.frequency = 1.0 / 32.0;
+                    noise.lacunarity = LACUNARITY;
+                    noise.gain = PERSISTENCE;
+                    noise.frequency = FREQUENCY;
                     $bencher!(noise)
                 });
             });
@@ -124,6 +124,6 @@ macro_rules! benches_nD {
 }
 
 pub fn benches(c: &mut Criterion) {
-    benches_nD!(bench_2d, "noiz/2d", c);
-    benches_nD!(bench_3d, "noiz/3d", c);
+    benches_nD!(bench_2d, "fastnoise_lite/2d", c);
+    benches_nD!(bench_3d, "fastnoise_lite/3d", c);
 }

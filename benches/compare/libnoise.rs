@@ -1,4 +1,4 @@
-use super::{FREQUENCY, SIZE_2D, SIZE_3D, SIZE_4D};
+use super::{FREQUENCY, LACUNARITY, PERSISTENCE, SIZE_2D, SIZE_3D, SIZE_4D};
 use criterion::{measurement::WallTime, *};
 use libnoise::{Fbm, Generator as _, Perlin, Simplex, Value};
 
@@ -97,9 +97,9 @@ macro_rules! benches_nD {
                     let noise = Fbm::<$d, Perlin<$d>>::new(
                         Perlin::<$d>::new(0),
                         octaves,
-                        1.0 / 32.0,
-                        2.0,
-                        0.5,
+                        FREQUENCY as f64,
+                        LACUNARITY as f64,
+                        PERSISTENCE as f64,
                     );
                     $bencher!(noise)
                 });
@@ -113,9 +113,9 @@ macro_rules! benches_nD {
                     let noise = Fbm::<$d, Simplex<$d>>::new(
                         Simplex::<$d>::new(0),
                         octaves,
-                        1.0 / 32.0,
-                        2.0,
-                        0.5,
+                        FREQUENCY as f64,
+                        LACUNARITY as f64,
+                        PERSISTENCE as f64,
                     );
                     $bencher!(noise)
                 });
@@ -129,9 +129,9 @@ macro_rules! benches_nD {
                     let noise = Fbm::<$d, Value<$d>>::new(
                         Value::<$d>::new(0),
                         octaves,
-                        1.0 / 32.0,
-                        2.0,
-                        0.5,
+                        FREQUENCY as f64,
+                        LACUNARITY as f64,
+                        PERSISTENCE as f64,
                     );
                     $bencher!(noise)
                 });
@@ -141,7 +141,7 @@ macro_rules! benches_nD {
 }
 
 pub fn benches(c: &mut Criterion) {
-    benches_nD!(bench_2d, "noiz/2d", c, 2);
-    benches_nD!(bench_3d, "noiz/3d", c, 3);
-    benches_nD!(bench_4d, "noiz/4d", c, 4);
+    benches_nD!(bench_2d, "libnoise/2d", c, 2);
+    benches_nD!(bench_3d, "libnoise/3d", c, 3);
+    benches_nD!(bench_4d, "libnoise/4d", c, 4);
 }

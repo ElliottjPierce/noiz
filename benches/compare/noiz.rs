@@ -1,4 +1,4 @@
-use crate::{SIZE_3D, SIZE_4D};
+use crate::{FREQUENCY, LACUNARITY, PERSISTENCE, SIZE_3D, SIZE_4D};
 
 use super::SIZE_2D;
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
@@ -16,7 +16,7 @@ use noiz::{
 
 #[inline]
 fn bench_2d(mut noise: impl SampleableFor<Vec2, f32> + ConfigurableNoise) -> f32 {
-    noise.set_period(32.0);
+    noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_2D {
         for y in 0..SIZE_2D {
@@ -28,7 +28,7 @@ fn bench_2d(mut noise: impl SampleableFor<Vec2, f32> + ConfigurableNoise) -> f32
 
 #[inline]
 fn bench_3d(mut noise: impl SampleableFor<Vec3, f32> + ConfigurableNoise) -> f32 {
-    noise.set_period(32.0);
+    noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_3D {
         for y in 0..SIZE_3D {
@@ -42,7 +42,7 @@ fn bench_3d(mut noise: impl SampleableFor<Vec3, f32> + ConfigurableNoise) -> f32
 
 #[inline]
 fn bench_3da(mut noise: impl SampleableFor<Vec3A, f32> + ConfigurableNoise) -> f32 {
-    noise.set_period(32.0);
+    noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_3D {
         for y in 0..SIZE_3D {
@@ -56,7 +56,7 @@ fn bench_3da(mut noise: impl SampleableFor<Vec3A, f32> + ConfigurableNoise) -> f
 
 #[inline]
 fn bench_4d(mut noise: impl SampleableFor<Vec4, f32> + ConfigurableNoise) -> f32 {
-    noise.set_period(32.0);
+    noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_4D {
         for y in 0..SIZE_4D {
@@ -123,10 +123,10 @@ macro_rules! benches_nD {
                         >,
                     >::from(LayeredNoise::new(
                         Normed::default(),
-                        Persistence(0.5),
+                        Persistence(PERSISTENCE),
                         FractalOctaves {
                             octave: Default::default(),
-                            lacunarity: 2.0,
+                            lacunarity: LACUNARITY,
                             octaves,
                         },
                     ));
@@ -155,10 +155,10 @@ macro_rules! benches_nD {
                         >,
                     >::from(LayeredNoise::new(
                         Normed::default(),
-                        Persistence(0.5),
+                        Persistence(PERSISTENCE),
                         FractalOctaves {
                             octave: Default::default(),
-                            lacunarity: 2.0,
+                            lacunarity: LACUNARITY,
                             octaves,
                         },
                     ));
@@ -179,10 +179,10 @@ macro_rules! benches_nD {
                         >,
                     >::from(LayeredNoise::new(
                         Normed::default(),
-                        Persistence(0.5),
+                        Persistence(PERSISTENCE),
                         FractalOctaves {
                             octave: Default::default(),
-                            lacunarity: 2.0,
+                            lacunarity: LACUNARITY,
                             octaves,
                         },
                     ));
@@ -215,7 +215,7 @@ pub fn benches(c: &mut Criterion) {
                     for _ in 0..ocraves {
                         total += amp * noise.sample_for::<f32>(loc);
                         loc *= 2.0;
-                        amp *= 0.5;
+                        amp *= PERSISTENCE;
                     }
                     res += total / 1.999;
                 }
