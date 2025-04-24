@@ -1,6 +1,6 @@
 use super::SIZE;
 use criterion::{measurement::WallTime, *};
-use noise::{self as noise_rs, Fbm, Value};
+use noise::{self as noise_rs, Fbm, Simplex, Value};
 use noise_rs::{NoiseFn, Perlin};
 
 pub fn benches(c: &mut Criterion) {
@@ -15,6 +15,10 @@ pub fn benches(c: &mut Criterion) {
     fbm_value(&mut group, 1);
     fbm_value(&mut group, 2);
     fbm_value(&mut group, 8);
+
+    fbm_simplex(&mut group, 1);
+    fbm_simplex(&mut group, 2);
+    fbm_simplex(&mut group, 8);
 }
 
 fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
@@ -35,6 +39,36 @@ fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
                 Perlin::new(Perlin::DEFAULT_SEED),
                 Perlin::new(Perlin::DEFAULT_SEED),
                 Perlin::new(Perlin::DEFAULT_SEED),
+            ]);
+            let mut res = 0.0;
+            for x in 0..SIZE {
+                for y in 0..SIZE {
+                    res += noise.get([x as f64, y as f64]);
+                }
+            }
+            res
+        });
+    });
+}
+
+fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+    let octaves = black_box(octaves);
+    group.bench_function(format!("simplex fbm {octaves} octave"), |bencher| {
+        bencher.iter(|| {
+            let mut noise = Fbm::<Simplex>::new(Simplex::DEFAULT_SEED);
+            noise.frequency = 1.0 / 32.0;
+            noise.octaves = 8;
+            noise.lacunarity = 2.0;
+            noise.persistence = 0.5;
+            let noise = noise.set_sources(vec![
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
+                Simplex::new(Simplex::DEFAULT_SEED),
             ]);
             let mut res = 0.0;
             for x in 0..SIZE {
