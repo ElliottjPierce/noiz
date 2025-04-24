@@ -1,112 +1,144 @@
-use super::SIZE_2D;
+use super::{SIZE_2D, SIZE_3D, SIZE_4D};
 use criterion::{measurement::WallTime, *};
 use noise::{self as noise_rs, Fbm, Simplex, Value};
 use noise_rs::{NoiseFn, Perlin};
 
+macro_rules! bench_2d {
+    ($noise:ident) => {{
+        let mut res = 0.0;
+        for x in 0..SIZE_2D {
+            for y in 0..SIZE_2D {
+                res += $noise.get([x as f64, y as f64]);
+            }
+        }
+        res
+    }};
+}
+
+macro_rules! bench_3d {
+    ($noise:ident) => {{
+        let mut res = 0.0;
+        for x in 0..SIZE_3D {
+            for y in 0..SIZE_3D {
+                for z in 0..SIZE_3D {
+                    res += $noise.get([x as f64, y as f64, z as f64]);
+                }
+            }
+        }
+        res
+    }};
+}
+
+macro_rules! bench_4d {
+    ($noise:ident) => {{
+        let mut res = 0.0;
+        for x in 0..SIZE_4D {
+            for y in 0..SIZE_4D {
+                for z in 0..SIZE_4D {
+                    for w in 0..SIZE_4D {
+                        res += $noise.get([x as f64, y as f64, z as f64, w as f64]);
+                    }
+                }
+            }
+        }
+        res
+    }};
+}
+
+macro_rules! benches_nD {
+    ($bencher:ident, $name:literal, $c:ident) => {{
+        let mut group = $c.benchmark_group($name);
+        group.warm_up_time(core::time::Duration::from_millis(500));
+        group.measurement_time(core::time::Duration::from_secs(4));
+
+        fbm_perlin(&mut group, 1);
+        fbm_perlin(&mut group, 2);
+        fbm_perlin(&mut group, 8);
+
+        fbm_simplex(&mut group, 1);
+        fbm_simplex(&mut group, 2);
+        fbm_simplex(&mut group, 8);
+
+        fbm_value(&mut group, 1);
+        fbm_value(&mut group, 2);
+        fbm_value(&mut group, 8);
+
+        fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+            let octaves = black_box(octaves);
+            group.bench_function(format!("perlin fbm {octaves} octave"), |bencher| {
+                bencher.iter(|| {
+                    let mut noise = Fbm::<Perlin>::new(Perlin::DEFAULT_SEED);
+                    noise.frequency = 1.0 / 32.0;
+                    noise.octaves = 8;
+                    noise.lacunarity = 2.0;
+                    noise.persistence = 0.5;
+                    let noise = noise.set_sources(vec![
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                        Perlin::new(Perlin::DEFAULT_SEED),
+                    ]);
+                    $bencher!(noise)
+                });
+            });
+        }
+
+        fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+            let octaves = black_box(octaves);
+            group.bench_function(format!("simplex fbm {octaves} octave"), |bencher| {
+                bencher.iter(|| {
+                    let mut noise = Fbm::<Simplex>::new(Simplex::DEFAULT_SEED);
+                    noise.frequency = 1.0 / 32.0;
+                    noise.octaves = 8;
+                    noise.lacunarity = 2.0;
+                    noise.persistence = 0.5;
+                    let noise = noise.set_sources(vec![
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                        Simplex::new(Simplex::DEFAULT_SEED),
+                    ]);
+                    $bencher!(noise)
+                });
+            });
+        }
+
+        fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
+            let octaves = black_box(octaves);
+            group.bench_function(format!("value fbm {octaves} octave"), |bencher| {
+                bencher.iter(|| {
+                    let mut noise = Fbm::<Value>::new(Perlin::DEFAULT_SEED);
+                    noise.frequency = 1.0 / 32.0;
+                    noise.octaves = 8;
+                    noise.lacunarity = 2.0;
+                    noise.persistence = 0.5;
+                    let noise = noise.set_sources(vec![
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                        Value::new(Value::DEFAULT_SEED),
+                    ]);
+                    $bencher!(noise)
+                });
+            });
+        }
+    }};
+}
+
 pub fn benches(c: &mut Criterion) {
-    let mut group = c.benchmark_group("noise");
-    group.warm_up_time(core::time::Duration::from_millis(500));
-    group.measurement_time(core::time::Duration::from_secs(4));
-
-    fbm_perlin(&mut group, 1);
-    fbm_perlin(&mut group, 2);
-    fbm_perlin(&mut group, 8);
-
-    fbm_value(&mut group, 1);
-    fbm_value(&mut group, 2);
-    fbm_value(&mut group, 8);
-
-    fbm_simplex(&mut group, 1);
-    fbm_simplex(&mut group, 2);
-    fbm_simplex(&mut group, 8);
-}
-
-fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-    let octaves = black_box(octaves);
-    group.bench_function(format!("perlin fbm {octaves} octave"), |bencher| {
-        bencher.iter(|| {
-            let mut noise = Fbm::<Perlin>::new(Perlin::DEFAULT_SEED);
-            noise.frequency = 1.0 / 32.0;
-            noise.octaves = 8;
-            noise.lacunarity = 2.0;
-            noise.persistence = 0.5;
-            let noise = noise.set_sources(vec![
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-                Perlin::new(Perlin::DEFAULT_SEED),
-            ]);
-            let mut res = 0.0;
-            for x in 0..SIZE_2D {
-                for y in 0..SIZE_2D {
-                    res += noise.get([x as f64, y as f64]);
-                }
-            }
-            res
-        });
-    });
-}
-
-fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-    let octaves = black_box(octaves);
-    group.bench_function(format!("simplex fbm {octaves} octave"), |bencher| {
-        bencher.iter(|| {
-            let mut noise = Fbm::<Simplex>::new(Simplex::DEFAULT_SEED);
-            noise.frequency = 1.0 / 32.0;
-            noise.octaves = 8;
-            noise.lacunarity = 2.0;
-            noise.persistence = 0.5;
-            let noise = noise.set_sources(vec![
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-                Simplex::new(Simplex::DEFAULT_SEED),
-            ]);
-            let mut res = 0.0;
-            for x in 0..SIZE_2D {
-                for y in 0..SIZE_2D {
-                    res += noise.get([x as f64, y as f64]);
-                }
-            }
-            res
-        });
-    });
-}
-
-fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-    let octaves = black_box(octaves);
-    group.bench_function(format!("value fbm {octaves} octave"), |bencher| {
-        bencher.iter(|| {
-            let mut noise = Fbm::<Value>::new(Perlin::DEFAULT_SEED);
-            noise.frequency = 1.0 / 32.0;
-            noise.octaves = 8;
-            noise.lacunarity = 2.0;
-            noise.persistence = 0.5;
-            let noise = noise.set_sources(vec![
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-                Value::new(Value::DEFAULT_SEED),
-            ]);
-            let mut res = 0.0;
-            for x in 0..SIZE_2D {
-                for y in 0..SIZE_2D {
-                    res += noise.get([x as f64, y as f64]);
-                }
-            }
-            res
-        });
-    });
+    benches_nD!(bench_2d, "noiz/2d", c);
+    benches_nD!(bench_3d, "noiz/3d", c);
+    benches_nD!(bench_4d, "noiz/4d", c);
 }

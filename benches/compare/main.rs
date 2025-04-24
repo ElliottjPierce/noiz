@@ -25,3 +25,7 @@ criterion_group!(
 const SIZE_2D: u32 = 1024;
 const SIZE_3D: u32 = 101;
 const SIZE_4D: u32 = 32;
+
+const FREQUENCY: f32 = 1.0 / 32.0;
+const LACUNARITY: f32 = 2.0;
+const PERSISTENCE: f32 = 0.5;
