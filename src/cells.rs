@@ -108,7 +108,7 @@ impl SquareCell<Vec2, IVec2> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored + offset),
+            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
             offset: self.offset - offset.as_vec2(),
         }
     }
@@ -192,7 +192,7 @@ impl SquareCell<Vec3, IVec3> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored + offset),
+            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
             offset: self.offset - offset.as_vec3(),
         }
     }
@@ -312,7 +312,7 @@ impl SquareCell<Vec3A, IVec3> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3A> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored + offset),
+            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
             offset: self.offset - offset.as_vec3a(),
         }
     }
@@ -432,7 +432,7 @@ impl SquareCell<Vec4, IVec4> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec4) -> CellPoint<Vec4> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored + offset),
+            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
             offset: self.offset - offset.as_vec4(),
         }
     }
@@ -708,7 +708,7 @@ impl SimplexCell<Vec2, IVec2> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec2, diagonal_away: f32) -> CellPoint<Vec2> {
         CellPoint {
-            rough_id: rng.rand_u32(self.0.floored + offset),
+            rough_id: rng.rand_u32(self.0.floored.wrapping_add(offset)),
             offset: self.0.offset - offset.as_vec2()
                 + Vec2::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_2D),
         }
@@ -757,7 +757,7 @@ impl SimplexCell<Vec3, IVec3> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3, diagonal_away: f32) -> CellPoint<Vec3> {
         CellPoint {
-            rough_id: rng.rand_u32(self.0.floored + offset),
+            rough_id: rng.rand_u32(self.0.floored.wrapping_add(offset)),
             offset: self.0.offset - offset.as_vec3()
                 + Vec3::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_3D),
         }
@@ -818,7 +818,7 @@ impl SimplexCell<Vec3A, IVec3> {
         diagonal_away: f32,
     ) -> CellPoint<Vec3A> {
         CellPoint {
-            rough_id: rng.rand_u32(self.0.floored + offset),
+            rough_id: rng.rand_u32(self.0.floored.wrapping_add(offset)),
             offset: self.0.offset - offset.as_vec3a()
                 + Vec3A::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_3D),
         }
@@ -880,7 +880,7 @@ impl SimplexCell<Vec4, IVec4> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec4, diagonal_away: f32) -> CellPoint<Vec4> {
         CellPoint {
-            rough_id: rng.rand_u32(self.0.floored + offset),
+            rough_id: rng.rand_u32(self.0.floored.wrapping_add(offset)),
             offset: self.0.offset - offset.as_vec4()
                 + Vec4::splat(diagonal_away * SIMPLEX_UNSKEW_FACTOR_4D),
         }
