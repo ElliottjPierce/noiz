@@ -9,7 +9,7 @@ use bevy_math::{
 use crate::{
     NoiseFunction,
     cells::{DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient},
-    rng::{ConcreteAnyValueFromBits, NoiseRng},
+    rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, UNorm},
 };
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
@@ -297,8 +297,6 @@ impl<
 
 /// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
 /// This is the fastest provided [`GradientGenerator`].
-///
-/// This does not correct for the bunching of directions caused by normalizing.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct QuickGradients;
 
@@ -403,9 +401,31 @@ const GRADIENT_TABLE: [Vec4; 32] = [
     Vec4::new(-1.0, -1.0, -1.0, 0.0),
 ];
 
-/// A [`GradientGenerator`] for [`SimplexGrid`](crate::cells::SimplexGrid).
+/// A medium qualaty [`GradientGenerator`] that distributes normalized gradient vectors.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct SimplexGrads;
+pub struct RandomGradients;
+
+macro_rules! impl_random_gradients {
+    ($t:ty) => {
+        impl GradientGenerator<$t> for RandomGradients {
+            #[inline]
+            fn get_gradient_dot(&self, seed: u32, offset: $t) -> f32 {
+                GradientGenerator::<$t>::get_gradient(self, seed).dot(offset)
+            }
+
+            #[inline]
+            fn get_gradient(&self, seed: u32) -> $t {
+                let v: $t = UNorm.linear_equivalent_value(seed);
+                (v - 1.5).normalize_or_zero()
+            }
+        }
+    };
+}
+
+impl_random_gradients!(Vec2);
+impl_random_gradients!(Vec3);
+impl_random_gradients!(Vec3A);
+impl_random_gradients!(Vec4);
 
 /// A [`Blender`] for [`SimplexGrid`](crate::cells::SimplexGrid).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
