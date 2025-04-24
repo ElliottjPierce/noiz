@@ -11,7 +11,7 @@ use noiz::{
     },
     cells::{OrthoGrid, SimplexGrid},
     curves::Smoothstep,
-    rng::UValue,
+    rng::{Random, UNorm},
 };
 
 #[inline]
@@ -99,7 +99,7 @@ macro_rules! benches_nD {
 
         group.bench_function("value", |bencher| {
             bencher.iter(|| {
-                let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default();
+                let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>>::default();
                 $bencher(noise)
             });
         });
@@ -172,7 +172,7 @@ macro_rules! benches_nD {
                         LayeredNoise<
                             Normed<f32>,
                             Persistence,
-                            FractalOctaves<Octave<MixCellValues<OrthoGrid, Smoothstep, UValue>>>,
+                            FractalOctaves<Octave<MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>>>,
                         >,
                     >::from(LayeredNoise::new(
                         Normed::default(),
@@ -201,7 +201,8 @@ pub fn benches(c: &mut Criterion) {
     group.measurement_time(core::time::Duration::from_secs(4));
     group.bench_function("value fbm 8 octaves manual", |bencher| {
         bencher.iter(|| {
-            let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default();
+            let noise =
+                Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>>::default();
             let mut res = 0.0;
             let ocraves = black_box(8u32);
             for x in 0..SIZE_2D {

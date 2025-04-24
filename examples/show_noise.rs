@@ -15,7 +15,7 @@ use noiz::{
     cells::{OrthoGrid, SimplexGrid},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
-    rng::UValue,
+    rng::{Random, UNorm},
 };
 
 /// Holds a version of the noise
@@ -78,28 +78,32 @@ fn main() -> AppExit {
                     options: vec![
                         NoiseOption {
                             name: "Basic white noise",
-                            noise: Box::new(Noise::<Cellular<OrthoGrid, UValue>>::default()),
+                            noise: Box::new(
+                                Noise::<Cellular<OrthoGrid, Random<UNorm, f32>>>::default(),
+                            ),
                         },
                         NoiseOption {
                             name: "Simlex white noise",
-                            noise: Box::new(Noise::<Cellular<SimplexGrid, UValue>>::default()),
+                            noise: Box::new(
+                                Noise::<Cellular<SimplexGrid, Random<UNorm, f32>>>::default(),
+                            ),
                         },
                         NoiseOption {
                             name: "Basic value noise",
-                            noise: Box::new(
-                                Noise::<MixCellValues<OrthoGrid, Linear, UValue>>::default(),
-                            ),
+                            noise: Box::new(Noise::<
+                                MixCellValues<OrthoGrid, Linear, Random<UNorm, f32>>,
+                            >::default()),
                         },
                         NoiseOption {
                             name: "Smooth value noise",
-                            noise: Box::new(
-                                Noise::<MixCellValues<OrthoGrid, Smoothstep, UValue>>::default(),
-                            ),
+                            noise: Box::new(Noise::<
+                                MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>,
+                            >::default()),
                         },
                         NoiseOption {
                             name: "Simlex value noise",
                             noise: Box::new(Noise::<
-                                BlendCellValues<SimplexGrid, SimplecticBlend, UValue>,
+                                BlendCellValues<SimplexGrid, SimplecticBlend, Random<UNorm, f32>>,
                             >::default()),
                         },
                         NoiseOption {

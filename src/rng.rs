@@ -214,11 +214,11 @@ impl<I: NoiseRngInput, O, R: AnyValueFromBits<O>> NoiseFunction<I> for Random<R,
 
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (0, 1).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct UValue;
+pub struct UNorm;
 
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (-1, 1).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct IValue;
+pub struct SNorm;
 
 /// Represents some type that can convert some random bits into an output `T`.
 pub trait AnyValueFromBits<T> {
@@ -241,7 +241,7 @@ pub trait AnyValueFromBits<T> {
     }
 }
 
-impl AnyValueFromBits<f32> for UValue {
+impl AnyValueFromBits<f32> for UNorm {
     #[inline]
     fn linear_equivalent_value(&self, random: u32) -> f32 {
         NoiseRng::any_rng_float_32(random)
@@ -258,7 +258,7 @@ impl AnyValueFromBits<f32> for UValue {
     }
 }
 
-impl AnyValueFromBits<f32> for IValue {
+impl AnyValueFromBits<f32> for SNorm {
     #[inline]
     fn linear_equivalent_value(&self, random: u32) -> f32 {
         NoiseRng::any_rng_float_32(random)
