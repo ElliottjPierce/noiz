@@ -117,16 +117,17 @@ pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     pub blender: B,
 }
 
-impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: NoiseFunction<u32>>
+impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Concrete>, N: ConcreteAnyValueFromBits>
     NoiseFunction<I> for BlendCellValues<P, B, N, false>
 {
-    type Output = N::Output;
+    type Output = N::Concrete;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.partition(input);
         let weighted = segment.iter_points(*seeds).map(|p| {
-            let value = self.noise.evaluate(p.rough_id, seeds);
+            // We can't use the `linear_equivalent_value` because the blend type is not linear.
+            let value = self.noise.any_value(p.rough_id);
             self.blender.weigh_value(value, p.offset)
         });
         self.blender.collect_weighted(weighted)
@@ -136,17 +137,17 @@ impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Output>, N: NoiseFuncti
 impl<
     I: VectorSpace,
     P: Partitioner<I>,
-    B: Blender<I, WithGradient<N::Output, I>>,
-    N: NoiseFunction<u32>,
+    B: Blender<I, WithGradient<N::Concrete, I>>,
+    N: ConcreteAnyValueFromBits,
 > NoiseFunction<I> for BlendCellValues<P, B, N, true>
 {
-    type Output = WithGradient<N::Output, I>;
+    type Output = WithGradient<N::Concrete, I>;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let segment = self.cells.partition(input);
         let weighted = segment.iter_points(*seeds).map(|p| {
-            let value = self.noise.evaluate(p.rough_id, seeds);
+            let value = self.noise.any_value(p.rough_id);
             // TODO: Verify that this gradient is correct. Does the blender naturally do this correctly?
             self.blender.weigh_value(
                 WithGradient {
