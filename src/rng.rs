@@ -3,7 +3,7 @@
 
 use core::marker::PhantomData;
 
-use bevy_math::{IVec2, IVec3, IVec4, UVec2, UVec3, UVec4};
+use bevy_math::{IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3, Vec3A, Vec4};
 
 use crate::NoiseFunction;
 
@@ -241,36 +241,62 @@ pub trait AnyValueFromBits<T> {
     }
 }
 
-impl AnyValueFromBits<f32> for UNorm {
-    #[inline]
-    fn linear_equivalent_value(&self, random: u32) -> f32 {
-        NoiseRng::any_rng_float_32(random)
-    }
+macro_rules! impl_norms {
+    ($t:ty, $builder:expr) => {
+        impl AnyValueFromBits<$t> for UNorm {
+            #[inline]
+            fn linear_equivalent_value(&self, bits: u32) -> $t {
+                $builder(bits)
+            }
 
-    #[inline(always)]
-    fn finish_linear_equivalent_value(&self, value: f32) -> f32 {
-        value - 1.0
-    }
+            #[inline(always)]
+            fn finish_linear_equivalent_value(&self, value: $t) -> $t {
+                value - 1.0
+            }
 
-    #[inline(always)]
-    fn finishing_derivative(&self) -> f32 {
-        1.0
-    }
+            #[inline(always)]
+            fn finishing_derivative(&self) -> f32 {
+                1.0
+            }
+        }
+
+        impl AnyValueFromBits<$t> for SNorm {
+            #[inline]
+            fn linear_equivalent_value(&self, bits: u32) -> $t {
+                $builder(bits)
+            }
+
+            #[inline(always)]
+            fn finish_linear_equivalent_value(&self, value: $t) -> $t {
+                value * 2.0 - 3.0
+            }
+
+            #[inline(always)]
+            fn finishing_derivative(&self) -> f32 {
+                2.0
+            }
+        }
+    };
 }
 
-impl AnyValueFromBits<f32> for SNorm {
-    #[inline]
-    fn linear_equivalent_value(&self, random: u32) -> f32 {
-        NoiseRng::any_rng_float_32(random)
-    }
-
-    #[inline(always)]
-    fn finish_linear_equivalent_value(&self, value: f32) -> f32 {
-        value * 2.0 - 3.0
-    }
-
-    #[inline(always)]
-    fn finishing_derivative(&self) -> f32 {
-        2.0
-    }
-}
+impl_norms!(f32, NoiseRng::any_rng_float_32);
+impl_norms!(Vec2, |bits| Vec2::new(
+    NoiseRng::any_rng_float_16((bits >> 16) as u16),
+    NoiseRng::any_rng_float_16(bits as u16),
+));
+impl_norms!(Vec3, |bits| Vec3::new(
+    NoiseRng::any_rng_float_8((bits >> 24) as u8),
+    NoiseRng::any_rng_float_8((bits >> 16) as u8),
+    NoiseRng::any_rng_float_8((bits >> 8) as u8),
+));
+impl_norms!(Vec3A, |bits| Vec3A::new(
+    NoiseRng::any_rng_float_8((bits >> 24) as u8),
+    NoiseRng::any_rng_float_8((bits >> 16) as u8),
+    NoiseRng::any_rng_float_8((bits >> 8) as u8),
+));
+impl_norms!(Vec4, |bits| Vec4::new(
+    NoiseRng::any_rng_float_8((bits >> 24) as u8),
+    NoiseRng::any_rng_float_8((bits >> 16) as u8),
+    NoiseRng::any_rng_float_8((bits >> 8) as u8),
+    NoiseRng::any_rng_float_8(bits as u8),
+));
