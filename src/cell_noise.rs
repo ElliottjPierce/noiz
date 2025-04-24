@@ -99,6 +99,7 @@ pub trait Blender<I: VectorSpace, V> {
 
     /// When the value is computed as the dot product of the `offset` passed to [`weigh_value`](Blender::weigh_value), the value is already weighted to some extent.
     /// This counteracts that weight by opperating on the already weighted value.
+    /// Assuming the collected value was the dot of some vec `a` with this `offset`, this will map the value into `±|a|`
     fn counter_dot_product(&self, value: V) -> V;
 
     /// Given some weighted values, combines them into one, performing any final actions needed.
@@ -416,6 +417,7 @@ const SIMPLECTIC_R_EFFECT: f32 = (1.0 / SIMPLECTIC_R_SQUARED)
     * (1.0 / SIMPLECTIC_R_SQUARED);
 
 fn general_simplex_weight(length_sqrd: f32) -> f32 {
+    // We do the unorm mapping here instead of later to prevent precision issues.
     let weight_unorm = (SIMPLECTIC_R_SQUARED - length_sqrd) * (1.0 / SIMPLECTIC_R_SQUARED);
     if weight_unorm <= 0.0 {
         0.0
