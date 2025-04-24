@@ -134,7 +134,7 @@ macro_rules! benches_nD {
 
         fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let octaves = black_box(octaves);
-            group.bench_function(format!("perlin fbm {octaves} octaves"), |bencher| {
+            group.bench_function(format!("simplex fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
                         LayeredNoise<
