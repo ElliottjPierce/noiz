@@ -224,7 +224,8 @@ pub struct SNorm;
 pub trait AnyValueFromBits<T> {
     /// Produces a value `T` from `bits` that can be linearly mapped back to the proper distriburion.
     ///
-    /// This is useful if you want to linearly mix or blend these values together, only remapping them at the end.
+    /// This is useful if you want to linearly mix these values together, only remapping them at the end.
+    /// This will only hold true if the values are always mixed linearly. (The linear interpolator `t` doesn't need to be linear but the end lerp does.)
     fn linear_equivalent_value(&self, bits: u32) -> T;
 
     /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](linear_equivalent_value::AnyValueFromBits)
