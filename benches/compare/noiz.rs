@@ -108,7 +108,7 @@ macro_rules! benches_nD {
 
         fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let octaves = black_box(octaves);
-            group.bench_function(format!("perlin fbm {octaves} octave"), |bencher| {
+            group.bench_function(format!("perlin fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
                         LayeredNoise<
@@ -134,7 +134,7 @@ macro_rules! benches_nD {
 
         fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let octaves = black_box(octaves);
-            group.bench_function(format!("perlin fbm {octaves} octave"), |bencher| {
+            group.bench_function(format!("perlin fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
                         LayeredNoise<
@@ -166,7 +166,7 @@ macro_rules! benches_nD {
 
         fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let octaves = black_box(octaves);
-            group.bench_function(format!("value fbm {octaves} octave"), |bencher| {
+            group.bench_function(format!("value fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
                         LayeredNoise<
