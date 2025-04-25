@@ -15,7 +15,10 @@ use crate::{
         DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
         WorlyDomainCell,
     },
-    rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
+    rng::{
+        AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm,
+        force_float_non_zero,
+    },
 };
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
@@ -204,6 +207,51 @@ impl WorlyMode for WorlySecondPointDistance {
     #[inline]
     fn evaluate_worly(&self, _nearest: f32, next_nearest: f32) -> f32 {
         next_nearest
+    }
+}
+
+/// A [`WorlyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorlyDifference;
+
+impl WorlyMode for WorlyDifference {
+    #[inline]
+    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
+        next_nearest - nearest
+    }
+}
+
+/// A [`WorlyMode`] that returns the unorm average of the first and second nearest [`CellPoint`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorlyAverage;
+
+impl WorlyMode for WorlyAverage {
+    #[inline]
+    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
+        (next_nearest + nearest) * 0.5
+    }
+}
+
+/// A [`WorlyMode`] that returns the unorm product between the first and second nearest [`CellPoint`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorlyProduct;
+
+impl WorlyMode for WorlyProduct {
+    #[inline]
+    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
+        next_nearest * nearest
+    }
+}
+
+/// A [`WorlyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorlyRatio;
+
+impl WorlyMode for WorlyRatio {
+    #[inline]
+    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
+        // can't divide by 0 since if it were zero since next_nearest > nearest >= 0. (next_nearest != nearest)
+        nearest / force_float_non_zero(next_nearest)
     }
 }
 

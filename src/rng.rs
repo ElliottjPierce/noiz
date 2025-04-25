@@ -184,6 +184,14 @@ mod float_rng {
 }
 pub use float_rng::*;
 
+/// Forces an `f32` to be nonzero.
+/// If it is not zero, **this will still change the value** a little.
+/// Only use this where speed is much higher priorety than precision.
+#[inline(always)]
+pub fn force_float_non_zero(f: f32) -> f32 {
+    f32::from_bits(f.to_bits() | 0b1111)
+}
+
 impl NoiseRngInput for u32 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {

@@ -11,7 +11,8 @@ use noiz::{
     cell_noise::{
         BlendCellGradients, BlendCellValues, EuclideanLength, MixCellGradients, MixCellValues,
         PerCell, PerLeastDistances, PerNearestPoint, QualityGradients, QuickGradients,
-        SimplecticBlend, WorlyPointDistance, WorlySecondPointDistance,
+        SimplecticBlend, WorlyAverage, WorlyDifference, WorlyPointDistance, WorlyProduct,
+        WorlyRatio, WorlySecondPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -215,11 +216,7 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Wacky Worly noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<
-                                    Voronoi,
-                                    EuclideanLength,
-                                    WorlySecondPointDistance,
-                                >,
+                                PerLeastDistances<Voronoi, EuclideanLength, WorlyDifference>,
                             >::default()),
                         },
                     ],
