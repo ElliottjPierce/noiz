@@ -5,7 +5,7 @@ use bevy_math::{
     curve::derivatives::SampleDerivative,
 };
 
-use crate::rng::{NoiseRng, NoiseRngInput};
+use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm};
 
 /// Represents a portion or cell of some larger domain and a position within that cell.
 pub trait DomainCell {
@@ -1077,3 +1077,82 @@ where
 /// This is currently only implemented for [`SquareCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct VoronoiCell<const HALF_SCALE: bool, C>(pub C);
+
+/// We use this as an xor. The number doesn't matter as long as it is unique (relative to other numbers used like this) and changes some bits in every part of the u32;
+const VORONOI_RNG_DIFF: u32 = 0b_011010011010110110110100110101001;
+
+impl DomainCell for VoronoiCell<true, SquareCell<Vec2, IVec2>> {
+    type Full = Vec2;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.0.iter_points(rng).map(|mut point| {
+            let push_between_1_and_2: Vec2 =
+                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point
+        })
+    }
+}
+
+impl DomainCell for VoronoiCell<true, SquareCell<Vec3, IVec3>> {
+    type Full = Vec3;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.0.iter_points(rng).map(|mut point| {
+            let push_between_1_and_2: Vec3 =
+                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point
+        })
+    }
+}
+
+impl DomainCell for VoronoiCell<true, SquareCell<Vec3A, IVec3>> {
+    type Full = Vec3A;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.0.iter_points(rng).map(|mut point| {
+            let push_between_1_and_2: Vec3A =
+                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point
+        })
+    }
+}
+
+impl DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4>> {
+    type Full = Vec4;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        self.0.iter_points(rng).map(|mut point| {
+            let push_between_1_and_2: Vec4 =
+                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point
+        })
+    }
+}
