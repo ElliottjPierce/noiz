@@ -9,7 +9,7 @@ use bevy_math::{
 use crate::{
     NoiseFunction,
     cells::{DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient},
-    rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, UNorm},
+    rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit},
 };
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
@@ -415,8 +415,8 @@ macro_rules! impl_random_gradients {
 
             #[inline]
             fn get_gradient(&self, seed: u32) -> $t {
-                let v: $t = UNorm.linear_equivalent_value(seed);
-                (v - 1.5).normalize_or_zero()
+                let v: $t = SNormSplit.linear_equivalent_value(seed);
+                v.normalize()
             }
         }
     };
