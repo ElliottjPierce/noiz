@@ -1057,14 +1057,14 @@ impl Partitioner<Vec4> for SimplexGrid {
 /// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 5).
 /// Turn `HALF_SCALE` off for high qualaty voronoi and one for high performance voronoi.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct Voronoi<P, const HALF_SCALE: bool = false>(pub P);
+pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid>(pub P);
 
 impl<T: VectorSpace, P: Partitioner<T>, const HALF_SCALE: bool> Partitioner<T>
-    for Voronoi<P, HALF_SCALE>
+    for Voronoi<HALF_SCALE, P>
 where
-    VoronoiCell<P::Cell, HALF_SCALE>: DomainCell<Full = T>,
+    VoronoiCell<HALF_SCALE, P::Cell>: DomainCell<Full = T>,
 {
-    type Cell = VoronoiCell<P::Cell, HALF_SCALE>;
+    type Cell = VoronoiCell<HALF_SCALE, P::Cell>;
 
     #[inline]
     fn partition(&self, full: T) -> Self::Cell {
@@ -1076,4 +1076,4 @@ where
 /// See [`Voronoi`] for details.
 /// This is currently only implemented for [`SquareCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct VoronoiCell<C, const HALF_SCALE: bool>(pub C);
+pub struct VoronoiCell<const HALF_SCALE: bool, C>(pub C);
