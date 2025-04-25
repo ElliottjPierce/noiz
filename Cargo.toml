@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy_math = { version = "0.16", default-features = false, features = [
-  "curve",
-] }
+bevy_math = { version = "0.16", default-features = false, features = ["curve"] }
 
 [dev-dependencies]
 # for examples
