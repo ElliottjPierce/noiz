@@ -1,6 +1,9 @@
 //! Contains logic for interpolating within a [`DomainCell`].
 
-use core::ops::{AddAssign, Mul};
+use core::{
+    f32,
+    ops::{AddAssign, Mul},
+};
 
 use bevy_math::{
     Curve, Vec2, Vec3, Vec3A, Vec4, Vec4Swizzles, VectorSpace, curve::derivatives::SampleDerivative,
@@ -14,22 +17,166 @@ use crate::{
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct Cellular<S, N> {
+pub struct PerCell<P, N> {
     /// The [`Partitioner`].
-    pub segment: S,
+    pub cells: P,
     /// The [`NoiseFunction<u32>`].
     pub noise: N,
 }
 
-impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>> NoiseFunction<I>
-    for Cellular<S, N>
+impl<I: VectorSpace, P: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>> NoiseFunction<I>
+    for PerCell<P, N>
 {
     type Output = N::Output;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.segment.partition(input);
-        self.noise.evaluate(segment.rough_id(*seeds), seeds)
+        let cell = self.cells.partition(input);
+        self.noise.evaluate(cell.rough_id(*seeds), seeds)
+    }
+}
+
+/// Represents some function on a vector `T` that computest some version of it's length.
+pub trait LengthFunction<T: VectorSpace> {
+    /// If the absolute value of no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
+    fn max_for_element_max(&self, element_max: f32) -> f32;
+    /// Computes the length or magatude of `vec`.
+    /// Must always be non-negative
+    fn length_of(&self, vec: T) -> f32;
+    /// Returns some measure of the length of the `vec` such that if the length ordering of one vec is less than that of another, that same ordering applies to their actual lengths.
+    fn length_ordering(&self, vec: T) -> f32;
+}
+
+/// A [`LengthFunction`] and for "as the crow flyies" length
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct EuclideanLength;
+
+/// A [`LengthFunction`] and for "manhatan" or diagonal length
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct ManhatanLength;
+
+/// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct HybridLength;
+
+/// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct ChebyshevLength;
+
+macro_rules! impl_distances {
+    ($t:path, $d:literal, $sqrt_d:expr) => {
+        impl LengthFunction<$t> for EuclideanLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max * $sqrt_d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.length_squared()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec).sqrt()
+            }
+        }
+
+        impl LengthFunction<$t> for ManhatanLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max * $d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.abs().element_sum()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
+            }
+        }
+
+        // inspired by https://github.com/Auburn/FastNoiseLite/blob/master/Rust/src/lib.rs#L1825
+        impl LengthFunction<$t> for HybridLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                // element_max * element_max * $d + element_max * $d
+                element_max * 2.0 * element_max * $d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.length_squared() + vec.abs().element_sum()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
+            }
+        }
+
+        impl LengthFunction<$t> for ChebyshevLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.abs().max_element()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
+            }
+        }
+    };
+}
+
+impl_distances!(Vec2, 2.0, f32::consts::SQRT_2);
+impl_distances!(Vec3, 3.0, 1.732_050_8);
+impl_distances!(Vec3A, 3.0, 1.732_050_8);
+impl_distances!(Vec4, 4.0, 2.0);
+
+/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoints`]s form a [`Partitioner`] `S`,
+/// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoints`].
+/// The [`LengthFunction`] `L` is used to determine which point is nearest.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct PerNearestPoint<P, L, N> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`LengthFunction`].
+    pub length_mode: L,
+    /// The [`NoiseFunction<u32>`].
+    pub noise: N,
+}
+
+impl<
+    I: VectorSpace,
+    L: LengthFunction<I>,
+    P: Partitioner<I, Cell: DomainCell>,
+    N: NoiseFunction<u32>,
+> NoiseFunction<I> for PerNearestPoint<P, L, N>
+{
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let cell = self.cells.partition(input);
+        let mut nearest_id = 0u32;
+        let mut least_length_order = f32::INFINITY;
+        for point in cell.iter_points(*seeds) {
+            let length_order = self.length_mode.length_ordering(point.offset);
+            if length_order < least_length_order {
+                least_length_order = length_order;
+                nearest_id = point.rough_id;
+            }
+        }
+        self.noise.evaluate(nearest_id, seeds)
     }
 }
 

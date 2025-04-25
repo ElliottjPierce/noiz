@@ -9,10 +9,10 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, Cellular, MixCellGradients, MixCellValues,
-        QualityGradients, QuickGradients, SimplecticBlend,
+        BlendCellGradients, BlendCellValues, EuclideanLength, MixCellGradients, MixCellValues,
+        PerCell, PerNearestPoint, QuickGradients, SimplecticBlend, QualityGradients,
     },
-    cells::{OrthoGrid, SimplexGrid},
+    cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
     rng::{Random, UNorm},
@@ -79,14 +79,20 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Basic white noise",
                             noise: Box::new(
-                                Noise::<Cellular<OrthoGrid, Random<UNorm, f32>>>::default(),
+                                Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default(),
                             ),
                         },
                         NoiseOption {
                             name: "Simlex white noise",
                             noise: Box::new(
-                                Noise::<Cellular<SimplexGrid, Random<UNorm, f32>>>::default(),
+                                Noise::<PerCell<SimplexGrid, Random<UNorm, f32>>>::default(),
                             ),
+                        },
+                        NoiseOption {
+                            name: "hexagonal noise",
+                            noise: Box::new(Noise::<
+                                PerNearestPoint<SimplexGrid, EuclideanLength, Random<UNorm, f32>>,
+                            >::default()),
                         },
                         NoiseOption {
                             name: "Basic value noise",
@@ -182,6 +188,22 @@ fn main() -> AppExit {
                                 )),
                                 adapter: SNormToUNorm,
                             }),
+                        },
+                        NoiseOption {
+                            name: "Fast Cellular noise",
+                            noise: Box::new(Noise::<
+                                PerNearestPoint<Voronoi<true>, EuclideanLength, Random<UNorm, f32>>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Full Cellular noise",
+                            noise: Box::new(Noise::<
+                                PerNearestPoint<
+                                    Voronoi<false>,
+                                    EuclideanLength,
+                                    Random<UNorm, f32>,
+                                >,
+                            >::default()),
                         },
                     ],
                     selected: 0,
