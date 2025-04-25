@@ -147,7 +147,7 @@ mod float_rng {
         let result = BASE_VALUE | ((bits & !1) << 15) | (bits << 31);
         f32::from_bits(result)
     }
-  
+
     /// Based on `bits`, generates an arbitrary `f32` in range (1, 1.5), with enough precision padding that other operations should not spiral out of range.
     /// This only actually uses 16 of these 32 bits.
     #[inline(always)]
@@ -396,7 +396,12 @@ macro_rules! impl_norms {
     };
 }
 
-impl_norms!(f32, any_rng_float_32, any_signed_rng_float_32, any_half_rng_float_32);
+impl_norms!(
+    f32,
+    any_rng_float_32,
+    any_signed_rng_float_32,
+    any_half_rng_float_32
+);
 impl_norms!(
     Vec2,
     |bits| Vec2::new(
@@ -410,7 +415,7 @@ impl_norms!(
     |bits| Vec2::new(
         any_half_rng_float_16((bits >> 16) as u16),
         any_half_rng_float_16(bits as u16),
-    ),
+    )
 );
 impl_norms!(
     Vec3,
@@ -428,7 +433,7 @@ impl_norms!(
         any_half_rng_float_8((bits >> 24) as u8),
         any_half_rng_float_8((bits >> 16) as u8),
         any_half_rng_float_8((bits >> 8) as u8),
-    ),
+    )
 );
 impl_norms!(
     Vec3A,
@@ -446,7 +451,7 @@ impl_norms!(
         any_half_rng_float_8((bits >> 24) as u8),
         any_half_rng_float_8((bits >> 16) as u8),
         any_half_rng_float_8((bits >> 8) as u8),
-    ),
+    )
 );
 impl_norms!(
     Vec4,
@@ -467,5 +472,5 @@ impl_norms!(
         any_half_rng_float_8((bits >> 16) as u8),
         any_half_rng_float_8((bits >> 8) as u8),
         any_half_rng_float_8(bits as u8),
-    ),
+    )
 );
