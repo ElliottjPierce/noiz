@@ -9,7 +9,7 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, Cellular, MixCellGradients, MixCellValues,
+        BlendCellGradients, BlendCellValues, MixCellGradients, MixCellValues, PerCell,
         QuickGradients, SimplecticBlend,
     },
     cells::{OrthoGrid, SimplexGrid},
@@ -79,13 +79,13 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Basic white noise",
                             noise: Box::new(
-                                Noise::<Cellular<OrthoGrid, Random<UNorm, f32>>>::default(),
+                                Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default(),
                             ),
                         },
                         NoiseOption {
                             name: "Simlex white noise",
                             noise: Box::new(
-                                Noise::<Cellular<SimplexGrid, Random<UNorm, f32>>>::default(),
+                                Noise::<PerCell<SimplexGrid, Random<UNorm, f32>>>::default(),
                             ),
                         },
                         NoiseOption {

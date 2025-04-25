@@ -14,7 +14,7 @@ use crate::{
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct Cellular<S, N> {
+pub struct PerCell<S, N> {
     /// The [`Partitioner`].
     pub segment: S,
     /// The [`NoiseFunction<u32>`].
@@ -22,7 +22,7 @@ pub struct Cellular<S, N> {
 }
 
 impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>> NoiseFunction<I>
-    for Cellular<S, N>
+    for PerCell<S, N>
 {
     type Output = N::Output;
 
