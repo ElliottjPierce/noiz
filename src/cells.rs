@@ -1056,8 +1056,18 @@ impl Partitioner<Vec4> for SimplexGrid {
 /// If `HALF_SCALE` is off, this will be a traditional voronoi graph that includes both positive and negative surrounding cells, where each lattace point is offset by some value in (0, 1).
 /// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 5).
 /// Turn `HALF_SCALE` off for high qualaty voronoi and one for high performance voronoi.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid>(pub P);
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
+    /// The inner [`Partitioner`] that will have its [`DomainCell`]'s [`CellPoint`]s moved
+    pub partitoner: P,
+    /// How much each [`CellPoint`]s will be moved.
+    /// Values that are not clamped to 0 and 1 are not invalid but will produce discontinuities.
+    /// It is recommended to keep this between 0 and 1/
+    ///
+    /// If this is less than 0.5, and `HALF_SCALE` is off (default),
+    /// the noise will perform better if `HALF_SCALE` is turned on, and this value is doubled accordingly.
+    pub randomness: f32,
+}
 
 impl<T: VectorSpace, P: Partitioner<T>, const HALF_SCALE: bool> Partitioner<T>
     for Voronoi<HALF_SCALE, P>
@@ -1068,15 +1078,39 @@ where
 
     #[inline]
     fn partition(&self, full: T) -> Self::Cell {
-        VoronoiCell(self.0.partition(full))
+        VoronoiCell {
+            cell: self.partitoner.partition(full),
+            randomness: self.randomness,
+        }
+    }
+}
+
+impl<P, const HALF_SCALE: bool> Voronoi<HALF_SCALE, P> {
+    /// Constructs a new [`Voronoi`] with this `randomness` and a default partitioner.
+    /// See [`randomness`](Voronoi::randomness) for details.
+    #[inline]
+    pub fn default_with_randomness(randomness: f32) -> Self
+    where
+        P: Default,
+    {
+        Self {
+            partitoner: P::default(),
+            randomness,
+        }
     }
 }
 
 /// A [`DomainCell`] that wraps an inner [`DomainCell`] and nudges each [`CellPoint`]s by some value.
 /// See [`Voronoi`] for details.
 /// This is currently only implemented for [`SquareCell`]s.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct VoronoiCell<const HALF_SCALE: bool, C>(pub C);
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct VoronoiCell<const HALF_SCALE: bool, C> {
+    /// The inner cell that will have it's [`CellPoint`]s moved
+    pub cell: C,
+    /// How much the [`CellPoint`]s will be moved.
+    /// See [`Voronoi`] for details.
+    pub randomness: f32,
+}
 
 /// We use this as an xor. The number doesn't matter as long as it is unique (relative to other numbers used like this) and changes some bits in every part of the u32;
 const VORONOI_RNG_DIFF: u32 = 0b_011010011010110110110100110101001;
@@ -1086,15 +1120,15 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec2, IVec2>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
-        self.0.iter_points(rng).map(|mut point| {
+        self.cell.iter_points(rng).map(|mut point| {
             let push_between_1_and_2: Vec2 =
                 UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
             point
         })
     }
@@ -1105,15 +1139,15 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec3, IVec3>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
-        self.0.iter_points(rng).map(|mut point| {
+        self.cell.iter_points(rng).map(|mut point| {
             let push_between_1_and_2: Vec3 =
                 UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
             point
         })
     }
@@ -1124,15 +1158,15 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec3A, IVec3>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
-        self.0.iter_points(rng).map(|mut point| {
+        self.cell.iter_points(rng).map(|mut point| {
             let push_between_1_and_2: Vec3A =
                 UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
             point
         })
     }
@@ -1143,15 +1177,15 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
-        self.0.iter_points(rng).map(|mut point| {
+        self.cell.iter_points(rng).map(|mut point| {
             let push_between_1_and_2: Vec4 =
                 UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_1_and_2 * 0.5 - 0.5;
+            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
             point
         })
     }
@@ -1162,7 +1196,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
@@ -1181,9 +1215,9 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2>> {
         ]
         .into_iter()
         .map(move |offset| {
-            let mut point = self.0.point_at_offset(rng, offset);
+            let mut point = self.cell.point_at_offset(rng, offset);
             let push_between_0_and_1: Vec2 = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_0_and_1;
+            point.offset -= push_between_0_and_1 * self.randomness;
             point
         })
     }
@@ -1194,7 +1228,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec3, IVec3>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
@@ -1230,9 +1264,9 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec3, IVec3>> {
         ]
         .into_iter()
         .map(move |offset| {
-            let mut point = self.0.point_at_offset(rng, offset);
+            let mut point = self.cell.point_at_offset(rng, offset);
             let push_between_0_and_1: Vec3 = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_0_and_1;
+            point.offset -= push_between_0_and_1 * self.randomness;
             point
         })
     }
@@ -1243,7 +1277,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec3A, IVec3>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
@@ -1279,9 +1313,9 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec3A, IVec3>> {
         ]
         .into_iter()
         .map(move |offset| {
-            let mut point = self.0.point_at_offset(rng, offset);
+            let mut point = self.cell.point_at_offset(rng, offset);
             let push_between_0_and_1: Vec3A = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_0_and_1;
+            point.offset -= push_between_0_and_1 * self.randomness;
             point
         })
     }
@@ -1292,7 +1326,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec4, IVec4>> {
 
     #[inline]
     fn rough_id(&self, rng: NoiseRng) -> u32 {
-        self.0.rough_id(rng)
+        self.cell.rough_id(rng)
     }
 
     #[inline]
@@ -1382,9 +1416,9 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec4, IVec4>> {
         ]
         .into_iter()
         .map(move |offset| {
-            let mut point = self.0.point_at_offset(rng, offset);
+            let mut point = self.cell.point_at_offset(rng, offset);
             let push_between_0_and_1: Vec4 = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= push_between_0_and_1;
+            point.offset -= push_between_0_and_1 * self.randomness;
             point
         })
     }
