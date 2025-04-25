@@ -5,7 +5,7 @@ use bevy_math::{
     curve::derivatives::SampleDerivative,
 };
 
-use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm};
+use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm, UNormHalf};
 
 /// Represents a portion or cell of some larger domain and a position within that cell.
 pub trait DomainCell {
@@ -1126,9 +1126,9 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec2, IVec2>> {
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.cell.iter_points(rng).map(|mut point| {
-            let push_between_1_and_2: Vec2 =
-                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
+            let push_between_1_and_half: Vec2 =
+                UNormHalf.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_half * self.randomness;
             point
         })
     }
@@ -1145,9 +1145,9 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec3, IVec3>> {
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.cell.iter_points(rng).map(|mut point| {
-            let push_between_1_and_2: Vec3 =
-                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
+            let push_between_1_and_half: Vec3 =
+                UNormHalf.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_half * self.randomness;
             point
         })
     }
@@ -1164,9 +1164,9 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec3A, IVec3>> {
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.cell.iter_points(rng).map(|mut point| {
-            let push_between_1_and_2: Vec3A =
-                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
+            let push_between_1_and_half: Vec3A =
+                UNormHalf.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_half * self.randomness;
             point
         })
     }
@@ -1183,9 +1183,9 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4>> {
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
         self.cell.iter_points(rng).map(|mut point| {
-            let push_between_1_and_2: Vec4 =
-                UNorm.linear_equivalent_value(point.rough_id ^ VORONOI_RNG_DIFF);
-            point.offset -= (push_between_1_and_2 * 0.5 - 0.5) * self.randomness;
+            let push_between_1_and_half: Vec4 =
+                UNormHalf.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_1_and_half * self.randomness;
             point
         })
     }

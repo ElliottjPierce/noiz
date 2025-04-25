@@ -86,7 +86,7 @@ mod float_rng {
     pub fn any_rng_float_32(bits: u32) -> f32 {
         /// The base value bits for the floats we make.
         /// Positive sign, exponent of 0    , 16 value bits    7 bits as precision padding.
-        const BASE_VALUE: u32 = 0b0_01111111_00000000_00000000_0111111;
+        const BASE_VALUE: u32 = 0b_0_01111111_00000000_00000000_0111111;
         const BIT_MASK: u32 = (u16::MAX as u32) << 7;
         let result = BASE_VALUE | (bits & BIT_MASK);
         f32::from_bits(result)
@@ -97,7 +97,7 @@ mod float_rng {
     pub fn any_rng_float_16(bits: u16) -> f32 {
         /// The base value bits for the floats we make.
         /// Positive sign, exponent of 0    , 16 value bits    7 bits as precision padding.
-        const BASE_VALUE: u32 = 0b0_01111111_00000000_00000000_0111111;
+        const BASE_VALUE: u32 = 0b_0_01111111_00000000_00000000_0111111;
         let bits = bits as u32;
         let result = BASE_VALUE | (bits << 7);
         f32::from_bits(result)
@@ -108,9 +108,43 @@ mod float_rng {
     pub fn any_rng_float_8(bits: u8) -> f32 {
         /// The base value bits for the floats we make.
         /// Positive sign, exponent of 0    , 8 value bits    15 bits as precision padding.
-        const BASE_VALUE: u32 = 0b0_01111111_00000000_010101010111111;
+        const BASE_VALUE: u32 = 0b_0_01111111_00000000_011111111111111;
         let bits = bits as u32;
         let result = BASE_VALUE | (bits << 15);
+        f32::from_bits(result)
+    }
+
+    /// Based on `bits`, generates an arbitrary `f32` in range (1, 1.5), with enough precision padding that other operations should not spiral out of range.
+    /// This only actually uses 16 of these 32 bits.
+    #[inline(always)]
+    pub fn any_half_rng_float_32(bits: u32) -> f32 {
+        /// The base value bits for the floats we make.
+        /// Positive sign, exponent of 0, skip .5 , 16 value bits    6 bits as precision padding.
+        const BASE_VALUE: u32 = 0b_0_01111111_0_00000000_00000000_011111;
+        const BIT_MASK: u32 = (u16::MAX as u32) << 6;
+        let result = BASE_VALUE | (bits & BIT_MASK);
+        f32::from_bits(result)
+    }
+
+    /// Based on `bits`, generates an arbitrary `f32` in range (1, 1.5), with enough precision padding that other operations should not spiral out of range.
+    #[inline(always)]
+    pub fn any_half_rng_float_16(bits: u16) -> f32 {
+        /// The base value bits for the floats we make.
+        /// Positive sign, exponent of 0, skip .5 , 16 value bits    6 bits as precision padding.
+        const BASE_VALUE: u32 = 0b_0_01111111_0_00000000_00000000_011111;
+        let bits = bits as u32;
+        let result = BASE_VALUE | (bits << 6);
+        f32::from_bits(result)
+    }
+
+    /// Based on `bits`, generates an arbitrary `f32` in range (1, 1.5), with enough precision padding that other operations should not spiral out of range.
+    #[inline(always)]
+    pub fn any_half_rng_float_8(bits: u8) -> f32 {
+        /// The base value bits for the floats we make.
+        /// Positive sign, exponent of 0, skip .5 , 8 value bits    14 bits as precision padding.
+        const BASE_VALUE: u32 = 0b_0_01111111_0_00000000_01111111111111;
+        let bits = bits as u32;
+        let result = BASE_VALUE | (bits << 14);
         f32::from_bits(result)
     }
 }
@@ -220,6 +254,10 @@ impl<I: NoiseRngInput, O, R: AnyValueFromBits<O>> NoiseFunction<I> for Random<R,
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct UNorm;
 
+/// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (0, 0.5).
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct UNormHalf;
+
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (-1, 1).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SNorm;
@@ -247,11 +285,28 @@ pub trait AnyValueFromBits<T> {
 }
 
 macro_rules! impl_norms {
-    ($t:ty, $builder:expr) => {
+    ($t:ty, $builder:expr, $half_builder:expr) => {
         impl AnyValueFromBits<$t> for UNorm {
             #[inline]
             fn linear_equivalent_value(&self, bits: u32) -> $t {
                 $builder(bits)
+            }
+
+            #[inline(always)]
+            fn finish_linear_equivalent_value(&self, value: $t) -> $t {
+                value - 1.0
+            }
+
+            #[inline(always)]
+            fn finishing_derivative(&self) -> f32 {
+                1.0
+            }
+        }
+
+        impl AnyValueFromBits<$t> for UNormHalf {
+            #[inline]
+            fn linear_equivalent_value(&self, bits: u32) -> $t {
+                $half_builder(bits)
             }
 
             #[inline(always)]
@@ -284,24 +339,56 @@ macro_rules! impl_norms {
     };
 }
 
-impl_norms!(f32, any_rng_float_32);
-impl_norms!(Vec2, |bits| Vec2::new(
-    any_rng_float_16((bits >> 16) as u16),
-    any_rng_float_16(bits as u16),
-));
-impl_norms!(Vec3, |bits| Vec3::new(
-    any_rng_float_8((bits >> 24) as u8),
-    any_rng_float_8((bits >> 16) as u8),
-    any_rng_float_8((bits >> 8) as u8),
-));
-impl_norms!(Vec3A, |bits| Vec3A::new(
-    any_rng_float_8((bits >> 24) as u8),
-    any_rng_float_8((bits >> 16) as u8),
-    any_rng_float_8((bits >> 8) as u8),
-));
-impl_norms!(Vec4, |bits| Vec4::new(
-    any_rng_float_8((bits >> 24) as u8),
-    any_rng_float_8((bits >> 16) as u8),
-    any_rng_float_8((bits >> 8) as u8),
-    any_rng_float_8(bits as u8),
-));
+impl_norms!(f32, any_rng_float_32, any_half_rng_float_32);
+impl_norms!(
+    Vec2,
+    |bits| Vec2::new(
+        any_rng_float_16((bits >> 16) as u16),
+        any_rng_float_16(bits as u16),
+    ),
+    |bits| Vec2::new(
+        any_half_rng_float_16((bits >> 16) as u16),
+        any_half_rng_float_16(bits as u16),
+    )
+);
+impl_norms!(
+    Vec3,
+    |bits| Vec3::new(
+        any_rng_float_8((bits >> 24) as u8),
+        any_rng_float_8((bits >> 16) as u8),
+        any_rng_float_8((bits >> 8) as u8),
+    ),
+    |bits| Vec3::new(
+        any_half_rng_float_8((bits >> 24) as u8),
+        any_half_rng_float_8((bits >> 16) as u8),
+        any_half_rng_float_8((bits >> 8) as u8),
+    )
+);
+impl_norms!(
+    Vec3A,
+    |bits| Vec3A::new(
+        any_rng_float_8((bits >> 24) as u8),
+        any_rng_float_8((bits >> 16) as u8),
+        any_rng_float_8((bits >> 8) as u8),
+    ),
+    |bits| Vec3A::new(
+        any_half_rng_float_8((bits >> 24) as u8),
+        any_half_rng_float_8((bits >> 16) as u8),
+        any_half_rng_float_8((bits >> 8) as u8),
+    )
+);
+impl_norms!(
+    Vec4,
+    |bits| Vec4::new(
+        any_rng_float_8((bits >> 24) as u8),
+        any_rng_float_8((bits >> 16) as u8),
+        any_rng_float_8((bits >> 8) as u8),
+        any_rng_float_8(bits as u8),
+    ),
+    |bits| Vec4::new(
+        any_half_rng_float_8((bits >> 24) as u8),
+        any_half_rng_float_8((bits >> 16) as u8),
+        any_half_rng_float_8((bits >> 8) as u8),
+        any_half_rng_float_8(bits as u8),
+    )
+);
