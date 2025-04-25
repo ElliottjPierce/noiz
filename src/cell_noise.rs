@@ -241,7 +241,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorlyDomainCe
                 next_least_length_offset = least_length_offset;
                 least_length_order = length_order;
                 least_length_offset = point.offset;
-            } else if least_length_order < next_least_length_order {
+            } else if length_order < next_least_length_order {
                 next_least_length_order = length_order;
                 next_least_length_offset = point.offset;
             }

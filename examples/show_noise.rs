@@ -209,14 +209,14 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Worly noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<OrthoGrid, EuclideanLength, WorlyPointDistance>,
+                                PerLeastDistances<Voronoi, EuclideanLength, WorlyPointDistance>,
                             >::default()),
                         },
                         NoiseOption {
                             name: "Wacky Worly noise",
                             noise: Box::new(Noise::<
                                 PerLeastDistances<
-                                    OrthoGrid,
+                                    Voronoi,
                                     EuclideanLength,
                                     WorlySecondPointDistance,
                                 >,
