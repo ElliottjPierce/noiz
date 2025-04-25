@@ -10,7 +10,7 @@ use noiz::{
     Persistence,
     cell_noise::{
         BlendCellGradients, BlendCellValues, EuclideanLength, MixCellGradients, MixCellValues,
-        PerCell, PerNearestPoint, QuickGradients, SimplecticBlend, QualityGradients,
+        PerCell, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
