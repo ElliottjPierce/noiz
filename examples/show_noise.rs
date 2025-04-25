@@ -9,10 +9,9 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, ChebyshevLength, EuclideanLength, HybridLength,
-        ManhatanLength, MixCellGradients, MixCellValues, PerCell, PerLeastDistances,
-        PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend, WorlyAverage,
-        WorlyDifference, WorlyPointDistance, WorlyProduct, WorlyRatio, WorlySecondPointDistance,
+        BlendCellGradients, BlendCellValues, ChebyshevLength, EuclideanLength, MixCellGradients,
+        MixCellValues, PerCell, PerLeastDistances, PerNearestPoint, QualityGradients,
+        QuickGradients, SimplecticBlend, WorlyAverage, WorlyDifference, WorlyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,

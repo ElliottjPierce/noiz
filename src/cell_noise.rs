@@ -15,10 +15,7 @@ use crate::{
         DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
         WorlyDomainCell,
     },
-    rng::{
-        AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm,
-        force_float_non_zero,
-    },
+    rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
@@ -211,6 +208,7 @@ impl WorlyMode for WorlyPointDistance {
 }
 
 /// A [`WorlyMode`] that returns the unorm distance to the second nearest [`CellPoint`].
+/// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WorlySecondPointDistance;
 
@@ -228,6 +226,7 @@ impl WorlyMode for WorlySecondPointDistance {
 }
 
 /// A [`WorlyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`].
+/// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WorlyDifference;
 
@@ -245,6 +244,7 @@ impl WorlyMode for WorlyDifference {
 }
 
 /// A [`WorlyMode`] that returns the unorm average of the first and second nearest [`CellPoint`].
+/// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WorlyAverage;
 
@@ -262,6 +262,7 @@ impl WorlyMode for WorlyAverage {
 }
 
 /// A [`WorlyMode`] that returns the unorm product between the first and second nearest [`CellPoint`].
+/// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WorlyProduct;
 
@@ -279,6 +280,7 @@ impl WorlyMode for WorlyProduct {
 }
 
 /// A [`WorlyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`].
+/// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WorlyRatio;
 
@@ -291,8 +293,8 @@ impl WorlyMode for WorlyRatio {
         next_nearest: f32,
         _max_next_nearest: f32,
     ) -> f32 {
-        // can't divide by 0 since if it were zero since next_nearest > nearest >= 0. (next_nearest != nearest)
-        nearest / force_float_non_zero(next_nearest)
+        // For this to be a division by zero, the points would need to be ontop of eachother, which is impossible.
+        nearest / next_nearest
     }
 }
 
