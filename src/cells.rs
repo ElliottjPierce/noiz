@@ -1156,3 +1156,235 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4>> {
         })
     }
 }
+
+impl DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2>> {
+    type Full = Vec2;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        [
+            IVec2::new(-1, -1),
+            IVec2::new(0, -1),
+            IVec2::new(1, -1),
+            IVec2::new(-1, 0),
+            IVec2::new(0, 0),
+            IVec2::new(1, 0),
+            IVec2::new(-1, 1),
+            IVec2::new(0, -1),
+            IVec2::new(1, 1),
+        ]
+        .into_iter()
+        .map(move |offset| {
+            let mut point = self.0.point_at_offset(rng, offset);
+            let push_between_0_and_1: Vec2 = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_0_and_1;
+            point
+        })
+    }
+}
+
+impl DomainCell for VoronoiCell<false, SquareCell<Vec3, IVec3>> {
+    type Full = Vec3;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        [
+            IVec3::new(-1, -1, -1),
+            IVec3::new(0, -1, -1),
+            IVec3::new(1, -1, -1),
+            IVec3::new(-1, 0, -1),
+            IVec3::new(0, 0, -1),
+            IVec3::new(1, 0, -1),
+            IVec3::new(-1, 1, -1),
+            IVec3::new(0, -1, -1),
+            IVec3::new(1, 1, -1),
+            IVec3::new(-1, -1, 0),
+            IVec3::new(0, -1, 0),
+            IVec3::new(1, -1, 0),
+            IVec3::new(-1, 0, 0),
+            IVec3::new(0, 0, 0),
+            IVec3::new(1, 0, 0),
+            IVec3::new(-1, 1, 0),
+            IVec3::new(0, -1, 0),
+            IVec3::new(1, 1, 0),
+            IVec3::new(-1, -1, 1),
+            IVec3::new(0, -1, 1),
+            IVec3::new(1, -1, 1),
+            IVec3::new(-1, 0, 1),
+            IVec3::new(0, 0, 1),
+            IVec3::new(1, 0, 1),
+            IVec3::new(-1, 1, 1),
+            IVec3::new(0, -1, 1),
+            IVec3::new(1, 1, 1),
+        ]
+        .into_iter()
+        .map(move |offset| {
+            let mut point = self.0.point_at_offset(rng, offset);
+            let push_between_0_and_1: Vec3 = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_0_and_1;
+            point
+        })
+    }
+}
+
+impl DomainCell for VoronoiCell<false, SquareCell<Vec3A, IVec3>> {
+    type Full = Vec3A;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        [
+            IVec3::new(-1, -1, -1),
+            IVec3::new(0, -1, -1),
+            IVec3::new(1, -1, -1),
+            IVec3::new(-1, 0, -1),
+            IVec3::new(0, 0, -1),
+            IVec3::new(1, 0, -1),
+            IVec3::new(-1, 1, -1),
+            IVec3::new(0, -1, -1),
+            IVec3::new(1, 1, -1),
+            IVec3::new(-1, -1, 0),
+            IVec3::new(0, -1, 0),
+            IVec3::new(1, -1, 0),
+            IVec3::new(-1, 0, 0),
+            IVec3::new(0, 0, 0),
+            IVec3::new(1, 0, 0),
+            IVec3::new(-1, 1, 0),
+            IVec3::new(0, -1, 0),
+            IVec3::new(1, 1, 0),
+            IVec3::new(-1, -1, 1),
+            IVec3::new(0, -1, 1),
+            IVec3::new(1, -1, 1),
+            IVec3::new(-1, 0, 1),
+            IVec3::new(0, 0, 1),
+            IVec3::new(1, 0, 1),
+            IVec3::new(-1, 1, 1),
+            IVec3::new(0, -1, 1),
+            IVec3::new(1, 1, 1),
+        ]
+        .into_iter()
+        .map(move |offset| {
+            let mut point = self.0.point_at_offset(rng, offset);
+            let push_between_0_and_1: Vec3A = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_0_and_1;
+            point
+        })
+    }
+}
+
+impl DomainCell for VoronoiCell<false, SquareCell<Vec4, IVec4>> {
+    type Full = Vec4;
+
+    #[inline]
+    fn rough_id(&self, rng: NoiseRng) -> u32 {
+        self.0.rough_id(rng)
+    }
+
+    #[inline]
+    fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        [
+            IVec4::new(-1, -1, -1, -1),
+            IVec4::new(0, -1, -1, -1),
+            IVec4::new(1, -1, -1, -1),
+            IVec4::new(-1, 0, -1, -1),
+            IVec4::new(0, 0, -1, -1),
+            IVec4::new(1, 0, -1, -1),
+            IVec4::new(-1, 1, -1, -1),
+            IVec4::new(0, -1, -1, -1),
+            IVec4::new(1, 1, -1, -1),
+            IVec4::new(-1, -1, 0, -1),
+            IVec4::new(0, -1, 0, -1),
+            IVec4::new(1, -1, 0, -1),
+            IVec4::new(-1, 0, 0, -1),
+            IVec4::new(0, 0, 0, -1),
+            IVec4::new(1, 0, 0, -1),
+            IVec4::new(-1, 1, 0, -1),
+            IVec4::new(0, -1, 0, -1),
+            IVec4::new(1, 1, 0, -1),
+            IVec4::new(-1, -1, 1, -1),
+            IVec4::new(0, -1, 1, -1),
+            IVec4::new(1, -1, 1, -1),
+            IVec4::new(-1, 0, 1, -1),
+            IVec4::new(0, 0, 1, -1),
+            IVec4::new(1, 0, 1, -1),
+            IVec4::new(-1, 1, 1, -1),
+            IVec4::new(0, -1, 1, -1),
+            IVec4::new(1, 1, 1, -1),
+            IVec4::new(-1, -1, -1, 0),
+            IVec4::new(0, -1, -1, 0),
+            IVec4::new(1, -1, -1, 0),
+            IVec4::new(-1, 0, -1, 0),
+            IVec4::new(0, 0, -1, 0),
+            IVec4::new(1, 0, -1, 0),
+            IVec4::new(-1, 1, -1, 0),
+            IVec4::new(0, -1, -1, 0),
+            IVec4::new(1, 1, -1, 0),
+            IVec4::new(-1, -1, 0, 0),
+            IVec4::new(0, -1, 0, 0),
+            IVec4::new(1, -1, 0, 0),
+            IVec4::new(-1, 0, 0, 0),
+            IVec4::new(0, 0, 0, 0),
+            IVec4::new(1, 0, 0, 0),
+            IVec4::new(-1, 1, 0, 0),
+            IVec4::new(0, -1, 0, 0),
+            IVec4::new(1, 1, 0, 0),
+            IVec4::new(-1, -1, 1, 0),
+            IVec4::new(0, -1, 1, 0),
+            IVec4::new(1, -1, 1, 0),
+            IVec4::new(-1, 0, 1, 0),
+            IVec4::new(0, 0, 1, 0),
+            IVec4::new(1, 0, 1, 0),
+            IVec4::new(-1, 1, 1, 0),
+            IVec4::new(0, -1, 1, 0),
+            IVec4::new(1, 1, 1, 0),
+            IVec4::new(-1, -1, -1, 1),
+            IVec4::new(0, -1, -1, 1),
+            IVec4::new(1, -1, -1, 1),
+            IVec4::new(-1, 0, -1, 1),
+            IVec4::new(0, 0, -1, 1),
+            IVec4::new(1, 0, -1, 1),
+            IVec4::new(-1, 1, -1, 1),
+            IVec4::new(0, -1, -1, 1),
+            IVec4::new(1, 1, -1, 1),
+            IVec4::new(-1, -1, 0, 1),
+            IVec4::new(0, -1, 0, 1),
+            IVec4::new(1, -1, 0, 1),
+            IVec4::new(-1, 0, 0, 1),
+            IVec4::new(0, 0, 0, 1),
+            IVec4::new(1, 0, 0, 1),
+            IVec4::new(-1, 1, 0, 1),
+            IVec4::new(0, -1, 0, 1),
+            IVec4::new(1, 1, 0, 1),
+            IVec4::new(-1, -1, 1, 1),
+            IVec4::new(0, -1, 1, 1),
+            IVec4::new(1, -1, 1, 1),
+            IVec4::new(-1, 0, 1, 1),
+            IVec4::new(0, 0, 1, 1),
+            IVec4::new(1, 0, 1, 1),
+            IVec4::new(-1, 1, 1, 1),
+            IVec4::new(0, -1, 1, 1),
+            IVec4::new(1, 1, 1, 1),
+        ]
+        .into_iter()
+        .map(move |offset| {
+            let mut point = self.0.point_at_offset(rng, offset);
+            let push_between_0_and_1: Vec4 = UNorm.any_value(point.rough_id ^ VORONOI_RNG_DIFF);
+            point.offset -= push_between_0_and_1;
+            point
+        })
+    }
+}
