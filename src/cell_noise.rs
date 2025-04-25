@@ -430,9 +430,9 @@ impl_random_gradients!(Vec4);
 
 /// A high qualaty (but slow) [`GradientGenerator`] that uniformly distributes normalized gradient vectors.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct QualatyGradients;
+pub struct QualityGradients;
 
-impl GradientGenerator<Vec2> for QualatyGradients {
+impl GradientGenerator<Vec2> for QualityGradients {
     #[inline]
     fn get_gradient_dot(&self, seed: u32, offset: Vec2) -> f32 {
         GradientGenerator::<Vec2>::get_gradient(self, seed).dot(offset)
@@ -445,7 +445,7 @@ impl GradientGenerator<Vec2> for QualatyGradients {
     }
 }
 
-impl GradientGenerator<Vec3> for QualatyGradients {
+impl GradientGenerator<Vec3> for QualityGradients {
     #[inline]
     fn get_gradient_dot(&self, seed: u32, offset: Vec3) -> f32 {
         GradientGenerator::<Vec3>::get_gradient(self, seed).dot(offset)
@@ -460,7 +460,7 @@ impl GradientGenerator<Vec3> for QualatyGradients {
     }
 }
 
-impl GradientGenerator<Vec3A> for QualatyGradients {
+impl GradientGenerator<Vec3A> for QualityGradients {
     #[inline]
     fn get_gradient_dot(&self, seed: u32, offset: Vec3A) -> f32 {
         GradientGenerator::<Vec3A>::get_gradient(self, seed).dot(offset)
