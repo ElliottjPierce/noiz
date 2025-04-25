@@ -33,6 +33,111 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
     }
 }
 
+/// Represents some function on a vector `T` that computest some version of it's length.
+pub trait LengthFunction<T: VectorSpace> {
+    /// If no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
+    fn max_for_element_max(&self, element_max: f32) -> f32;
+    /// Computes the length or magatude of `vec`.
+    fn length_of(&self, vec: T) -> f32;
+    /// Returns some measure of the length of the `vec` such that if the length ordering of one vec is less than that of another, that same ordering applies to their actual lengths.
+    fn length_ordering(&self, vec: T) -> f32;
+}
+
+/// A [`LengthFunction`] and for "as the crow flyies" length
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EuclideanLength;
+
+/// A [`LengthFunction`] and for "manhatan" or diagonal length
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ManhatanLength;
+
+/// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HybridLength;
+
+/// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ChebyshevLength;
+
+macro_rules! impl_distances {
+    ($t:path, $d:literal, $sqrt_d:expr) => {
+        impl LengthFunction<$t> for EuclideanLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max * $sqrt_d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.length_squared()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec).sqrt()
+            }
+        }
+
+        impl LengthFunction<$t> for ManhatanLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max * $d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.abs().element_sum()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
+            }
+        }
+
+        // inspired by https://github.com/Auburn/FastNoiseLite/blob/master/Rust/src/lib.rs#L1825
+        impl LengthFunction<$t> for HybridLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                // element_max * element_max * $d + element_max * $d
+                element_max * 2.0 * element_max * $d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.length_squared() + vec.abs().element_sum()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
+            }
+        }
+
+        impl LengthFunction<$t> for ChebyshevLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.abs().max_element()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
+            }
+        }
+    };
+}
+
+impl_distances!(Vec2, 2.0, core::f32::consts::SQRT_2);
+impl_distances!(Vec3, 3.0, 1.732_050_8);
+impl_distances!(Vec3A, 3.0, 1.732_050_8);
+impl_distances!(Vec4, 4.0, 2.0);
+
 /// A [`NoiseFunction`] that mixes a value sourced from a [`FastRandomMixed`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
