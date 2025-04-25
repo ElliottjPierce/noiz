@@ -576,6 +576,8 @@ impl_random_gradients!(Vec3A);
 impl_random_gradients!(Vec4);
 
 /// A high qualaty (but slow) [`GradientGenerator`] that uniformly distributes normalized gradient vectors.
+/// Note that this is not yet implemented for [`Vec4`].
+// TODO: implement for 4d
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct QualityGradients;
 
