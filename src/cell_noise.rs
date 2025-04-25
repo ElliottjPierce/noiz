@@ -184,7 +184,7 @@ pub trait WorlyMode {
     fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32;
 }
 
-/// A [`WorlyMode`] that returns the unorm distance to the nearest [`CellPoints`].
+/// A [`WorlyMode`] that returns the unorm distance to the nearest [`CellPoint`].
 /// This is traditional worly noise.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WorlyPointDistance;
@@ -193,6 +193,17 @@ impl WorlyMode for WorlyPointDistance {
     #[inline]
     fn evaluate_worly(&self, nearest: f32, _next_nearest: f32) -> f32 {
         nearest
+    }
+}
+
+/// A [`WorlyMode`] that returns the unorm distance to the second nearest [`CellPoint`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorlySecondPointDistance;
+
+impl WorlyMode for WorlySecondPointDistance {
+    #[inline]
+    fn evaluate_worly(&self, _nearest: f32, next_nearest: f32) -> f32 {
+        next_nearest
     }
 }
 

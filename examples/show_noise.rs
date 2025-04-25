@@ -10,7 +10,8 @@ use noiz::{
     Persistence,
     cell_noise::{
         BlendCellGradients, BlendCellValues, EuclideanLength, MixCellGradients, MixCellValues,
-        PerCell, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
+        PerCell, PerLeastDistances, PerNearestPoint, QualityGradients, QuickGradients,
+        SimplecticBlend, WorlyPointDistance, WorlySecondPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -202,6 +203,22 @@ fn main() -> AppExit {
                                     Voronoi<false>,
                                     EuclideanLength,
                                     Random<UNorm, f32>,
+                                >,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Worly noise",
+                            noise: Box::new(Noise::<
+                                PerLeastDistances<OrthoGrid, EuclideanLength, WorlyPointDistance>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Wacky Worly noise",
+                            noise: Box::new(Noise::<
+                                PerLeastDistances<
+                                    OrthoGrid,
+                                    EuclideanLength,
+                                    WorlySecondPointDistance,
                                 >,
                             >::default()),
                         },
