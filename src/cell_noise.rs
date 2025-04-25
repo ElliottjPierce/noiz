@@ -180,6 +180,72 @@ impl<
     }
 }
 
+/// Represents a way to compute worly noise, noise based on the distances of the two nearest [`CellPoints`]s to the sample point.
+pub trait WorlyMode {
+    /// Evaluates the result of this worly mode with the these distances to the `nearest` and `next_nearest` [`CellPoints`]s.
+    /// The distances will be unorm, and so should the result.
+    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32;
+}
+
+/// A [`WorlyMode`] that returns the unorm distance to the nearest [`CellPoints`].
+/// This is traditional worly noise.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WorlyPointDistance;
+
+impl WorlyMode for WorlyPointDistance {
+    #[inline]
+    fn evaluate_worly(&self, nearest: f32, _next_nearest: f32) -> f32 {
+        nearest
+    }
+}
+
+/// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`],
+/// finds the distance to each [`CellPoints`]s relevant to that cell via a [`LengthFunction`] `L`,
+/// and then provides those distances to some [`WorlyMode`] `M`.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct PerLeastDistances<P, L, W> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`LengthFunction`].
+    pub length_mode: L,
+    /// The [`WorlyMode`].
+    pub worly_mode: W,
+}
+
+impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: DomainCell>, W: WorlyMode>
+    NoiseFunction<I> for PerLeastDistances<P, L, W>
+{
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let cell = self.cells.partition(input);
+
+        let mut least_length_order = f32::INFINITY;
+        let mut least_length_offset = I::ZERO;
+        let mut next_least_length_order = f32::INFINITY;
+        let mut next_least_length_offset = I::ZERO;
+
+        for point in cell.iter_points(*seeds) {
+            let length_order = self.length_mode.length_ordering(point.offset);
+            if length_order < least_length_order {
+                next_least_length_order = least_length_order;
+                next_least_length_offset = least_length_offset;
+                least_length_order = length_order;
+                least_length_offset = point.offset;
+            } else if least_length_order < next_least_length_order {
+                next_least_length_order = length_order;
+                next_least_length_offset = point.offset;
+            }
+        }
+
+        self.worly_mode.evaluate_worly(
+            self.length_mode.length_of(least_length_offset),
+            self.length_mode.length_of(next_least_length_offset),
+        )
+    }
+}
+
 /// A [`NoiseFunction`] that mixes a value sourced from a [`FastRandomMixed`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
