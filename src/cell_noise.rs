@@ -48,6 +48,8 @@ pub trait LengthFunction<T: VectorSpace> {
     fn length_ordering(&self, vec: T) -> f32;
 }
 
+// TODO: Minkowski distance
+
 /// A [`LengthFunction`] and for "as the crow flyies" length
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct EuclideanLength;
