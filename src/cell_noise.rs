@@ -11,7 +11,10 @@ use bevy_math::{
 
 use crate::{
     NoiseFunction,
-    cells::{DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient},
+    cells::{
+        DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
+        WorlyDomainCell,
+    },
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
 
@@ -24,9 +27,7 @@ pub struct PerCell<P, N> {
     pub noise: N,
 }
 
-impl<I: VectorSpace, P: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>> NoiseFunction<I>
-    for PerCell<P, N>
-{
+impl<I: VectorSpace, P: Partitioner<I>, N: NoiseFunction<u32>> NoiseFunction<I> for PerCell<P, N> {
     type Output = N::Output;
 
     #[inline]
@@ -155,12 +156,8 @@ pub struct PerNearestPoint<P, L, N> {
     pub noise: N,
 }
 
-impl<
-    I: VectorSpace,
-    L: LengthFunction<I>,
-    P: Partitioner<I, Cell: DomainCell>,
-    N: NoiseFunction<u32>,
-> NoiseFunction<I> for PerNearestPoint<P, L, N>
+impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u32>>
+    NoiseFunction<I> for PerNearestPoint<P, L, N>
 {
     type Output = N::Output;
 
@@ -212,7 +209,7 @@ pub struct PerLeastDistances<P, L, W> {
     pub worly_mode: W,
 }
 
-impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: DomainCell>, W: WorlyMode>
+impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorlyDomainCell>, W: WorlyMode>
     NoiseFunction<I> for PerLeastDistances<P, L, W>
 {
     type Output = f32;
@@ -240,8 +237,14 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: DomainCell>, 
         }
 
         self.worly_mode.evaluate_worly(
-            self.length_mode.length_of(least_length_offset),
-            self.length_mode.length_of(next_least_length_offset),
+            self.length_mode.length_of(least_length_offset)
+                / self
+                    .length_mode
+                    .max_for_element_max(cell.nearest_1d_point_always_within()),
+            self.length_mode.length_of(next_least_length_offset)
+                / self
+                    .length_mode
+                    .max_for_element_max(cell.next_nearest_1d_point_always_within()),
         )
     }
 }

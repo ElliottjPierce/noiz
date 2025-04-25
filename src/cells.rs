@@ -9,13 +9,21 @@ use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm, UNormHalf};
 
 /// Represents a portion or cell of some larger domain and a position within that cell.
 pub trait DomainCell {
-    /// The larger/full domain this is a segment of.
+    /// The larger/full domain this is a portion of.
     type Full: VectorSpace;
 
-    /// Identifies this segment roughly from others per `rng`, roughly meaning the ids are not necessarily unique.
+    /// Identifies this cell roughly from others per `rng`, roughly meaning the ids are not necessarily unique.
     fn rough_id(&self, rng: NoiseRng) -> u32;
-    /// Iterates all the points relevant to this segment.
+    /// Iterates all the points relevant to this cell.
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>>;
+}
+
+/// Represents a [`DomainCell`] that upholds some guarantees about distance ordering per point.
+pub trait WorlyDomainCell {
+    /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the nearest point along each axis will be less than this far away along that axis.
+    fn nearest_1d_point_always_within(&self) -> f32;
+    /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the second nearest point along each axis will be less than this far away along that axis.
+    fn next_nearest_1d_point_always_within(&self) -> f32;
 }
 
 /// Represents a [`DomainCell`] that can be soothly interpolated within.
@@ -93,11 +101,26 @@ pub trait Partitioner<T: VectorSpace> {
 
 /// Represents a hyper cube of some N dimensions.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SquareCell<F: VectorSpace, I> {
+pub struct SquareCell<F, I> {
     /// The least corner of this grid square.
     pub floored: I,
     /// The positive offset from [`floored`](Self::floored) to the point in the grid square.
     pub offset: F,
+}
+
+impl<F, I> WorlyDomainCell for SquareCell<F, I>
+where
+    Self: DomainCell,
+{
+    #[inline(always)]
+    fn nearest_1d_point_always_within(&self) -> f32 {
+        0.5
+    }
+
+    #[inline(always)]
+    fn next_nearest_1d_point_always_within(&self) -> f32 {
+        1.0
+    }
 }
 
 /// A [`Partitioner`] that produces various [`SquareCell`]s.
@@ -1119,6 +1142,31 @@ pub struct VoronoiCell<const HALF_SCALE: bool, C> {
     /// How much the [`CellPoint`]s will be moved.
     /// See [`Voronoi`] for details.
     pub randomness: f32,
+}
+
+impl<C: WorlyDomainCell, const HALF_SCALE: bool> WorlyDomainCell for VoronoiCell<HALF_SCALE, C>
+where
+    Self: DomainCell,
+{
+    #[inline(always)]
+    fn nearest_1d_point_always_within(&self) -> f32 {
+        let additional = if HALF_SCALE {
+            self.randomness * 0.5
+        } else {
+            self.randomness
+        };
+        (self.cell.nearest_1d_point_always_within() + additional) * 0.5
+    }
+
+    #[inline(always)]
+    fn next_nearest_1d_point_always_within(&self) -> f32 {
+        let additional = if HALF_SCALE {
+            self.randomness * 0.5
+        } else {
+            self.randomness
+        };
+        self.cell.next_nearest_1d_point_always_within() + additional
+    }
 }
 
 /// We use this as an xor. The number doesn't matter as long as it is unique (relative to other numbers used like this) and changes some bits in every part of the u32;
