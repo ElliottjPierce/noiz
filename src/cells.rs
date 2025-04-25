@@ -1050,3 +1050,30 @@ impl Partitioner<Vec4> for SimplexGrid {
         })
     }
 }
+
+/// A [`Partitioner`] that wraps its inner [`Partitioner`] `P`'s [`CellPoint`]s in [`VoronoiCell`].
+///
+/// If `HALF_SCALE` is off, this will be a traditional voronoi graph that includes both positive and negative surrounding cells, where each lattace point is offset by some value in (0, 1).
+/// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 5).
+/// Turn `HALF_SCALE` off for high qualaty voronoi and one for high performance voronoi.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Voronoi<P, const HALF_SCALE: bool = false>(pub P);
+
+impl<T: VectorSpace, P: Partitioner<T>, const HALF_SCALE: bool> Partitioner<T>
+    for Voronoi<P, HALF_SCALE>
+where
+    VoronoiCell<P::Cell, HALF_SCALE>: DomainCell<Full = T>,
+{
+    type Cell = VoronoiCell<P::Cell, HALF_SCALE>;
+
+    #[inline]
+    fn partition(&self, full: T) -> Self::Cell {
+        VoronoiCell(self.0.partition(full))
+    }
+}
+
+/// A [`DomainCell`] that wraps an inner [`DomainCell`] and nudges each [`CellPoint`]s by some value.
+/// See [`Voronoi`] for details.
+/// This is currently only implemented for [`SquareCell`]s.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct VoronoiCell<C, const HALF_SCALE: bool>(pub C);
