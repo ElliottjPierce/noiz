@@ -1056,7 +1056,7 @@ impl Partitioner<Vec4> for SimplexGrid {
 /// If `HALF_SCALE` is off, this will be a traditional voronoi graph that includes both positive and negative surrounding cells, where each lattace point is offset by some value in (0, 1).
 /// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 5).
 /// Turn `HALF_SCALE` off for high qualaty voronoi and one for high performance voronoi.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
     /// The inner [`Partitioner`] that will have its [`DomainCell`]'s [`CellPoint`]s moved
     pub partitoner: P,
@@ -1067,6 +1067,15 @@ pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
     /// If this is less than 0.5, and `HALF_SCALE` is off (default),
     /// the noise will perform better if `HALF_SCALE` is turned on, and this value is doubled accordingly.
     pub randomness: f32,
+}
+
+impl<P: Default, const HALF_SCALE: bool> Default for Voronoi<HALF_SCALE, P> {
+    fn default() -> Self {
+        Self {
+            partitoner: P::default(),
+            randomness: 1.0,
+        }
+    }
 }
 
 impl<T: VectorSpace, P: Partitioner<T>, const HALF_SCALE: bool> Partitioner<T>
