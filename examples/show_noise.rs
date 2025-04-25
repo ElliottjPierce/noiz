@@ -9,10 +9,10 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, EuclideanLength, MixCellGradients, MixCellValues,
-        PerCell, PerLeastDistances, PerNearestPoint, QualityGradients, QuickGradients,
-        SimplecticBlend, WorlyAverage, WorlyDifference, WorlyPointDistance, WorlyProduct,
-        WorlyRatio, WorlySecondPointDistance,
+        BlendCellGradients, BlendCellValues, ChebyshevLength, EuclideanLength, HybridLength,
+        ManhatanLength, MixCellGradients, MixCellValues, PerCell, PerLeastDistances,
+        PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend, WorlyAverage,
+        WorlyDifference, WorlyPointDistance, WorlyProduct, WorlyRatio, WorlySecondPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -214,13 +214,15 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         NoiseOption {
+                            name: "Worly difference",
+                            noise: Box::new(Noise::<
+                                PerLeastDistances<Voronoi, EuclideanLength, WorlyDifference>,
+                            >::default()),
+                        },
+                        NoiseOption {
                             name: "Wacky Worly noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<
-                                    Voronoi,
-                                    EuclideanLength,
-                                    WorlySecondPointDistance,
-                                >,
+                                PerLeastDistances<Voronoi, ChebyshevLength, WorlyAverage>,
                             >::default()),
                         },
                     ],

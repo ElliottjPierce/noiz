@@ -236,11 +236,11 @@ impl WorlyMode for WorlyDifference {
     fn evaluate_worly(
         &self,
         nearest: f32,
-        max_nearest: f32,
+        _max_nearest: f32,
         next_nearest: f32,
         max_next_nearest: f32,
     ) -> f32 {
-        (next_nearest - nearest) / max_nearest
+        (next_nearest - nearest) / max_next_nearest
     }
 }
 
