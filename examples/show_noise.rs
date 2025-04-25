@@ -183,9 +183,19 @@ fn main() -> AppExit {
                             }),
                         },
                         NoiseOption {
-                            name: "Cellular noise",
+                            name: "Fast Cellular noise",
                             noise: Box::new(Noise::<
                                 PerNearestPoint<Voronoi<true>, EuclideanLength, Random<UNorm, f32>>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Full Cellular noise",
+                            noise: Box::new(Noise::<
+                                PerNearestPoint<
+                                    Voronoi<false>,
+                                    EuclideanLength,
+                                    Random<UNorm, f32>,
+                                >,
                             >::default()),
                         },
                     ],
