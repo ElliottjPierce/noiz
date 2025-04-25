@@ -17,15 +17,15 @@ use crate::{
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct PerCell<S, N> {
+pub struct PerCell<P, N> {
     /// The [`Partitioner`].
-    pub cells: S,
+    pub cells: P,
     /// The [`NoiseFunction<u32>`].
     pub noise: N,
 }
 
-impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>> NoiseFunction<I>
-    for PerCell<S, N>
+impl<I: VectorSpace, P: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>> NoiseFunction<I>
+    for PerCell<P, N>
 {
     type Output = N::Output;
 
@@ -48,19 +48,19 @@ pub trait LengthFunction<T: VectorSpace> {
 }
 
 /// A [`LengthFunction`] and for "as the crow flyies" length
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct EuclideanLength;
 
 /// A [`LengthFunction`] and for "manhatan" or diagonal length
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct ManhatanLength;
 
 /// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct HybridLength;
 
 /// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct ChebyshevLength;
 
 macro_rules! impl_distances {
@@ -146,9 +146,9 @@ impl_distances!(Vec4, 4.0, 2.0);
 /// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoints`].
 /// The [`LengthFunction`] `L` is used to determine which point is nearest.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct PerNearestPoint<S, L, N> {
+pub struct PerNearestPoint<P, L, N> {
     /// The [`Partitioner`].
-    pub cells: S,
+    pub cells: P,
     /// The [`LengthFunction`].
     pub length_mode: L,
     /// The [`NoiseFunction<u32>`].
@@ -158,9 +158,9 @@ pub struct PerNearestPoint<S, L, N> {
 impl<
     I: VectorSpace,
     L: LengthFunction<I>,
-    S: Partitioner<I, Cell: DomainCell>,
+    P: Partitioner<I, Cell: DomainCell>,
     N: NoiseFunction<u32>,
-> NoiseFunction<I> for PerNearestPoint<S, L, N>
+> NoiseFunction<I> for PerNearestPoint<P, L, N>
 {
     type Output = N::Output;
 
