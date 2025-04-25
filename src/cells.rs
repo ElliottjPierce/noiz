@@ -1167,6 +1167,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2>> {
 
     #[inline]
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>> {
+        // TODO: Improve these with generators when they land.
         [
             IVec2::new(-1, -1),
             IVec2::new(0, -1),
