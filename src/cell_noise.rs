@@ -1,6 +1,9 @@
 //! Contains logic for interpolating within a [`DomainCell`].
 
-use core::ops::{AddAssign, Mul};
+use core::{
+    f32,
+    ops::{AddAssign, Mul},
+};
 
 use bevy_math::{
     Curve, Vec2, Vec3, Vec3A, Vec4, Vec4Swizzles, VectorSpace, curve::derivatives::SampleDerivative,
@@ -16,7 +19,7 @@ use crate::{
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct PerCell<S, N> {
     /// The [`Partitioner`].
-    pub segment: S,
+    pub cells: S,
     /// The [`NoiseFunction<u32>`].
     pub noise: N,
 }
@@ -28,8 +31,8 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.segment.partition(input);
-        self.noise.evaluate(segment.rough_id(*seeds), seeds)
+        let cell = self.cells.partition(input);
+        self.noise.evaluate(cell.rough_id(*seeds), seeds)
     }
 }
 
@@ -134,10 +137,48 @@ macro_rules! impl_distances {
     };
 }
 
-impl_distances!(Vec2, 2.0, core::f32::consts::SQRT_2);
+impl_distances!(Vec2, 2.0, f32::consts::SQRT_2);
 impl_distances!(Vec3, 3.0, 1.732_050_8);
 impl_distances!(Vec3A, 3.0, 1.732_050_8);
 impl_distances!(Vec4, 4.0, 2.0);
+
+/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoints`]s form a [`Partitioner`] `S`,
+/// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoints`].
+/// The [`LengthFunction`] `L` is used to determine which point is nearest.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct PerNearestPoint<S, L, N> {
+    /// The [`Partitioner`].
+    pub cells: S,
+    /// The [`LengthFunction`].
+    pub length_mode: L,
+    /// The [`NoiseFunction<u32>`].
+    pub noise: N,
+}
+
+impl<
+    I: VectorSpace,
+    L: LengthFunction<I>,
+    S: Partitioner<I, Cell: DomainCell>,
+    N: NoiseFunction<u32>,
+> NoiseFunction<I> for PerNearestPoint<S, L, N>
+{
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let cell = self.cells.partition(input);
+        let mut nearest_id = 0u32;
+        let mut least_length_order = f32::INFINITY;
+        for point in cell.iter_points(*seeds) {
+            let length_order = self.length_mode.length_ordering(point.offset);
+            if length_order < least_length_order {
+                least_length_order = length_order;
+                nearest_id = point.rough_id;
+            }
+        }
+        self.noise.evaluate(nearest_id, seeds)
+    }
+}
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`FastRandomMixed`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
