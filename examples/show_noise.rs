@@ -12,7 +12,7 @@ use noiz::{
         BlendCellGradients, BlendCellValues, EuclideanLength, MixCellGradients, MixCellValues,
         PerCell, PerNearestPoint, QuickGradients, SimplecticBlend,
     },
-    cells::{OrthoGrid, SimplexGrid},
+    cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
     curves::{Linear, Smoothstep},
     rng::{Random, UNorm},
@@ -181,6 +181,12 @@ fn main() -> AppExit {
                                 )),
                                 adapter: SNormToUNorm,
                             }),
+                        },
+                        NoiseOption {
+                            name: "Cellular noise",
+                            noise: Box::new(Noise::<
+                                PerNearestPoint<Voronoi<true>, EuclideanLength, Random<UNorm, f32>>,
+                            >::default()),
                         },
                     ],
                     selected: 0,
