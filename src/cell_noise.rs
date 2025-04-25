@@ -35,9 +35,10 @@ impl<I: VectorSpace, S: Partitioner<I, Cell: DomainCell>, N: NoiseFunction<u32>>
 
 /// Represents some function on a vector `T` that computest some version of it's length.
 pub trait LengthFunction<T: VectorSpace> {
-    /// If no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
+    /// If the absolute value of no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
     fn max_for_element_max(&self, element_max: f32) -> f32;
     /// Computes the length or magatude of `vec`.
+    /// Must always be non-negative
     fn length_of(&self, vec: T) -> f32;
     /// Returns some measure of the length of the `vec` such that if the length ordering of one vec is less than that of another, that same ordering applies to their actual lengths.
     fn length_ordering(&self, vec: T) -> f32;
