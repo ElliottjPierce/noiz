@@ -183,8 +183,13 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
 /// Represents a way to compute worly noise, noise based on the distances of the two nearest [`CellPoints`]s to the sample point.
 pub trait WorlyMode {
     /// Evaluates the result of this worly mode with the these distances to the `nearest` and `next_nearest` [`CellPoints`]s.
-    /// The distances will be unorm, and so should the result.
-    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32;
+    fn evaluate_worly(
+        &self,
+        nearest: f32,
+        max_nearest: f32,
+        next_nearest: f32,
+        max_next_nearest: f32,
+    ) -> f32;
 }
 
 /// A [`WorlyMode`] that returns the unorm distance to the nearest [`CellPoint`].
@@ -194,8 +199,14 @@ pub struct WorlyPointDistance;
 
 impl WorlyMode for WorlyPointDistance {
     #[inline]
-    fn evaluate_worly(&self, nearest: f32, _next_nearest: f32) -> f32 {
-        nearest
+    fn evaluate_worly(
+        &self,
+        nearest: f32,
+        max_nearest: f32,
+        _next_nearest: f32,
+        _max_next_nearest: f32,
+    ) -> f32 {
+        nearest / max_nearest
     }
 }
 
@@ -205,8 +216,14 @@ pub struct WorlySecondPointDistance;
 
 impl WorlyMode for WorlySecondPointDistance {
     #[inline]
-    fn evaluate_worly(&self, _nearest: f32, next_nearest: f32) -> f32 {
-        next_nearest
+    fn evaluate_worly(
+        &self,
+        _nearest: f32,
+        _max_nearest: f32,
+        next_nearest: f32,
+        max_next_nearest: f32,
+    ) -> f32 {
+        next_nearest / max_next_nearest
     }
 }
 
@@ -216,8 +233,14 @@ pub struct WorlyDifference;
 
 impl WorlyMode for WorlyDifference {
     #[inline]
-    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
-        next_nearest - nearest
+    fn evaluate_worly(
+        &self,
+        nearest: f32,
+        max_nearest: f32,
+        next_nearest: f32,
+        max_next_nearest: f32,
+    ) -> f32 {
+        (next_nearest - nearest) / max_nearest
     }
 }
 
@@ -227,8 +250,14 @@ pub struct WorlyAverage;
 
 impl WorlyMode for WorlyAverage {
     #[inline]
-    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
-        (next_nearest + nearest) * 0.5
+    fn evaluate_worly(
+        &self,
+        nearest: f32,
+        max_nearest: f32,
+        next_nearest: f32,
+        max_next_nearest: f32,
+    ) -> f32 {
+        (next_nearest / max_next_nearest + nearest / max_nearest) * 0.5
     }
 }
 
@@ -238,8 +267,14 @@ pub struct WorlyProduct;
 
 impl WorlyMode for WorlyProduct {
     #[inline]
-    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
-        next_nearest * nearest
+    fn evaluate_worly(
+        &self,
+        nearest: f32,
+        max_nearest: f32,
+        next_nearest: f32,
+        max_next_nearest: f32,
+    ) -> f32 {
+        (next_nearest * nearest) / (max_nearest * max_next_nearest)
     }
 }
 
@@ -249,7 +284,13 @@ pub struct WorlyRatio;
 
 impl WorlyMode for WorlyRatio {
     #[inline]
-    fn evaluate_worly(&self, nearest: f32, next_nearest: f32) -> f32 {
+    fn evaluate_worly(
+        &self,
+        nearest: f32,
+        _max_nearest: f32,
+        next_nearest: f32,
+        _max_next_nearest: f32,
+    ) -> f32 {
         // can't divide by 0 since if it were zero since next_nearest > nearest >= 0. (next_nearest != nearest)
         nearest / force_float_non_zero(next_nearest)
     }
@@ -296,14 +337,12 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorlyDomainCe
         }
 
         self.worly_mode.evaluate_worly(
-            self.length_mode.length_of(least_length_offset)
-                / self
-                    .length_mode
-                    .max_for_element_max(cell.nearest_1d_point_always_within()),
-            self.length_mode.length_of(next_least_length_offset)
-                / self
-                    .length_mode
-                    .max_for_element_max(cell.next_nearest_1d_point_always_within()),
+            self.length_mode.length_of(least_length_offset),
+            self.length_mode
+                .max_for_element_max(cell.nearest_1d_point_always_within()),
+            self.length_mode.length_of(next_least_length_offset),
+            self.length_mode
+                .max_for_element_max(cell.next_nearest_1d_point_always_within()),
         )
     }
 }

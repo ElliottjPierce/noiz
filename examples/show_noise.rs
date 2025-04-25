@@ -216,7 +216,11 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Wacky Worly noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, EuclideanLength, WorlyDifference>,
+                                PerLeastDistances<
+                                    Voronoi,
+                                    EuclideanLength,
+                                    WorlySecondPointDistance,
+                                >,
                             >::default()),
                         },
                     ],
