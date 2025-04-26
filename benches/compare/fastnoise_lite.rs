@@ -1,6 +1,6 @@
 use super::{FREQUENCY, LACUNARITY, PERSISTENCE, SIZE_2D, SIZE_3D};
 use criterion::{measurement::WallTime, *};
-use fastnoise_lite::{FastNoiseLite, FractalType, NoiseType};
+use fastnoise_lite::{CellularDistanceFunction, FastNoiseLite, FractalType, NoiseType};
 
 macro_rules! bench_2d {
     ($noise:ident) => {{
@@ -72,6 +72,20 @@ macro_rules! benches_nD {
         });
         fbm_value(&mut group, 2);
         fbm_value(&mut group, 8);
+
+        group.bench_function(format!("worley"), |bencher| {
+            bencher.iter(|| {
+                let mut noise = FastNoiseLite::new();
+                noise.set_noise_type(Some(NoiseType::Cellular));
+                noise.set_cellular_distance_function(Some(CellularDistanceFunction::Euclidean));
+                noise.set_fractal_type(Some(FractalType::None));
+                noise.octaves = 1;
+                noise.lacunarity = LACUNARITY;
+                noise.gain = PERSISTENCE;
+                noise.frequency = FREQUENCY;
+                $bencher!(noise)
+            });
+        });
 
         fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: i32) {
             let octaves = black_box(octaves);

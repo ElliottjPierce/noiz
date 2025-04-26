@@ -7,9 +7,10 @@ use noiz::{
     ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
     Sampleable, SampleableFor,
     cell_noise::{
-        BlendCellGradients, MixCellGradients, MixCellValues, QuickGradients, SimplecticBlend,
+        BlendCellGradients, EuclideanLength, MixCellGradients, MixCellValues, PerLeastDistances,
+        QuickGradients, SimplecticBlend, WorlyPointDistance,
     },
-    cells::{OrthoGrid, SimplexGrid},
+    cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::Smoothstep,
     rng::{Random, UNorm},
 };
@@ -105,6 +106,19 @@ macro_rules! benches_nD {
         });
         fbm_value(&mut group, 2);
         fbm_value(&mut group, 8);
+
+        group.bench_function("worley", |bencher| {
+            bencher.iter(|| {
+                let noise = Noise::<PerLeastDistances<Voronoi, EuclideanLength, WorlyPointDistance>>::default();
+                $bencher(noise)
+            });
+        });
+        group.bench_function("worley-fast", |bencher| {
+            bencher.iter(|| {
+                let noise = Noise::<PerLeastDistances<Voronoi<true>, EuclideanLength, WorlyPointDistance>>::default();
+                $bencher(noise)
+            });
+        });
 
         fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
             let octaves = black_box(octaves);

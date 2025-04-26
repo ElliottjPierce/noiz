@@ -1,6 +1,6 @@
 use super::{FREQUENCY, LACUNARITY, PERSISTENCE, SIZE_2D, SIZE_3D, SIZE_4D};
 use criterion::{measurement::WallTime, *};
-use noise::{self as noise_rs, Fbm, Simplex, Value};
+use noise::{self as noise_rs, Fbm, Simplex, Value, Worley};
 use noise_rs::{NoiseFn, Perlin};
 
 macro_rules! bench_2d {
@@ -77,6 +77,13 @@ macro_rules! benches_nD {
         });
         fbm_value(&mut group, 2);
         fbm_value(&mut group, 8);
+
+        group.bench_function("worley", |bencher| {
+            bencher.iter(|| {
+                let noise = Worley::new(0);
+                $bencher!(noise)
+            });
+        });
 
         fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: usize) {
             let octaves = black_box(octaves);
