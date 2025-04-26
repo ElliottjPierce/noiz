@@ -220,15 +220,15 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         NoiseOption {
+                            name: "Worly distance to edge",
+                            noise: Box::new(
+                                Noise::<DistanceToEdge<Voronoi, EuclideanLength>>::default(),
+                            ),
+                        },
+                        NoiseOption {
                             name: "Wacky Worly noise",
                             noise: Box::new(Noise::<
                                 PerLeastDistances<Voronoi, ChebyshevLength, WorlyAverage>,
-                            >::default()),
-                        },
-                        NoiseOption {
-                            name: "Worly distance to edge",
-                            noise: Box::new(Noise::<
-                                DistanceToEdge<Voronoi<true>, EuclideanLength, EuclideanLength>,
                             >::default()),
                         },
                     ],

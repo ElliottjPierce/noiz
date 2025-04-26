@@ -179,53 +179,55 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
     }
 }
 
-/// A [`NoiseFunction`] partitions space by a [`Partitioner`] `S` into a [`DomainCell`],
-/// finds the two nearest [`CellPoint`]s according to some [`LengthFunction`] `L`,
-/// and returns the distance to the edge formed by those points according to another [`LengthFunction`] `N`.
+/// A [`NoiseFunction`] partitions space by a [`Partitioner`] `S` into a [`DomainCell`] and
+/// finds the distance to the nearest voronoi edge of according to some [`LengthFunction`] `L`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct DistanceToEdge<P, L, N> {
+pub struct DistanceToEdge<P, L> {
     /// The [`Partitioner`].
     pub cells: P,
-    /// The [`LengthFunction`] for finding the two closest [`CellPoint`]s.
-    pub point_length_mode: L,
-    /// The [`LengthFunction`] for computing the final distance.
-    pub final_length_mode: N,
+    /// The [`LengthFunction`].
+    pub length_mode: L,
 }
 
-impl<L: LengthFunction<Vec2>, P: Partitioner<Vec2, Cell: WorlyDomainCell>, N: LengthFunction<Vec2>>
-    NoiseFunction<Vec2> for DistanceToEdge<P, L, N>
+impl<L: LengthFunction<Vec2>, P: Partitioner<Vec2, Cell: WorlyDomainCell>> NoiseFunction<Vec2>
+    for DistanceToEdge<P, L>
 {
     type Output = f32;
 
     #[inline]
     fn evaluate(&self, input: Vec2, seeds: &mut NoiseRng) -> Self::Output {
         let cell = self.cells.partition(input);
+        let mut nearest_offset = Vec2::ZERO;
         let mut least_length_order = f32::INFINITY;
-        let mut least_length_offset = Vec2::ZERO;
-        let mut next_least_length_order = f32::INFINITY;
-        let mut next_least_length_offset = Vec2::ZERO;
-
         for point in cell.iter_points(*seeds) {
-            let length_order = self.point_length_mode.length_ordering(point.offset);
+            let length_order = self.length_mode.length_ordering(point.offset);
             if length_order < least_length_order {
-                next_least_length_order = least_length_order;
-                next_least_length_offset = least_length_offset;
                 least_length_order = length_order;
-                least_length_offset = point.offset;
-            } else if length_order < next_least_length_order {
-                next_least_length_order = length_order;
-                next_least_length_offset = point.offset;
+                nearest_offset = point.offset;
             }
         }
 
-        let edge = (least_length_offset - next_least_length_offset).normalize();
-        let nearest_to_edge_nearest = edge * edge.dot(least_length_offset).max(0.0);
-        let strait_to_edge = nearest_to_edge_nearest - least_length_offset;
-        let dist = self.final_length_mode.length_of(strait_to_edge);
-        let max_dist = self
-            .final_length_mode
-            .max_for_element_max(cell.nearest_1d_point_always_within());
-        dist / max_dist
+        let mut to_nearest_edge = Vec2::ZERO;
+        let mut to_nearest_edge_order = f32::INFINITY;
+        for point in cell.iter_points(*seeds) {
+            let to_other_point = nearest_offset - point.offset;
+            let Some(dir_to_other) = to_other_point.try_normalize() else {
+                continue;
+            };
+            let nearest_traveled_towards_other = dir_to_other * dir_to_other.dot(nearest_offset);
+            let nearest_traveled_to_edge = to_other_point * 0.5;
+            let sample_to_this_edge = nearest_traveled_to_edge - nearest_traveled_towards_other;
+
+            let order = self.length_mode.length_ordering(sample_to_this_edge);
+            if order < to_nearest_edge_order {
+                to_nearest_edge_order = order;
+                to_nearest_edge = sample_to_this_edge;
+            }
+        }
+
+        let dist = self.length_mode.length_of(to_nearest_edge);
+        let max_dits = cell.next_nearest_1d_point_always_within();
+        dist / max_dits
     }
 }
 
