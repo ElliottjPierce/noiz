@@ -9,9 +9,10 @@ use noiz::{
     AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
     Persistence,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, ChebyshevLength, EuclideanLength, MixCellGradients,
-        MixCellValues, PerCell, PerLeastDistances, PerNearestPoint, QualityGradients,
-        QuickGradients, SimplecticBlend, WorlyAverage, WorlyDifference, WorlyPointDistance,
+        BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceToEdge, EuclideanLength,
+        MixCellGradients, MixCellValues, PerCell, PerLeastDistances, PerNearestPoint,
+        QualityGradients, QuickGradients, SimplecticBlend, WorlyAverage, WorlyDifference,
+        WorlyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -222,6 +223,12 @@ fn main() -> AppExit {
                             name: "Wacky Worly noise",
                             noise: Box::new(Noise::<
                                 PerLeastDistances<Voronoi, ChebyshevLength, WorlyAverage>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Worly distance to edge",
+                            noise: Box::new(Noise::<
+                                DistanceToEdge<Voronoi<true>, EuclideanLength, EuclideanLength>,
                             >::default()),
                         },
                     ],

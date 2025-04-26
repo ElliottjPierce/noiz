@@ -145,8 +145,8 @@ impl_distances!(Vec3, 3.0, 1.732_050_8);
 impl_distances!(Vec3A, 3.0, 1.732_050_8);
 impl_distances!(Vec4, 4.0, 2.0);
 
-/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoints`]s form a [`Partitioner`] `S`,
-/// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoints`].
+/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoint`]s form a [`Partitioner`] `P`,
+/// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoint`]s.
 /// The [`LengthFunction`] `L` is used to determine which point is nearest.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct PerNearestPoint<P, L, N> {
@@ -176,6 +176,56 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
             }
         }
         self.noise.evaluate(nearest_id, seeds)
+    }
+}
+
+/// A [`NoiseFunction`] partitions space by a [`Partitioner`] `S` into a [`DomainCell`],
+/// finds the two nearest [`CellPoint`]s according to some [`LengthFunction`] `L`,
+/// and returns the distance to the edge formed by those points according to another [`LengthFunction`] `N`.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct DistanceToEdge<P, L, N> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`LengthFunction`] for finding the two closest [`CellPoint`]s.
+    pub point_length_mode: L,
+    /// The [`LengthFunction`] for computing the final distance.
+    pub final_length_mode: N,
+}
+
+impl<L: LengthFunction<Vec2>, P: Partitioner<Vec2, Cell: WorlyDomainCell>, N: LengthFunction<Vec2>>
+    NoiseFunction<Vec2> for DistanceToEdge<P, L, N>
+{
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: Vec2, seeds: &mut NoiseRng) -> Self::Output {
+        let cell = self.cells.partition(input);
+        let mut least_length_order = f32::INFINITY;
+        let mut least_length_offset = Vec2::ZERO;
+        let mut next_least_length_order = f32::INFINITY;
+        let mut next_least_length_offset = Vec2::ZERO;
+
+        for point in cell.iter_points(*seeds) {
+            let length_order = self.point_length_mode.length_ordering(point.offset);
+            if length_order < least_length_order {
+                next_least_length_order = least_length_order;
+                next_least_length_offset = least_length_offset;
+                least_length_order = length_order;
+                least_length_offset = point.offset;
+            } else if length_order < next_least_length_order {
+                next_least_length_order = length_order;
+                next_least_length_offset = point.offset;
+            }
+        }
+
+        let edge = (least_length_offset - next_least_length_offset).normalize();
+        let nearest_to_edge_nearest = edge * edge.dot(least_length_offset).max(0.0);
+        let strait_to_edge = nearest_to_edge_nearest - least_length_offset;
+        let dist = self.final_length_mode.length_of(strait_to_edge);
+        let max_dist = self
+            .final_length_mode
+            .max_for_element_max(cell.nearest_1d_point_always_within());
+        dist / max_dist
     }
 }
 
