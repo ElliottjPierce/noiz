@@ -19,7 +19,7 @@ pub trait DomainCell {
 }
 
 /// Represents a [`DomainCell`] that upholds some guarantees about distance ordering per point.
-pub trait WorlyDomainCell {
+pub trait WorleyDomainCell {
     /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the nearest point along each axis will be less than this far away along that axis.
     fn nearest_1d_point_always_within(&self) -> f32;
     /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the second nearest point along each axis will be less than this far away along that axis.
@@ -108,7 +108,7 @@ pub struct SquareCell<F, I> {
     pub offset: F,
 }
 
-impl<F, I> WorlyDomainCell for SquareCell<F, I>
+impl<F, I> WorleyDomainCell for SquareCell<F, I>
 where
     Self: DomainCell,
 {
@@ -1148,7 +1148,7 @@ pub struct VoronoiCell<const HALF_SCALE: bool, C> {
     pub randomness: f32,
 }
 
-impl<C: WorlyDomainCell, const HALF_SCALE: bool> WorlyDomainCell for VoronoiCell<HALF_SCALE, C>
+impl<C: WorleyDomainCell, const HALF_SCALE: bool> WorleyDomainCell for VoronoiCell<HALF_SCALE, C>
 where
     Self: DomainCell,
 {

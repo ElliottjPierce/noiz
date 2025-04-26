@@ -13,7 +13,7 @@ use crate::{
     NoiseFunction,
     cells::{
         DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
-        WorlyDomainCell,
+        WorleyDomainCell,
     },
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
@@ -75,7 +75,7 @@ pub struct ChebyshevLength;
 ///
 /// **Artifact Warning:** Depending on the inner value,
 /// this can produce asymptotes that bleed across cell lines and cause artifacts.
-/// This works fine with traditional worly noise for example, but other [`WorlyMode`]s may yield harsh lines.
+/// This works fine with traditional worley noise for example, but other [`WorleyMode`]s may yield harsh lines.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MinkowskiLength(pub f32);
 
@@ -236,7 +236,7 @@ pub struct DistanceToEdge<P, L = EuclideanLength, const APPROXIMATE: bool = fals
 
 macro_rules! impl_distance_to_edge {
     ($t:ty) => {
-        impl<L: LengthFunction<$t>, P: Partitioner<$t, Cell: WorlyDomainCell>> NoiseFunction<$t>
+        impl<L: LengthFunction<$t>, P: Partitioner<$t, Cell: WorleyDomainCell>> NoiseFunction<$t>
             for DistanceToEdge<P, L, true>
         {
             type Output = f32;
@@ -275,7 +275,7 @@ macro_rules! impl_distance_to_edge {
             }
         }
 
-        impl<L: LengthFunction<$t>, P: Partitioner<$t, Cell: WorlyDomainCell>> NoiseFunction<$t>
+        impl<L: LengthFunction<$t>, P: Partitioner<$t, Cell: WorleyDomainCell>> NoiseFunction<$t>
             for DistanceToEdge<P, L, false>
         {
             type Output = f32;
@@ -326,10 +326,10 @@ impl_distance_to_edge!(Vec3);
 impl_distance_to_edge!(Vec3A);
 impl_distance_to_edge!(Vec4);
 
-/// Represents a way to compute worly noise, noise based on the distances of the two nearest [`CellPoints`]s to the sample point.
-pub trait WorlyMode {
-    /// Evaluates the result of this worly mode with the these distances to the `nearest` and `next_nearest` [`CellPoints`]s.
-    fn evaluate_worly(
+/// Represents a way to compute worley noise, noise based on the distances of the two nearest [`CellPoints`]s to the sample point.
+pub trait WorleyMode {
+    /// Evaluates the result of this worley mode with the these distances to the `nearest` and `next_nearest` [`CellPoints`]s.
+    fn evaluate_worley(
         &self,
         nearest: f32,
         max_nearest: f32,
@@ -338,14 +338,14 @@ pub trait WorlyMode {
     ) -> f32;
 }
 
-/// A [`WorlyMode`] that returns the unorm distance to the nearest [`CellPoint`].
-/// This is traditional worly noise.
+/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`].
+/// This is traditional worley noise.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct WorlyPointDistance;
+pub struct WorleyPointDistance;
 
-impl WorlyMode for WorlyPointDistance {
+impl WorleyMode for WorleyPointDistance {
     #[inline]
-    fn evaluate_worly(
+    fn evaluate_worley(
         &self,
         nearest: f32,
         max_nearest: f32,
@@ -356,14 +356,14 @@ impl WorlyMode for WorlyPointDistance {
     }
 }
 
-/// A [`WorlyMode`] that returns the unorm distance to the second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm distance to the second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct WorlySecondPointDistance;
+pub struct WorleySecondPointDistance;
 
-impl WorlyMode for WorlySecondPointDistance {
+impl WorleyMode for WorleySecondPointDistance {
     #[inline]
-    fn evaluate_worly(
+    fn evaluate_worley(
         &self,
         _nearest: f32,
         _max_nearest: f32,
@@ -374,14 +374,14 @@ impl WorlyMode for WorlySecondPointDistance {
     }
 }
 
-/// A [`WorlyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct WorlyDifference;
+pub struct WorleyDifference;
 
-impl WorlyMode for WorlyDifference {
+impl WorleyMode for WorleyDifference {
     #[inline]
-    fn evaluate_worly(
+    fn evaluate_worley(
         &self,
         nearest: f32,
         _max_nearest: f32,
@@ -392,14 +392,14 @@ impl WorlyMode for WorlyDifference {
     }
 }
 
-/// A [`WorlyMode`] that returns the unorm average of the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm average of the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct WorlyAverage;
+pub struct WorleyAverage;
 
-impl WorlyMode for WorlyAverage {
+impl WorleyMode for WorleyAverage {
     #[inline]
-    fn evaluate_worly(
+    fn evaluate_worley(
         &self,
         nearest: f32,
         max_nearest: f32,
@@ -410,14 +410,14 @@ impl WorlyMode for WorlyAverage {
     }
 }
 
-/// A [`WorlyMode`] that returns the unorm product between the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm product between the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct WorlyProduct;
+pub struct WorleyProduct;
 
-impl WorlyMode for WorlyProduct {
+impl WorleyMode for WorleyProduct {
     #[inline]
-    fn evaluate_worly(
+    fn evaluate_worley(
         &self,
         nearest: f32,
         max_nearest: f32,
@@ -428,14 +428,14 @@ impl WorlyMode for WorlyProduct {
     }
 }
 
-/// A [`WorlyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct WorlyRatio;
+pub struct WorleyRatio;
 
-impl WorlyMode for WorlyRatio {
+impl WorleyMode for WorleyRatio {
     #[inline]
-    fn evaluate_worly(
+    fn evaluate_worley(
         &self,
         nearest: f32,
         _max_nearest: f32,
@@ -449,18 +449,18 @@ impl WorlyMode for WorlyRatio {
 
 /// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`],
 /// finds the distance to each [`CellPoints`]s relevant to that cell via a [`LengthFunction`] `L`,
-/// and then provides those distances to some [`WorlyMode`] `M`.
+/// and then provides those distances to some [`WorleyMode`] `M`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct PerLeastDistances<P, L, W> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`LengthFunction`].
     pub length_mode: L,
-    /// The [`WorlyMode`].
-    pub worly_mode: W,
+    /// The [`WorleyMode`].
+    pub worley_mode: W,
 }
 
-impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorlyDomainCell>, W: WorlyMode>
+impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainCell>, W: WorleyMode>
     NoiseFunction<I> for PerLeastDistances<P, L, W>
 {
     type Output = f32;
@@ -487,7 +487,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorlyDomainCe
             }
         }
 
-        self.worly_mode.evaluate_worly(
+        self.worley_mode.evaluate_worley(
             self.length_mode.length_of(least_length_offset),
             self.length_mode
                 .max_for_element_max(cell.nearest_1d_point_always_within()),

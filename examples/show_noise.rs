@@ -11,8 +11,8 @@ use noiz::{
     cell_noise::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceToEdge, EuclideanLength,
         MixCellGradients, MixCellValues, PerCell, PerLeastDistances, PerNearestPoint,
-        QualityGradients, QuickGradients, SimplecticBlend, WorlyAverage, WorlyDifference,
-        WorlyPointDistance,
+        QualityGradients, QuickGradients, SimplecticBlend, WorleyAverage, WorleyDifference,
+        WorleyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -208,25 +208,25 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         NoiseOption {
-                            name: "Worly noise",
+                            name: "Worley noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, EuclideanLength, WorlyPointDistance>,
+                                PerLeastDistances<Voronoi, EuclideanLength, WorleyPointDistance>,
                             >::default()),
                         },
                         NoiseOption {
-                            name: "Worly difference",
+                            name: "Worley difference",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, EuclideanLength, WorlyDifference>,
+                                PerLeastDistances<Voronoi, EuclideanLength, WorleyDifference>,
                             >::default()),
                         },
                         NoiseOption {
-                            name: "Worly distance to edge",
+                            name: "Worley distance to edge",
                             noise: Box::new(Noise::<DistanceToEdge<Voronoi>>::default()),
                         },
                         NoiseOption {
-                            name: "Wacky Worly noise",
+                            name: "Wacky Worley noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, ChebyshevLength, WorlyAverage>,
+                                PerLeastDistances<Voronoi, ChebyshevLength, WorleyAverage>,
                             >::default()),
                         },
                     ],
