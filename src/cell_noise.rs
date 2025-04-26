@@ -181,16 +181,57 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
 
 /// A [`NoiseFunction`] partitions space by a [`Partitioner`] `S` into a [`DomainCell`] and
 /// finds the distance to the nearest voronoi edge of according to some [`LengthFunction`] `L`.
+///
+/// If `APPROXIMATE` is on, this will be a cheaper, approximate, discontinuous distance to edge.
+/// If you need speed, and don't care about discontinuities or exactness, turn this on.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct DistanceToEdge<P, L> {
+pub struct DistanceToEdge<P, L, const APPROXIMATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`LengthFunction`].
     pub length_mode: L,
 }
+impl<L: LengthFunction<Vec2>, P: Partitioner<Vec2, Cell: WorlyDomainCell>> NoiseFunction<Vec2>
+    for DistanceToEdge<P, L, true>
+{
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: Vec2, seeds: &mut NoiseRng) -> Self::Output {
+        let cell = self.cells.partition(input);
+
+        let mut least_length_order = f32::INFINITY;
+        let mut least_offset = Vec2::ZERO;
+        let mut next_least_length_order = f32::INFINITY;
+        let mut next_least_offset = Vec2::ZERO;
+
+        for point in cell.iter_points(*seeds) {
+            let length_order = self.length_mode.length_ordering(point.offset);
+            if length_order < least_length_order {
+                next_least_length_order = least_length_order;
+                next_least_offset = least_offset;
+                least_length_order = length_order;
+                least_offset = point.offset;
+            } else if length_order < next_least_length_order {
+                next_least_length_order = length_order;
+                next_least_offset = point.offset;
+            }
+        }
+
+        let to_other_point = least_offset - next_least_offset;
+        let dir_to_other = to_other_point.normalize();
+        let nearest_traveled_towards_other = dir_to_other * dir_to_other.dot(least_offset);
+        let nearest_traveled_to_edge = to_other_point * 0.5;
+        let sample_to_this_edge = nearest_traveled_to_edge - nearest_traveled_towards_other;
+
+        let dist = self.length_mode.length_of(sample_to_this_edge);
+        let max_dits = cell.next_nearest_1d_point_always_within();
+        dist / max_dits
+    }
+}
 
 impl<L: LengthFunction<Vec2>, P: Partitioner<Vec2, Cell: WorlyDomainCell>> NoiseFunction<Vec2>
-    for DistanceToEdge<P, L>
+    for DistanceToEdge<P, L, false>
 {
     type Output = f32;
 
@@ -226,7 +267,7 @@ impl<L: LengthFunction<Vec2>, P: Partitioner<Vec2, Cell: WorlyDomainCell>> Noise
         }
 
         let dist = self.length_mode.length_of(to_nearest_edge);
-        let max_dits = cell.next_nearest_1d_point_always_within();
+        let max_dits = cell.nearest_1d_point_always_within();
         dist / max_dits
     }
 }
