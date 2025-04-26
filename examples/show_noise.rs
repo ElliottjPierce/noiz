@@ -229,6 +229,12 @@ fn main() -> AppExit {
                                 PerLeastDistances<Voronoi, ChebyshevLength, WorleyAverage>,
                             >::default()),
                         },
+                        NoiseOption {
+                            name: "Blend simplectic voronoi value noise",
+                            noise: Box::new(Noise::<
+                                BlendCellValues<Voronoi, SimplecticBlend, Random<UNorm, f32>>,
+                            >::default()),
+                        },
                     ],
                     selected: 0,
                     image: dummy_image,
