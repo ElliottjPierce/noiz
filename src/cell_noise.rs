@@ -48,8 +48,6 @@ pub trait LengthFunction<T: VectorSpace> {
     fn length_ordering(&self, vec: T) -> f32;
 }
 
-// TODO: Minkowski distance
-
 /// A [`LengthFunction`] and for "as the crow flyies" length
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct EuclideanLength;
@@ -65,6 +63,23 @@ pub struct HybridLength;
 /// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct ChebyshevLength;
+
+/// A configurable [`LengthFunction`] that bends space according to the inner float.
+/// Higher values pass [`EuclideanLength`] and approach [`ChebyshevLength`].
+/// Lower values pass [`ManhatanLength`] and approach a star-like shape.
+/// The inner value must be greater than 0 to be meaningful.
+///
+/// **Performance Warning:** This is *very* slow compared to other [`LengthFunction`]s.
+/// Don't use this unless you need to.
+/// If you only need a particular value, consider creating your own [`LengthFunction`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MinkowskiLength(pub f32);
+
+impl Default for MinkowskiLength {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
 
 macro_rules! impl_distances {
     ($t:path, $d:literal, $sqrt_d:expr) => {
@@ -135,6 +150,23 @@ macro_rules! impl_distances {
             #[inline]
             fn length_of(&self, vec: $t) -> f32 {
                 self.length_ordering(vec)
+            }
+        }
+
+        impl LengthFunction<$t> for MinkowskiLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max * $d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.abs().powf(self.0).element_sum()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec).powf(1.0 / self.0)
             }
         }
     };
