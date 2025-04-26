@@ -19,11 +19,18 @@ pub trait DomainCell {
 }
 
 /// Represents a [`DomainCell`] that upholds some guarantees about distance ordering per point.
-pub trait WorleyDomainCell {
+pub trait WorleyDomainCell: DomainCell {
     /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the nearest point along each axis will be less than this far away along that axis.
     fn nearest_1d_point_always_within(&self) -> f32;
     /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the second nearest point along each axis will be less than this far away along that axis.
     fn next_nearest_1d_point_always_within(&self) -> f32;
+}
+
+/// Represents a [`DomainCell`] that upholds some guarantees about distance smoothing per point.
+pub trait BlendableDomainCell: DomainCell {
+    /// Returns half how far our to consider blending points.
+    /// Too high a value can produce discontinuities.
+    fn blending_half_radius(&self) -> f32;
 }
 
 /// Represents a [`DomainCell`] that can be soothly interpolated within.
@@ -120,6 +127,16 @@ where
     #[inline(always)]
     fn next_nearest_1d_point_always_within(&self) -> f32 {
         1.0
+    }
+}
+
+impl<F, I> BlendableDomainCell for SquareCell<F, I>
+where
+    Self: DomainCell,
+{
+    #[inline]
+    fn blending_half_radius(&self) -> f32 {
+        0.5
     }
 }
 
@@ -717,7 +734,17 @@ impl Partitioner<Vec4> for OrthoGrid {
 
 /// Represents a simplex grid cell as its skewed base grid square.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SimplexCell<F: VectorSpace, I>(pub SquareCell<F, I>);
+pub struct SimplexCell<F, I>(pub SquareCell<F, I>);
+
+impl<F, I> BlendableDomainCell for SimplexCell<F, I>
+where
+    Self: DomainCell,
+{
+    #[inline]
+    fn blending_half_radius(&self) -> f32 {
+        0.5
+    }
+}
 
 const SIMPLEX_SKEW_FACTOR_2D: f32 = 0.366_025_42;
 const SIMPLEX_UNSKEW_FACTOR_2D: f32 = 0.211_324_87;
@@ -1146,6 +1173,17 @@ pub struct VoronoiCell<const HALF_SCALE: bool, C> {
     /// How much the [`CellPoint`]s will be moved.
     /// See [`Voronoi`] for details.
     pub randomness: f32,
+}
+
+impl<C: BlendableDomainCell, const HALF_SCALE: bool> BlendableDomainCell
+    for VoronoiCell<HALF_SCALE, C>
+where
+    Self: DomainCell,
+{
+    #[inline]
+    fn blending_half_radius(&self) -> f32 {
+        self.cell.blending_half_radius() * if HALF_SCALE { 0.5 } else { 1.0 }
+    }
 }
 
 impl<C: WorleyDomainCell, const HALF_SCALE: bool> WorleyDomainCell for VoronoiCell<HALF_SCALE, C>

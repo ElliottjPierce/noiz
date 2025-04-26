@@ -12,8 +12,8 @@ use bevy_math::{
 use crate::{
     NoiseFunction,
     cells::{
-        DiferentiableCell, DomainCell, InterpolatableCell, Partitioner, WithGradient,
-        WorleyDomainCell,
+        BlendableDomainCell, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner,
+        WithGradient, WorleyDomainCell,
     },
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
@@ -582,8 +582,12 @@ pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     pub blender: B,
 }
 
-impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Concrete>, N: ConcreteAnyValueFromBits>
-    NoiseFunction<I> for BlendCellValues<P, B, N, false>
+impl<
+    I: VectorSpace,
+    P: Partitioner<I, Cell: BlendableDomainCell>,
+    B: Blender<I, N::Concrete>,
+    N: ConcreteAnyValueFromBits,
+> NoiseFunction<I> for BlendCellValues<P, B, N, false>
 {
     type Output = N::Concrete;
 
@@ -601,7 +605,7 @@ impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, N::Concrete>, N: ConcreteA
 
 impl<
     I: VectorSpace,
-    P: Partitioner<I>,
+    P: Partitioner<I, Cell: BlendableDomainCell>,
     B: Blender<I, WithGradient<N::Concrete, I>>,
     N: ConcreteAnyValueFromBits,
 > NoiseFunction<I> for BlendCellValues<P, B, N, true>
@@ -715,8 +719,12 @@ pub struct BlendCellGradients<P, B, G, const DIFFERENTIATE: bool = false> {
     pub blender: B,
 }
 
-impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, f32>, G: GradientGenerator<I>>
-    NoiseFunction<I> for BlendCellGradients<P, B, G, false>
+impl<
+    I: VectorSpace,
+    P: Partitioner<I, Cell: BlendableDomainCell>,
+    B: Blender<I, f32>,
+    G: GradientGenerator<I>,
+> NoiseFunction<I> for BlendCellGradients<P, B, G, false>
 {
     type Output = f32;
 
@@ -734,7 +742,7 @@ impl<I: VectorSpace, P: Partitioner<I>, B: Blender<I, f32>, G: GradientGenerator
 
 impl<
     I: VectorSpace,
-    P: Partitioner<I>,
+    P: Partitioner<I, Cell: BlendableDomainCell>,
     B: Blender<I, WithGradient<f32, I>>,
     G: GradientGenerator<I>,
 > NoiseFunction<I> for BlendCellGradients<P, B, G, true>
