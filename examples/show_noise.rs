@@ -221,9 +221,7 @@ fn main() -> AppExit {
                         },
                         NoiseOption {
                             name: "Worly distance to edge",
-                            noise: Box::new(
-                                Noise::<DistanceToEdge<Voronoi, EuclideanLength>>::default(),
-                            ),
+                            noise: Box::new(Noise::<DistanceToEdge<Voronoi>>::default()),
                         },
                         NoiseOption {
                             name: "Wacky Worly noise",

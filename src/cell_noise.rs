@@ -72,6 +72,10 @@ pub struct ChebyshevLength;
 /// **Performance Warning:** This is *very* slow compared to other [`LengthFunction`]s.
 /// Don't use this unless you need to.
 /// If you only need a particular value, consider creating your own [`LengthFunction`].
+///
+/// **Artifact Warning:** Depending on the inner value,
+/// this can produce asymptotes that bleed across cell lines and cause artifacts.
+/// This works fine with traditional worly noise for example, but other [`WorlyMode`]s may yield harsh lines.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MinkowskiLength(pub f32);
 
@@ -213,11 +217,17 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
 
 /// A [`NoiseFunction`] partitions space by a [`Partitioner`] `S` into a [`DomainCell`] and
 /// finds the distance to the nearest voronoi edge of according to some [`LengthFunction`] `L`.
+/// The result is a unorm f32.
 ///
 /// If `APPROXIMATE` is on, this will be a cheaper, approximate, discontinuous distance to edge.
 /// If you need speed, and don't care about discontinuities or exactness, turn this on.
+///
+/// **Artifact Warning:** Depending on the [`LengthFunction`] `L`, this will create artifacting.
+/// Some of the math presumes a [`EuclideanLength`]. Other lengths still work, but may artifact.
+/// This is kept generic over `L` to enable custom functions that are
+/// similar enough to euclidiean to not artifact and different enough to require a custom [`EuclideanLength`].
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct DistanceToEdge<P, L, const APPROXIMATE: bool = false> {
+pub struct DistanceToEdge<P, L = EuclideanLength, const APPROXIMATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`LengthFunction`].
