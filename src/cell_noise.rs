@@ -558,9 +558,10 @@ impl<
 /// Allows blending between different [`CellPoint`](crate::cells::CellPoint)s.
 pub trait Blender<I: VectorSpace, V> {
     /// Weighs the `value` by the offset of the sampled point to the point that generated the value.
+    /// `blending_radius` denotes how big of an `offset` to consider. It is a cutoff point to prevent discontinuities.
     ///
     /// Usually this will scale the `value` bassed on the length of `offset`.
-    fn weigh_value(&self, value: V, offset: I) -> V;
+    fn weigh_value(&self, value: V, offset: I, blending_half_radius: f32) -> V;
 
     /// When the value is computed as the dot product of the `offset` passed to [`weigh_value`](Blender::weigh_value), the value is already weighted to some extent.
     /// This counteracts that weight by opperating on the already weighted value.
@@ -593,11 +594,12 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.partition(input);
-        let weighted = segment.iter_points(*seeds).map(|p| {
+        let cell = self.cells.partition(input);
+        let weighted = cell.iter_points(*seeds).map(|p| {
             // We can't use the `linear_equivalent_value` because the blend type is not linear.
             let value = self.noise.any_value(p.rough_id);
-            self.blender.weigh_value(value, p.offset)
+            self.blender
+                .weigh_value(value, p.offset, cell.blending_half_radius())
         });
         self.blender.collect_weighted(weighted)
     }
@@ -614,8 +616,8 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.partition(input);
-        let weighted = segment.iter_points(*seeds).map(|p| {
+        let cell = self.cells.partition(input);
+        let weighted = cell.iter_points(*seeds).map(|p| {
             let value = self.noise.any_value(p.rough_id);
             // TODO: Verify that this gradient is correct. Does the blender naturally do this correctly?
             self.blender.weigh_value(
@@ -624,6 +626,7 @@ impl<
                     gradient: -p.offset,
                 },
                 p.offset,
+                cell.blending_half_radius(),
             )
         });
         self.blender.collect_weighted(weighted)
@@ -730,10 +733,11 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.partition(input);
-        let weighted = segment.iter_points(*seeds).map(|p| {
+        let cell = self.cells.partition(input);
+        let weighted = cell.iter_points(*seeds).map(|p| {
             let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
-            self.blender.weigh_value(dot, p.offset)
+            self.blender
+                .weigh_value(dot, p.offset, cell.blending_half_radius())
         });
         self.blender
             .counter_dot_product(self.blender.collect_weighted(weighted))
@@ -751,8 +755,8 @@ impl<
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let segment = self.cells.partition(input);
-        let weighted = segment.iter_points(*seeds).map(|p| {
+        let cell = self.cells.partition(input);
+        let weighted = cell.iter_points(*seeds).map(|p| {
             let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
             // TODO: Verify that this gradient is correct. Does the blender naturally do this correctly?
             self.blender.weigh_value(
@@ -761,6 +765,7 @@ impl<
                     gradient: -p.offset,
                 },
                 p.offset,
+                cell.blending_half_radius(),
             )
         });
         self.blender
@@ -957,9 +962,9 @@ const SIMPLECTIC_R_EFFECT: f32 = (1.0 / SIMPLECTIC_R_SQUARED)
     * (1.0 / SIMPLECTIC_R_SQUARED)
     * (1.0 / SIMPLECTIC_R_SQUARED);
 
-fn general_simplex_weight(length_sqrd: f32) -> f32 {
+fn general_simplex_weight(length_sqrd: f32, blending_half_radius: f32) -> f32 {
     // We do the unorm mapping here instead of later to prevent precision issues.
-    let weight_unorm = (SIMPLECTIC_R_SQUARED - length_sqrd) * (1.0 / SIMPLECTIC_R_SQUARED);
+    let weight_unorm = (blending_half_radius - length_sqrd) / blending_half_radius;
     if weight_unorm <= 0.0 {
         0.0
     } else {
@@ -970,8 +975,8 @@ fn general_simplex_weight(length_sqrd: f32) -> f32 {
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for SimplecticBlend {
     #[inline]
-    fn weigh_value(&self, value: V, offset: Vec2) -> V {
-        value * general_simplex_weight(offset.length_squared())
+    fn weigh_value(&self, value: V, offset: Vec2, blending_half_radius: f32) -> V {
+        value * general_simplex_weight(offset.length_squared(), blending_half_radius)
     }
 
     #[inline]
@@ -991,8 +996,8 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for Simp
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3, V> for SimplecticBlend {
     #[inline]
-    fn weigh_value(&self, value: V, offset: Vec3) -> V {
-        value * general_simplex_weight(offset.length_squared())
+    fn weigh_value(&self, value: V, offset: Vec3, blending_half_radius: f32) -> V {
+        value * general_simplex_weight(offset.length_squared(), blending_half_radius)
     }
 
     #[inline]
@@ -1012,8 +1017,8 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3, V> for Simp
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3A, V> for SimplecticBlend {
     #[inline]
-    fn weigh_value(&self, value: V, offset: Vec3A) -> V {
-        value * general_simplex_weight(offset.length_squared())
+    fn weigh_value(&self, value: V, offset: Vec3A, blending_half_radius: f32) -> V {
+        value * general_simplex_weight(offset.length_squared(), blending_half_radius)
     }
 
     #[inline]
@@ -1033,8 +1038,8 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3A, V> for Sim
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec4, V> for SimplecticBlend {
     #[inline]
-    fn weigh_value(&self, value: V, offset: Vec4) -> V {
-        value * general_simplex_weight(offset.length_squared())
+    fn weigh_value(&self, value: V, offset: Vec4, blending_half_radius: f32) -> V {
+        value * general_simplex_weight(offset.length_squared(), blending_half_radius)
     }
 
     #[inline]
