@@ -239,7 +239,7 @@ fn main() -> AppExit {
                             name: "Blend voronoi value noise",
                             noise: Box::new(Noise::<
                                 BlendCellValues<
-                                    Voronoi,
+                                    OrthoGrid,
                                     DistanceBlend<EuclideanLength>,
                                     Random<UNorm, f32>,
                                 >,

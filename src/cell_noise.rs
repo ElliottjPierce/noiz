@@ -15,6 +15,7 @@ use crate::{
         BlendableDomainCell, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner,
         WithGradient, WorleyDomainCell,
     },
+    curves::Smoothstep,
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
 
@@ -956,8 +957,8 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
         let mut weight_sum = 0f32;
         for (val, weight) in to_blend {
             let len = self.0.length_of(weight);
-            let clamp_len = self.0.max_for_element_max(blending_half_radius);
-            let weight = (clamp_len - len).max(0.0);
+            let clamp_len = self.0.max_for_element_max(blending_half_radius * 2.0);
+            let weight = Smoothstep.sample_unchecked((clamp_len - len).max(0.0) / clamp_len);
             sum += val * weight;
             weight_sum += weight;
         }
