@@ -952,7 +952,37 @@ impl GradientGenerator<Vec3A> for QualityGradients {
     }
 }
 
-/// A [`Blender`] for [`SimplexGrid`](crate::cells::SimplexGrid).
+/// A [`Blender`] that weighs each values by it's distance, as computed by a [`LengthFunction`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DistanceBlend<L>(pub L);
+
+impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: VectorSpace>
+    Blender<I, V> for DistanceBlend<L>
+{
+    #[inline]
+    fn weigh_value(&self, value: V, offset: I, blending_half_radius: f32) -> V {
+        let len = self.0.length_of(offset);
+        let clamp_len = self.0.max_for_element_max(blending_half_radius);
+        let weight = (clamp_len - len).max(0.0) / clamp_len;
+        value * weight
+    }
+
+    #[inline]
+    fn collect_weighted(&self, weighed: impl Iterator<Item = V>) -> V {
+        let mut sum = V::default();
+        for v in weighed {
+            sum += v;
+        }
+        sum
+    }
+
+    #[inline]
+    fn counter_dot_product(&self, value: V) -> V {
+        value
+    }
+}
+
+/// A [`Blender`] built for [`SimplexGrid`](crate::cells::SimplexGrid) that smoothly blends values in a pleasant way.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplecticBlend;
 

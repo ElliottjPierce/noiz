@@ -1182,7 +1182,11 @@ where
 {
     #[inline]
     fn blending_half_radius(&self) -> f32 {
-        self.cell.blending_half_radius() * if HALF_SCALE { 0.5 } else { 1.0 }
+        if HALF_SCALE {
+            self.cell.blending_half_radius()
+        } else {
+            self.cell.blending_half_radius() * 1.5
+        }
     }
 }
 
