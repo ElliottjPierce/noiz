@@ -28,9 +28,25 @@ pub struct Pow4;
 pub struct PowF(pub f32);
 
 /// A [`NoiseFunction`] makes more positive numbers get closer to 0.
-/// Negative numbers are meaningless.
+/// Negative numbers are meaningless. Positive numbers will produce UNorm results.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct PositiveApproachZero;
+
+/// A [`NoiseFunction`] that takes the absolute value of its input.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Abs;
+
+/// A [`NoiseFunction`] that divides 1.0 by its input.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Inverse;
+
+/// A [`NoiseFunction`] that subtracts its input from 1.0.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ReverseUNorm;
+
+/// A [`NoiseFunction`] that negates its input.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Negate;
 
 macro_rules! impl_vector_spaces {
     ($n:ty) => {
@@ -94,6 +110,42 @@ macro_rules! impl_vector_spaces {
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 1.0 / (input + 1.0)
+            }
+        }
+
+        impl NoiseFunction<$n> for Abs {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input.abs()
+            }
+        }
+
+        impl NoiseFunction<$n> for Inverse {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                1.0 / input
+            }
+        }
+
+        impl NoiseFunction<$n> for ReverseUNorm {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                1.0 - input
+            }
+        }
+
+        impl NoiseFunction<$n> for Negate {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                -input
             }
         }
     };
