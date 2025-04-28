@@ -15,7 +15,7 @@ use crate::{
         BlendableDomainCell, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner,
         WithGradient, WorleyDomainCell,
     },
-    curves::Smoothstep,
+    curves::{SmoothMin, Smoothstep},
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
 
@@ -380,6 +380,48 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
     }
 
     (least, next_least)
+}
+
+/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`] via a [`SmoothMin`].
+/// This is similar to [`WorleyPointDistance`] but instead of dividing nearby cells, it smooths between them.
+/// Note that when cells are close together, this can merge them into a single value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WorleySmoothMin<T> {
+    /// The [`SmoothMin`].
+    pub smooth_min: T,
+    /// The inverse of the radius to smooth cells together.
+    /// Positive values between 0 and 1 are recommended.
+    pub smoothing_inverse_radius: f32,
+}
+
+impl<T: Default> Default for WorleySmoothMin<T> {
+    fn default() -> Self {
+        Self {
+            smooth_min: T::default(),
+            smoothing_inverse_radius: 1.0 / 16.0,
+        }
+    }
+}
+
+impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
+    #[inline]
+    fn evaluate_worley<I: VectorSpace>(
+        &self,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        _max_least_length: f32,
+        _max_next_least_length: f32,
+    ) -> f32 {
+        let mut res = f32::INFINITY;
+        for p in points {
+            res = self.smooth_min.smin_norm(
+                res,
+                lengths.length_ordering(p),
+                self.smoothing_inverse_radius,
+            );
+        }
+        lengths.length_from_ordering(res)
+    }
 }
 
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`].

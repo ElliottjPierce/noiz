@@ -12,11 +12,11 @@ use noiz::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
         EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, PerCell,
         PerCellPointDistances, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
-        WorleyAverage, WorleyDifference, WorleyPointDistance,
+        WorleyAverage, WorleyDifference, WorleyPointDistance, WorleySmoothMin,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
-    curves::{Linear, Smoothstep},
+    curves::{CubicSMin, Linear, Smoothstep},
     rng::{Random, UNorm},
 };
 
@@ -214,6 +214,16 @@ fn main() -> AppExit {
                                     Voronoi,
                                     EuclideanLength,
                                     WorleyPointDistance,
+                                >,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Smooth Worley noise",
+                            noise: Box::new(Noise::<
+                                PerCellPointDistances<
+                                    Voronoi,
+                                    EuclideanLength,
+                                    WorleySmoothMin<CubicSMin>,
                                 >,
                             >::default()),
                         },
