@@ -13,6 +13,7 @@ pub mod cells;
 pub mod common_adapters;
 pub mod curves;
 pub mod layering;
+pub mod misc_noise;
 pub mod rng;
 
 use bevy_math::VectorSpace;
