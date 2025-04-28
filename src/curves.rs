@@ -1,6 +1,9 @@
 //! Contains a variety of curves of domain and range [0, 1].
 
-use bevy_math::{Curve, curve::Interval};
+use bevy_math::{
+    Curve, WithDerivative,
+    curve::{Interval, derivatives::SampleDerivative},
+};
 
 /// Linear interpolation.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -15,6 +18,16 @@ impl Curve<f32> for Linear {
     #[inline]
     fn sample_unchecked(&self, t: f32) -> f32 {
         t
+    }
+}
+
+impl SampleDerivative<f32> for Linear {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
+        WithDerivative {
+            value: self.sample_unchecked(t),
+            derivative: 1.0,
+        }
     }
 }
 
@@ -51,6 +64,16 @@ impl Curve<f32> for Smoothstep {
     }
 }
 
+impl SampleDerivative<f32> for Smoothstep {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
+        WithDerivative {
+            value: self.sample_unchecked(t),
+            derivative: 6.0 * t - 6.0 * t * t,
+        }
+    }
+}
+
 /// Smoothstep interpolation composed on itself.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct DoubleSmoothstep;
@@ -67,6 +90,20 @@ impl Curve<f32> for DoubleSmoothstep {
     }
 }
 
+impl SampleDerivative<f32> for DoubleSmoothstep {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
+        let first = Smoothstep.sample_with_derivative_unchecked(t);
+        WithDerivative {
+            value: Smoothstep.sample_unchecked(first.value),
+            derivative: first.derivative
+                * Smoothstep
+                    .sample_with_derivative_unchecked(first.value)
+                    .derivative,
+        }
+    }
+}
+
 /// Smoothstep interpolation composed on itself twice.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct TripleSmoothstep;
@@ -80,6 +117,20 @@ impl Curve<f32> for TripleSmoothstep {
     #[inline]
     fn sample_unchecked(&self, t: f32) -> f32 {
         Smoothstep.sample_unchecked(Smoothstep.sample_unchecked(Smoothstep.sample_unchecked(t)))
+    }
+}
+
+impl SampleDerivative<f32> for TripleSmoothstep {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
+        let first = Smoothstep.sample_with_derivative_unchecked(t);
+        WithDerivative {
+            value: DoubleSmoothstep.sample_unchecked(first.value),
+            derivative: first.derivative
+                * DoubleSmoothstep
+                    .sample_with_derivative_unchecked(first.value)
+                    .derivative,
+        }
     }
 }
 
