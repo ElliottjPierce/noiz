@@ -1,6 +1,6 @@
 //! This contains logic for dividing a domain into segments.
 
-use core::ops::{Add, AddAssign, Mul, MulAssign, Rem};
+use core::ops::{Add, AddAssign, Mul, MulAssign};
 
 use bevy_math::{
     Curve, IVec2, IVec3, IVec4, Vec2, Vec3, Vec3A, Vec4, VectorSpace,
@@ -146,25 +146,6 @@ pub trait Partitioner<T: VectorSpace> {
 
     /// Partitions the vector space `T` into [`DomainCell`]s, providing the cell that `full` is in.
     fn partition(&self, full: T) -> Self::Cell;
-}
-
-/// A [`Partitioner`] that wraps its space so that it is tilable. before giving it to an inner [`Partitioner`] `P`.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Wrapped<P> {
-    /// The inner [`Partitioner`].
-    pub cells: P,
-    /// The amount to go in any direction before wrapping the noise.
-    /// Generally, an integer value is recommended.
-    pub wrap_dist: f32,
-}
-
-impl<I: VectorSpace + Rem<f32, Output = I>, P: Partitioner<I>> Partitioner<I> for Wrapped<P> {
-    type Cell = P::Cell;
-
-    #[inline]
-    fn partition(&self, full: I) -> Self::Cell {
-        self.cells.partition(full % self.wrap_dist)
-    }
 }
 
 /// Represents a hyper cube of some N dimensions.

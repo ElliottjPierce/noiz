@@ -19,7 +19,7 @@ use noiz::{
         DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
     },
-    math_noise::{Abs, Billow, PingPong, SNormToUNorm},
+    math_noise::{Abs, Billow, PingPong, SNormToUNorm, Wrapped},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
@@ -622,6 +622,43 @@ fn main() -> AppExit {
                                 >,
                                 SNormToUNorm,
                             )>::from((
+                                LayeredNoise::new(
+                                    NormedByDerivative::default().with_falloff(0.5),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Usecase: Tileable Heightmap",
+                            noise: Box::new(Noise::<(
+                                Wrapped,
+                                LayeredNoise<
+                                    NormedByDerivative<
+                                        f32,
+                                        EuclideanLength,
+                                        PeakDerivativeContribution,
+                                    >,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            MixCellGradients<
+                                                OrthoGrid,
+                                                Smoothstep,
+                                                QuickGradients,
+                                                true,
+                                            >,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                Wrapped(8.0),
                                 LayeredNoise::new(
                                     NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
