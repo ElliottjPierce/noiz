@@ -7,9 +7,9 @@ use bevy_math::VectorSpace;
 use rng::NoiseRng;
 
 /// This represents the context of some [`NoiseResult`].
-pub trait NoiseResultContext {
+pub trait LayerResultContext {
     /// This is the type that actually computes the result based on this context.
-    type Result: NoiseResult;
+    type Result: LayerResult;
 
     /// Informs the context that this much weight is expected.
     /// This allows precomputing the total weight.
@@ -20,50 +20,50 @@ pub trait NoiseResultContext {
 }
 
 /// Represents a working result of a noise sample.
-pub trait NoiseResult {
+pub trait LayerResult {
     /// The type the result finishes to.
     type Output;
-    /// Informs the result that `weight` will be in included even though it was not in [`NoiseResultContext::expect_weight`].
+    /// Informs the result that `weight` will be in included even though it was not in [`LayerResultContext::expect_weight`].
     fn add_unexpected_weight_to_total(&mut self, weight: f32);
     /// Collapses all accumulated noise results into a finished product `T`.
     fn finish(self, rng: &mut NoiseRng) -> Self::Output;
 }
 
-/// Specifies that this [`NoiseResult`] can include values of type `V`.
-pub trait NoiseResultFor<V>: NoiseResult {
+/// Specifies that this [`LayerResult`] can include values of type `V`.
+pub trait LayerResultFor<V>: LayerResult {
     /// Includes `value` in the final result at this `weight`.
     /// The `value` should be kepy plain, for example, if multiplication is needed, this will do so.
-    /// If `weight` was not included in [`NoiseResultContext::expect_weight`],
-    /// be sure to also call [`add_unexpected_weight_to_total`](NoiseResult::add_unexpected_weight_to_total).
+    /// If `weight` was not included in [`LayerResultContext::expect_weight`],
+    /// be sure to also call [`add_unexpected_weight_to_total`](LayerResult::add_unexpected_weight_to_total).
     fn include_value(&mut self, value: V, weight: f32);
 }
 
-/// Provides a user facing view of some [`NoiseWeights`].
-pub trait NoiseWeightsSettings {
-    /// The kind of [`NoiseWeights`] produced by these settings.
-    type Weights: NoiseWeights;
+/// Provides a user facing view of some [`LayerWeights`].
+pub trait LayerWeightsSettings {
+    /// The kind of [`LayerWeights`] produced by these settings.
+    type Weights: LayerWeights;
 
-    /// Prepares a new [`NoiseWeights`] for another sample.
+    /// Prepares a new [`LayerWeights`] for another sample.
     fn start_weights(&self) -> Self::Weights;
 }
 
 /// Specifies that this generates configurable weights for different layers of noise.
-pub trait NoiseWeights {
+pub trait LayerWeights {
     /// Generates the weight of the next layer of noise.
     fn next_weight(&mut self) -> f32;
 }
 
 /// An operation that contributes to some noise result.
 /// `R` represents how the result is collected, and `W` represents how each layer is weighted.
-pub trait NoiseOperation<R: NoiseResultContext, W: NoiseWeights> {
+pub trait LayerOperation<R: LayerResultContext, W: LayerWeights> {
     /// Prepares the result context `R` for this noise. This is like a dry run of the noise to try to precompute anything it needs.
     fn prepare(&self, result_context: &mut R, weights: &mut W);
 }
 
-/// Specifies that this [`NoiseOperation`] can be done on type `I`.
+/// Specifies that this [`LayerOperation`] can be done on type `I`.
 /// If this adds to the `result`, this is called an octave.
-pub trait NoiseOperationFor<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights>:
-    NoiseOperation<R, W>
+pub trait LayerOperationFor<I: VectorSpace, R: LayerResultContext, W: LayerWeights>:
+    LayerOperation<R, W>
 {
     /// Performs the noise operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
     fn do_noise_op(
@@ -79,7 +79,7 @@ macro_rules! impl_all_operation_tuples {
     () => { };
 
     ($i:ident=$f:tt, $($ni:ident=$nf:tt),* $(,)?) => {
-        impl<R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperation<R, W>, $($ni: NoiseOperation<R, W>),* > NoiseOperation<R, W> for ($i, $($ni),*) {
+        impl<R: LayerResultContext, W: LayerWeights, $i: LayerOperation<R, W>, $($ni: LayerOperation<R, W>),* > LayerOperation<R, W> for ($i, $($ni),*) {
             #[inline]
             fn prepare(&self, result_context: &mut R, weights: &mut W) {
                 self.$f.prepare(result_context, weights);
@@ -87,7 +87,7 @@ macro_rules! impl_all_operation_tuples {
             }
         }
 
-        impl<I: VectorSpace, R: NoiseResultContext, W: NoiseWeights, $i: NoiseOperationFor<I, R, W>, $($ni: NoiseOperationFor<I, R, W>),* > NoiseOperationFor<I, R, W> for ($i, $($ni),*) {
+        impl<I: VectorSpace, R: LayerResultContext, W: LayerWeights, $i: LayerOperationFor<I, R, W>, $($ni: LayerOperationFor<I, R, W>),* > LayerOperationFor<I, R, W> for ($i, $($ni),*) {
             #[inline]
             fn do_noise_op(
                 &self,
@@ -124,7 +124,7 @@ impl_all_operation_tuples!(
     T0 = 0,
 );
 
-/// Represents a [`NoiseFunction`] based on layers of [`NoiseOperation`]s.
+/// Represents a [`NoiseFunction`] based on layers of [`LayerOperation`]s.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct LayeredNoise<R, W, N, const DONT_FINISH: bool = false> {
     result_context: R,
@@ -132,10 +132,10 @@ pub struct LayeredNoise<R, W, N, const DONT_FINISH: bool = false> {
     noise: N,
 }
 
-impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Weights>>
+impl<R: LayerResultContext, W: LayerWeightsSettings, N: LayerOperation<R, W::Weights>>
     LayeredNoise<R, W, N>
 {
-    /// Constructs a [`Noise`] from these values.
+    /// Constructs a [`LayeredNoise`] from these values.
     pub fn new(result_settings: R, weight_settings: W, noise: N) -> Self {
         // prepare
         let mut result_context = result_settings;
@@ -153,12 +153,12 @@ impl<R: NoiseResultContext, W: NoiseWeightsSettings, N: NoiseOperation<R, W::Wei
 
 impl<
     I: VectorSpace,
-    R: NoiseResultContext,
-    W: NoiseWeightsSettings,
-    N: NoiseOperationFor<I, R, W::Weights>,
+    R: LayerResultContext,
+    W: LayerWeightsSettings,
+    N: LayerOperationFor<I, R, W::Weights>,
 > NoiseFunction<I> for LayeredNoise<R, W, N, false>
 {
-    type Output = <R::Result as NoiseResult>::Output;
+    type Output = <R::Result as LayerResult>::Output;
 
     #[inline]
     fn evaluate(&self, mut input: I, seeds: &mut NoiseRng) -> Self::Output {
@@ -172,9 +172,9 @@ impl<
 
 impl<
     I: VectorSpace,
-    R: NoiseResultContext,
-    W: NoiseWeightsSettings,
-    N: NoiseOperationFor<I, R, W::Weights>,
+    R: LayerResultContext,
+    W: LayerWeightsSettings,
+    N: LayerOperationFor<I, R, W::Weights>,
 > NoiseFunction<I> for LayeredNoise<R, W, N, true>
 {
     type Output = R::Result;
@@ -189,11 +189,11 @@ impl<
     }
 }
 
-/// Represents a [`NoiseOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
+/// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Octave<T>(pub T);
 
-impl<T, R: NoiseResultContext, W: NoiseWeights> NoiseOperation<R, W> for Octave<T> {
+impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for Octave<T> {
     #[inline]
     fn prepare(&self, result_context: &mut R, weights: &mut W) {
         result_context.expect_weight(weights.next_weight());
@@ -203,16 +203,16 @@ impl<T, R: NoiseResultContext, W: NoiseWeights> NoiseOperation<R, W> for Octave<
 impl<
     T: NoiseFunction<I, Output: VectorSpace>,
     I: VectorSpace,
-    R: NoiseResultContext<Result: NoiseResultFor<T::Output>>,
-    W: NoiseWeights,
-> NoiseOperationFor<I, R, W> for Octave<T>
+    R: LayerResultContext<Result: LayerResultFor<T::Output>>,
+    W: LayerWeights,
+> LayerOperationFor<I, R, W> for Octave<T>
 {
     #[inline]
     fn do_noise_op(
         &self,
         seeds: &mut NoiseRng,
         working_loc: &mut I,
-        result: &mut <R as NoiseResultContext>::Result,
+        result: &mut <R as LayerResultContext>::Result,
         weights: &mut W,
     ) {
         let octave_result = self.0.evaluate(*working_loc, seeds);
@@ -221,10 +221,10 @@ impl<
     }
 }
 
-/// Represents a [`NoiseOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
+/// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FractalOctaves<T> {
-    /// The [`NoiseOperation`] to perform.
+    /// The [`LayerOperation`] to perform.
     pub octave: T,
     /// lacunarity measures how far apart each octave will be.
     /// Effectively, this is a frequency multiplier.
@@ -236,7 +236,7 @@ pub struct FractalOctaves<T> {
     pub octaves: u32,
 }
 
-impl<T: NoiseOperation<R, W>, R: NoiseResultContext, W: NoiseWeights> NoiseOperation<R, W>
+impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W>
     for FractalOctaves<T>
 {
     #[inline]
@@ -247,15 +247,15 @@ impl<T: NoiseOperation<R, W>, R: NoiseResultContext, W: NoiseWeights> NoiseOpera
     }
 }
 
-impl<I: VectorSpace, T: NoiseOperationFor<I, R, W>, R: NoiseResultContext, W: NoiseWeights>
-    NoiseOperationFor<I, R, W> for FractalOctaves<T>
+impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: LayerWeights>
+    LayerOperationFor<I, R, W> for FractalOctaves<T>
 {
     #[inline]
     fn do_noise_op(
         &self,
         seeds: &mut NoiseRng,
         working_loc: &mut I,
-        result: &mut <R as NoiseResultContext>::Result,
+        result: &mut <R as LayerResultContext>::Result,
         weights: &mut W,
     ) {
         self.octave.do_noise_op(seeds, working_loc, result, weights);
@@ -266,7 +266,7 @@ impl<I: VectorSpace, T: NoiseOperationFor<I, R, W>, R: NoiseResultContext, W: No
     }
 }
 
-/// A [`NoiseWeightsSettings`] for [`PersistenceWeights`].
+/// A [`LayerWeightsSettings`] for [`PersistenceWeights`].
 /// This is a very common weight system, as it can produce fractal noise easily.
 /// If you're not sure which one to use, use this one.
 ///
@@ -280,14 +280,14 @@ impl Persistence {
     pub const CONSTANT: Self = Self(1.0);
 }
 
-/// The [`NoiseWeights`] for [`Persistence`].
+/// The [`LayerWeights`] for [`Persistence`].
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PersistenceWeights {
     persistence: Persistence,
     next: f32,
 }
 
-impl NoiseWeights for PersistenceWeights {
+impl LayerWeights for PersistenceWeights {
     #[inline]
     fn next_weight(&mut self) -> f32 {
         let result = self.next;
@@ -296,7 +296,7 @@ impl NoiseWeights for PersistenceWeights {
     }
 }
 
-impl NoiseWeightsSettings for Persistence {
+impl LayerWeightsSettings for Persistence {
     type Weights = PersistenceWeights;
 
     #[inline]
@@ -328,9 +328,9 @@ impl<T: VectorSpace> Default for Normed<T> {
     }
 }
 
-impl<T: VectorSpace> NoiseResultContext for Normed<T>
+impl<T: VectorSpace> LayerResultContext for Normed<T>
 where
-    NormedResult<T>: NoiseResult,
+    NormedResult<T>: LayerResult,
 {
     type Result = NormedResult<T>;
 
@@ -355,7 +355,7 @@ pub struct NormedResult<T> {
     running_total: T,
 }
 
-impl<T: Div<f32>> NoiseResult for NormedResult<T> {
+impl<T: Div<f32>> LayerResult for NormedResult<T> {
     type Output = T::Output;
 
     #[inline]
@@ -369,9 +369,9 @@ impl<T: Div<f32>> NoiseResult for NormedResult<T> {
     }
 }
 
-impl<T: VectorSpace, I: Into<T>> NoiseResultFor<I> for NormedResult<T>
+impl<T: VectorSpace, I: Into<T>> LayerResultFor<I> for NormedResult<T>
 where
-    Self: NoiseResult,
+    Self: LayerResult,
 {
     #[inline]
     fn include_value(&mut self, value: I, weight: f32) {
