@@ -17,7 +17,7 @@ use noiz::{
     common_adapters::SNormToUNorm,
     curves::{CubicSMin, Linear, Smoothstep},
     layering::{DomainWarp, FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
-    misc_noise::RandomElements,
+    misc_noise::{Offset, RandomElements},
     rng::{Random, SNorm, UNorm},
 };
 
@@ -282,20 +282,20 @@ fn main() -> AppExit {
                                 LayeredNoise<
                                     Normed<f32>,
                                     Persistence,
-                                    FractalOctaves<(
-                                        DomainWarp<
-                                            RandomElements<
-                                                MixCellGradients<
-                                                    OrthoGrid,
-                                                    Smoothstep,
-                                                    QuickGradients,
+                                    FractalOctaves<
+                                        Octave<(
+                                            Offset<
+                                                RandomElements<
+                                                    MixCellGradients<
+                                                        OrthoGrid,
+                                                        Smoothstep,
+                                                        QuickGradients,
+                                                    >,
                                                 >,
                                             >,
-                                        >,
-                                        Octave<
                                             MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
-                                        >,
-                                    )>,
+                                        )>,
+                                    >,
                                 >,
                                 SNormToUNorm,
                             )>::from((
@@ -303,13 +303,13 @@ fn main() -> AppExit {
                                     Normed::default(),
                                     Persistence(0.6),
                                     FractalOctaves {
-                                        octave: (
-                                            DomainWarp {
-                                                warper: Default::default(),
-                                                strength: 4.0,
+                                        octave: Octave((
+                                            Offset {
+                                                offseter: Default::default(),
+                                                offset_strength: 1.0,
                                             },
                                             Default::default(),
-                                        ),
+                                        )),
                                         lacunarity: 1.8,
                                         octaves: 8,
                                     },
