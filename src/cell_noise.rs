@@ -504,11 +504,10 @@ impl WorleyMode for WorleyRatio {
     }
 }
 
-/// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`],
-/// finds the distance to each [`CellPoints`]s relevant to that cell via a [`LengthFunction`] `L`,
-/// and then provides those distances to some [`WorleyMode`] `M`.
+/// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`]s,
+/// and then provides the distance to each [`CellPoints`] to some [`WorleyMode`] `M` by some [`LengthFunction`] `L`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub struct PerLeastDistances<P, L, W> {
+pub struct PerCellPointDistances<P, L, W> {
     /// The [`Partitioner`].
     pub cells: P,
     /// The [`LengthFunction`].
@@ -518,7 +517,7 @@ pub struct PerLeastDistances<P, L, W> {
 }
 
 impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainCell>, W: WorleyMode>
-    NoiseFunction<I> for PerLeastDistances<P, L, W>
+    NoiseFunction<I> for PerCellPointDistances<P, L, W>
 {
     type Output = f32;
 

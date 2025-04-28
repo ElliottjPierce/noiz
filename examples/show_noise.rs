@@ -11,7 +11,7 @@ use noiz::{
     cell_noise::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
         EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, PerCell,
-        PerLeastDistances, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
+        PerCellPointDistances, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
         WorleyAverage, WorleyDifference, WorleyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
@@ -210,13 +210,17 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Worley noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, EuclideanLength, WorleyPointDistance>,
+                                PerCellPointDistances<
+                                    Voronoi,
+                                    EuclideanLength,
+                                    WorleyPointDistance,
+                                >,
                             >::default()),
                         },
                         NoiseOption {
                             name: "Worley difference",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, EuclideanLength, WorleyDifference>,
+                                PerCellPointDistances<Voronoi, EuclideanLength, WorleyDifference>,
                             >::default()),
                         },
                         NoiseOption {
@@ -226,7 +230,7 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Wacky Worley noise",
                             noise: Box::new(Noise::<
-                                PerLeastDistances<Voronoi, ChebyshevLength, WorleyAverage>,
+                                PerCellPointDistances<Voronoi, ChebyshevLength, WorleyAverage>,
                             >::default()),
                         },
                         NoiseOption {
