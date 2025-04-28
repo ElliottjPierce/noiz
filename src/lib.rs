@@ -16,8 +16,6 @@ pub mod layering;
 pub mod rng;
 
 use bevy_math::VectorSpace;
-pub use layering::*;
-
 use rng::NoiseRng;
 
 /// Represents a simple noise function with an input `I` and an output.

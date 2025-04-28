@@ -4,14 +4,14 @@ use super::SIZE_2D;
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 use criterion::{measurement::WallTime, *};
 use noiz::{
-    ConfigurableNoise, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
-    Sampleable, SampleableFor,
+    ConfigurableNoise, Noise, Sampleable, SampleableFor,
     cell_noise::{
         BlendCellGradients, EuclideanLength, MixCellGradients, MixCellValues,
         PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::Smoothstep,
+    layering::{FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
     rng::{Random, UNorm},
 };
 

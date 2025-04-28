@@ -6,7 +6,7 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
-    DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
+    DynamicSampleable, Noise,
     cell_noise::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
         EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, PerCell,
@@ -16,6 +16,7 @@ use noiz::{
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
     curves::{CubicSMin, Linear, Smoothstep},
+    layering::{FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
     rng::{Random, UNorm},
 };
 
