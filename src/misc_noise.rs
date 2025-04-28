@@ -188,3 +188,37 @@ impl<T> NoiseFunction<T> for ExtraRng {
         input
     }
 }
+
+/// A [`NoiseFunction`] that changes the seed of an inner [`NoiseFunction`] `N` based on the output of another [`NoiseFunction`] `P`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Peeled<N, P> {
+    /// The [`NoiseFunction`] that determines where to peel the seed.
+    pub pealer: P,
+    /// The inner [`NoiseFunction`].
+    pub noise: N,
+    /// How many layers to peel off.
+    pub layers: f32,
+}
+
+impl<N: Default, P: Default> Default for Peeled<N, P> {
+    fn default() -> Self {
+        Self {
+            pealer: P::default(),
+            noise: N::default(),
+            layers: 2.0,
+        }
+    }
+}
+
+impl<I: Copy, N: NoiseFunction<I>, P: NoiseFunction<I, Output = f32>> NoiseFunction<I>
+    for Peeled<N, P>
+{
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let layer = (self.pealer.evaluate(input, seeds) * self.layers).floor() as i32;
+        let mut layered = NoiseRng(seeds.rand_u32(layer as u32));
+        self.noise.evaluate(input, &mut layered)
+    }
+}
