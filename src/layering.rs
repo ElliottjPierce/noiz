@@ -428,6 +428,9 @@ pub struct NormedByDerivative<T, L, C> {
     pub derivative_calculator: L,
     /// The [`Curve`] to calculate the the contribution for a derivative.
     pub derivative_contribution: C,
+    /// A value representing how quickly large derivatives are suppressed.
+    /// Negative values are meaningless.
+    pub derivative_falloff: f32,
     marker: PhantomData<T>,
     total_weights: f32,
 }
@@ -439,6 +442,7 @@ impl<T: VectorSpace, L: Default, C: Default> Default for NormedByDerivative<T, L
             total_weights: 0.0,
             derivative_calculator: L::default(),
             derivative_contribution: C::default(),
+            derivative_falloff: 1.0,
         }
     }
 }
@@ -462,6 +466,7 @@ where
             running_derivative: Vec4::ZERO,
             derivative_calculator: self.derivative_calculator,
             derivative_contribution: self.derivative_contribution,
+            derivative_falloff: self.derivative_falloff,
         }
     }
 }
@@ -474,6 +479,7 @@ pub struct NormedByDerivativeResult<T, L, C> {
     running_derivative: Vec4,
     derivative_calculator: L,
     derivative_contribution: C,
+    derivative_falloff: f32,
 }
 
 impl<T: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, L, C> {
@@ -547,7 +553,7 @@ where
             .length_of(self.running_derivative);
         let additional_weight = self
             .derivative_contribution
-            .sample_unchecked(total_derivative);
+            .sample_unchecked(total_derivative * self.derivative_falloff);
         self.running_total = self.running_total + value.value.into() * (weight * additional_weight);
     }
 }
