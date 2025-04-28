@@ -201,7 +201,7 @@ impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for Octave<
 }
 
 impl<
-    T: NoiseFunction<I, Output: VectorSpace>,
+    T: NoiseFunction<I>,
     I: VectorSpace,
     R: LayerResultContext<Result: LayerResultFor<T::Output>>,
     W: LayerWeights,

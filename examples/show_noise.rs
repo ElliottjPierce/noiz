@@ -15,7 +15,10 @@ use noiz::{
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{CubicSMin, Linear, Smoothstep},
-    layering::{DomainWarp, FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
+    layering::{
+        DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
+        PeakDerivativeContribution, Persistence,
+    },
     math_noise::{Abs, Billow, PingPong, SNormToUNorm},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
@@ -516,6 +519,41 @@ fn main() -> AppExit {
                             )>::from((
                                 LayeredNoise::new(
                                     Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Derivative Fractal Perlin noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    NormedByDerivative<
+                                        f32,
+                                        EuclideanLength,
+                                        PeakDerivativeContribution,
+                                    >,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            MixCellGradients<
+                                                OrthoGrid,
+                                                Smoothstep,
+                                                QuickGradients,
+                                                true,
+                                            >,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    NormedByDerivative::default(),
                                     Persistence(0.6),
                                     FractalOctaves {
                                         octave: Default::default(),
