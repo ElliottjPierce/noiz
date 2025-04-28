@@ -9,9 +9,9 @@ use noiz::{
     DynamicSampleable, Noise,
     cell_noise::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
-        EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, PerCell,
-        PerCellPointDistances, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
-        WorleyAverage, WorleyDifference, WorleyPointDistance, WorleySmoothMin,
+        EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, MixCellValuesForDomain,
+        PerCell, PerCellPointDistances, PerNearestPoint, QualityGradients, QuickGradients,
+        SimplecticBlend, WorleyAverage, WorleyDifference, WorleyPointDistance, WorleySmoothMin,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -227,6 +227,45 @@ fn main() -> AppExit {
                                             DomainWarp {
                                                 warper: Default::default(),
                                                 strength: 1.0,
+                                            },
+                                            Default::default(),
+                                        ),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Domain Warped Fractal Value noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<(
+                                        DomainWarp<
+                                            MixCellValuesForDomain<OrthoGrid, Smoothstep, UNorm>,
+                                        >,
+                                        Octave<
+                                            MixCellValues<
+                                                OrthoGrid,
+                                                Smoothstep,
+                                                Random<UNorm, f32>,
+                                            >,
+                                        >,
+                                    )>,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: (
+                                            DomainWarp {
+                                                warper: Default::default(),
+                                                strength: 2.0,
                                             },
                                             Default::default(),
                                         ),

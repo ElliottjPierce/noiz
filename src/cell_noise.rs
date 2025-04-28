@@ -621,7 +621,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
     }
 }
 
-/// A [`NoiseFunction`] that mixes a value sourced from a [`FastRandomMixed`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// A [`NoiseFunction`] that mixes a value sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
@@ -661,6 +661,64 @@ impl<
 > NoiseFunction<I> for MixCellValues<P, C, N, true>
 {
     type Output = WithGradient<N::Concrete, <P::Cell as DiferentiableCell>::Gradient<N::Concrete>>;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.partition(input);
+        let WithGradient { value, gradient } = segment.interpolate_with_gradient(
+            *seeds,
+            |point| self.noise.linear_equivalent_value(point.rough_id),
+            &self.curve,
+            self.noise.finishing_derivative(),
+        );
+        WithGradient {
+            value: self.noise.finish_linear_equivalent_value(value),
+            gradient,
+        }
+    }
+}
+
+/// A [`NoiseFunction`] that mixes a value sourced from a [`AnyValueFromBits`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// This is similar to [`MixCellValues`] but more restricted.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct MixCellValuesForDomain<P, C, N, const DIFFERENTIATE: bool = false> {
+    /// The [`Partitioner`].
+    pub cells: P,
+    /// The [`FastRandomMixed`].
+    pub noise: N,
+    /// The [`Curve`].
+    pub curve: C,
+}
+
+impl<
+    I: VectorSpace,
+    P: Partitioner<I, Cell: InterpolatableCell>,
+    C: Curve<f32>,
+    N: AnyValueFromBits<I>,
+> NoiseFunction<I> for MixCellValuesForDomain<P, C, N, false>
+{
+    type Output = I;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let segment = self.cells.partition(input);
+        let raw = segment.interpolate_within(
+            *seeds,
+            |point| self.noise.linear_equivalent_value(point.rough_id),
+            &self.curve,
+        );
+        self.noise.finish_linear_equivalent_value(raw)
+    }
+}
+
+impl<
+    I: VectorSpace,
+    P: Partitioner<I, Cell: DiferentiableCell>,
+    C: SampleDerivative<f32>,
+    N: AnyValueFromBits<I>,
+> NoiseFunction<I> for MixCellValuesForDomain<P, C, N, true>
+{
+    type Output = WithGradient<I, <P::Cell as DiferentiableCell>::Gradient<I>>;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
