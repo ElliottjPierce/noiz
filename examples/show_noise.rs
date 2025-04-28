@@ -240,19 +240,16 @@ fn main() -> AppExit {
                             noise: Box::new(Noise::<
                                 BlendCellValues<
                                     Voronoi,
-                                    DistanceBlend<EuclideanLength>,
+                                    DistanceBlend<ManhatanLength>,
                                     Random<UNorm, f32>,
                                 >,
                             >::default()),
                         },
                         NoiseOption {
                             name: "Blend voronoi gradient noise",
-                            noise: Box::new(Noise::<
-                                BlendCellGradients<
-                                    Voronoi,
-                                    DistanceBlend<ManhatanLength>,
-                                    QuickGradients,
-                                >,
+                            noise: Box::new(AdaptiveNoise::<
+                                BlendCellGradients<Voronoi, SimplecticBlend, QuickGradients>,
+                                SNormToUNorm,
                             >::default()),
                         },
                     ],
