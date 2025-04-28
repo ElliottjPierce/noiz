@@ -53,6 +53,10 @@ pub trait LengthFunction<T: VectorSpace> {
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct EuclideanLength;
 
+/// A [`LengthFunction`] and for squared [`EuclideanLength`] length
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct EuclideanSqrdLength;
+
 /// A [`LengthFunction`] and for "manhatan" or diagonal length
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct ManhatanLength;
@@ -102,6 +106,23 @@ macro_rules! impl_distances {
             #[inline]
             fn length_of(&self, vec: $t) -> f32 {
                 self.length_ordering(vec).sqrt()
+            }
+        }
+
+        impl LengthFunction<$t> for EuclideanSqrdLength {
+            #[inline]
+            fn max_for_element_max(&self, element_max: f32) -> f32 {
+                element_max * element_max * $d
+            }
+
+            #[inline]
+            fn length_ordering(&self, vec: $t) -> f32 {
+                vec.length_squared()
+            }
+
+            #[inline]
+            fn length_of(&self, vec: $t) -> f32 {
+                self.length_ordering(vec)
             }
         }
 
@@ -955,14 +976,16 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
     fn blend(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
         let mut sum = V::default();
         let mut weight_sum = 0f32;
+        let mut cnt = 0;
+        let clamp_len = self.0.max_for_element_max(blending_half_radius);
         for (val, weight) in to_blend {
             let len = self.0.length_of(weight);
-            let clamp_len = self.0.max_for_element_max(blending_half_radius * 2.0);
             let weight = Smoothstep.sample_unchecked((clamp_len - len).max(0.0) / clamp_len);
             sum += val * weight;
             weight_sum += weight;
+            cnt += 1;
         }
-        sum * (1.0 / weight_sum)
+        sum * (weight_sum / (cnt as f32 * clamp_len))
     }
 
     #[inline]
