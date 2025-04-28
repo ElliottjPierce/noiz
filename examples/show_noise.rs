@@ -6,8 +6,7 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
-    AdaptiveNoise, DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave,
-    Persistence,
+    DynamicSampleable, FractalOctaves, LayeredNoise, Noise, Normed, Octave, Persistence,
     cell_noise::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
         EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, PerCell,
@@ -116,28 +115,28 @@ fn main() -> AppExit {
                         },
                         NoiseOption {
                             name: "Perlin noise",
-                            noise: Box::new(AdaptiveNoise::<
+                            noise: Box::new(Noise::<(
                                 MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
                                 SNormToUNorm,
-                            >::default()),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Perlin quality noise",
-                            noise: Box::new(AdaptiveNoise::<
+                            noise: Box::new(Noise::<(
                                 MixCellGradients<OrthoGrid, Smoothstep, QualityGradients>,
                                 SNormToUNorm,
-                            >::default()),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Simlex noise",
-                            noise: Box::new(AdaptiveNoise::<
+                            noise: Box::new(Noise::<(
                                 BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>,
                                 SNormToUNorm,
-                            >::default()),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Fractal Perlin noise",
-                            noise: Box::new(AdaptiveNoise::<
+                            noise: Box::new(Noise::<(
                                 LayeredNoise<
                                     Normed<f32>,
                                     Persistence,
@@ -148,8 +147,8 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            > {
-                                noise: Noise::from(LayeredNoise::new(
+                            )>::from((
+                                LayeredNoise::new(
                                     Normed::default(),
                                     Persistence(0.6),
                                     FractalOctaves {
@@ -157,13 +156,13 @@ fn main() -> AppExit {
                                         lacunarity: 1.8,
                                         octaves: 8,
                                     },
-                                )),
-                                adapter: SNormToUNorm,
-                            }),
+                                ),
+                                Default::default(),
+                            ))),
                         },
                         NoiseOption {
                             name: "Fractal Simplex noise",
-                            noise: Box::new(AdaptiveNoise::<
+                            noise: Box::new(Noise::<(
                                 LayeredNoise<
                                     Normed<f32>,
                                     Persistence,
@@ -178,8 +177,8 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            > {
-                                noise: Noise::from(LayeredNoise::new(
+                            )>::from((
+                                LayeredNoise::new(
                                     Normed::default(),
                                     Persistence(0.6),
                                     FractalOctaves {
@@ -187,9 +186,9 @@ fn main() -> AppExit {
                                         lacunarity: 1.8,
                                         octaves: 8,
                                     },
-                                )),
-                                adapter: SNormToUNorm,
-                            }),
+                                ),
+                                Default::default(),
+                            ))),
                         },
                         NoiseOption {
                             name: "Fast Cellular noise",
@@ -261,10 +260,10 @@ fn main() -> AppExit {
                         },
                         NoiseOption {
                             name: "Blend voronoi gradient noise",
-                            noise: Box::new(AdaptiveNoise::<
+                            noise: Box::new(Noise::<(
                                 BlendCellGradients<Voronoi, SimplecticBlend, QuickGradients>,
                                 SNormToUNorm,
-                            >::default()),
+                            )>::default()),
                         },
                     ],
                     selected: 0,
