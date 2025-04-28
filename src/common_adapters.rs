@@ -3,22 +3,38 @@ use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 
 use crate::NoiseFunction;
 
-/// Maps vectors from (-1,1) to (0, 1).
+/// A [`NoiseFunction`] that maps vectors from (-1,1) to (0, 1).
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct SNormToUNorm;
 
-/// Maps vectors from (0, 1) to (-1,1).
+/// A [`NoiseFunction`] that maps vectors from (0, 1) to (-1,1).
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct UNormToSNorm;
 
+/// A [`NoiseFunction`] that raises the input to the second power.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Pow2;
+
+/// A [`NoiseFunction`] that raises the input to the third power.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Pow3;
+
+/// A [`NoiseFunction`] that raises the input to the fourth power.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Pow4;
+
+/// A [`NoiseFunction`] that raises the input to some power.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct PowF(pub f32);
+
 macro_rules! impl_vector_spaces {
-    ($n:ty, $half:expr, $two:expr) => {
+    ($n:ty) => {
         impl NoiseFunction<$n> for SNormToUNorm {
             type Output = $n;
 
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-                input * $half + $half
+                input * 0.5 + 0.5
             }
         }
 
@@ -27,14 +43,50 @@ macro_rules! impl_vector_spaces {
 
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-                (input - $half) * $two
+                (input - 0.5) * 2.0
+            }
+        }
+
+        impl NoiseFunction<$n> for Pow2 {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input * input
+            }
+        }
+
+        impl NoiseFunction<$n> for Pow3 {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input * input * input
+            }
+        }
+
+        impl NoiseFunction<$n> for Pow4 {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                (input * input) * (input * input)
+            }
+        }
+
+        impl NoiseFunction<$n> for PowF {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input.powf(self.0)
             }
         }
     };
 }
 
-impl_vector_spaces!(f32, 0.5, 2.0);
-impl_vector_spaces!(Vec2, Vec2::splat(0.5), Vec2::splat(2.0));
-impl_vector_spaces!(Vec3, Vec3::splat(0.5), Vec3::splat(2.0));
-impl_vector_spaces!(Vec3A, Vec3A::splat(0.5), Vec3A::splat(2.0));
-impl_vector_spaces!(Vec4, Vec4::splat(0.5), Vec4::splat(2.0));
+impl_vector_spaces!(f32);
+impl_vector_spaces!(Vec2);
+impl_vector_spaces!(Vec3);
+impl_vector_spaces!(Vec3A);
+impl_vector_spaces!(Vec4);
