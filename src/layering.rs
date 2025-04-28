@@ -2,8 +2,8 @@
 
 use core::{marker::PhantomData, ops::Div};
 
-use crate::*;
-use bevy_math::VectorSpace;
+use crate::{cell_noise::LengthFunction, *};
+use bevy_math::{Vec4, VectorSpace};
 use rng::NoiseRng;
 
 /// This represents the context of some [`NoiseResult`].
@@ -409,6 +409,88 @@ impl<T: Div<f32>> LayerResult for NormedResult<T> {
 }
 
 impl<T: VectorSpace, I: Into<T>> LayerResultFor<I> for NormedResult<T>
+where
+    Self: LayerResult,
+{
+    #[inline]
+    fn include_value(&mut self, value: I, weight: f32) {
+        self.running_total = self.running_total + (value.into() * weight);
+    }
+}
+
+/// This will normalize the results into a whieghted average where the derivatives affect the weight.
+///
+/// `T` is the [`VectorSpace`] you want to collect.
+/// `L` is the [`LengthFunction`] to calculate the derivative from the gradient.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NormedByDerivative<T, L, C> {
+    /// The [`LengthFunction`] to calculate the derivative from the gradient.
+    pub derivative_calculator: L,
+    /// The [`Curve`] to calculate the the contribution for a derivative.
+    pub derivative_contribution: C,
+    marker: PhantomData<T>,
+    total_weights: f32,
+}
+
+impl<T: VectorSpace, L: Default, C: Default> Default for NormedByDerivative<T, L, C> {
+    fn default() -> Self {
+        Self {
+            marker: PhantomData,
+            total_weights: 0.0,
+            derivative_calculator: L::default(),
+            derivative_contribution: C::default(),
+        }
+    }
+}
+
+impl<T: VectorSpace, L: Copy, C: Copy> LayerResultContext for NormedByDerivative<T, L, C>
+where
+    NormedResult<T>: LayerResult,
+{
+    type Result = NormedByDerivativeResult<T, L, C>;
+
+    #[inline]
+    fn expect_weight(&mut self, weight: f32) {
+        self.total_weights += weight;
+    }
+
+    #[inline]
+    fn start_result(&self) -> Self::Result {
+        NormedByDerivativeResult {
+            total_weights: self.total_weights,
+            running_total: T::ZERO,
+            running_derivative: Vec4::ZERO,
+            derivative_calculator: self.derivative_calculator,
+            derivative_contribution: self.derivative_contribution,
+        }
+    }
+}
+
+/// The in-progress result of a [`NormedByDerivative`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NormedByDerivativeResult<T, L, C> {
+    total_weights: f32,
+    running_total: T,
+    running_derivative: Vec4,
+    derivative_calculator: L,
+    derivative_contribution: C,
+}
+
+impl<T: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, L, C> {
+    type Output = T::Output;
+
+    #[inline]
+    fn add_unexpected_weight_to_total(&mut self, weight: f32) {
+        self.total_weights += weight;
+    }
+
+    #[inline]
+    fn finish(self, _rng: &mut NoiseRng) -> Self::Output {
+        self.running_total / self.total_weights
+    }
+}
+
+impl<T: VectorSpace, I: Into<T>, L, C> LayerResultFor<I> for NormedByDerivativeResult<T, L, C>
 where
     Self: LayerResult,
 {
