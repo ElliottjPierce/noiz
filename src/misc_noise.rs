@@ -1,5 +1,7 @@
 //! A grab bag of miscelenious noise functions that have no bette place to be.
 
+use core::ops::{Add, Mul};
+
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 
 use crate::{NoiseFunction, rng::NoiseRng};
@@ -65,5 +67,35 @@ impl<N: NoiseFunction<Vec4, Output = f32>> NoiseFunction<Vec4> for RandomElement
         let w = self.0.evaluate(input, seeds);
         seeds.re_seed();
         Vec4::new(x, y, z, w)
+    }
+}
+
+/// A [`NoiseFunction`] that pushes its input by some offset from an inner [`NoiseFunction`] `N`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Offset<N> {
+    /// The inner [`NoiseFunction`].
+    pub offseter: N,
+    /// The offset's strength.
+    pub offset_strength: f32,
+}
+
+impl<N: Default> Default for Offset<N> {
+    fn default() -> Self {
+        Self {
+            offseter: N::default(),
+            offset_strength: 1.0,
+        }
+    }
+}
+
+impl<I: Add<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::Output>>>
+    NoiseFunction<I> for Offset<N>
+{
+    type Output = I::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let offset = self.offseter.evaluate(input, seeds) * self.offset_strength;
+        input + offset
     }
 }
