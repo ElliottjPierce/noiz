@@ -1,6 +1,6 @@
 //! Contains logic for layering different noise ontop of eachother.
 
-use core::marker::PhantomData;
+use core::{marker::PhantomData, ops::Div};
 
 use crate::*;
 use bevy_math::VectorSpace;
@@ -21,21 +21,12 @@ pub trait NoiseResultContext {
 
 /// Represents a working result of a noise sample.
 pub trait NoiseResult {
+    /// The type the result finishes to.
+    type Output;
     /// Informs the result that `weight` will be in included even though it was not in [`NoiseResultContext::expect_weight`].
     fn add_unexpected_weight_to_total(&mut self, weight: f32);
-}
-
-/// Signifies that the [`NoiseResult`] can finalize into type `T`.
-pub trait NoiseResultOf<T> {
     /// Collapses all accumulated noise results into a finished product `T`.
-    fn finish(self, rng: &mut NoiseRng) -> T;
-}
-
-impl<T: VectorSpace> NoiseResultOf<T> for T {
-    #[inline(always)]
-    fn finish(self, _rng: &mut NoiseRng) -> T {
-        self
-    }
+    fn finish(self, rng: &mut NoiseRng) -> Self::Output;
 }
 
 /// Specifies that this [`NoiseResult`] can include values of type `V`.
@@ -135,7 +126,7 @@ impl_all_operation_tuples!(
 
 /// Represents a [`NoiseFunction`] based on layers of [`NoiseOperation`]s.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct LayeredNoise<R, W, N> {
+pub struct LayeredNoise<R, W, N, const DONT_FINISH: bool = false> {
     result_context: R,
     weight_settings: W,
     noise: N,
@@ -165,7 +156,26 @@ impl<
     R: NoiseResultContext,
     W: NoiseWeightsSettings,
     N: NoiseOperationFor<I, R, W::Weights>,
-> NoiseFunction<I> for LayeredNoise<R, W, N>
+> NoiseFunction<I> for LayeredNoise<R, W, N, false>
+{
+    type Output = <R::Result as NoiseResult>::Output;
+
+    #[inline]
+    fn evaluate(&self, mut input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let mut weights = self.weight_settings.start_weights();
+        let mut result = self.result_context.start_result();
+        self.noise
+            .do_noise_op(seeds, &mut input, &mut result, &mut weights);
+        result.finish(seeds)
+    }
+}
+
+impl<
+    I: VectorSpace,
+    R: NoiseResultContext,
+    W: NoiseWeightsSettings,
+    N: NoiseOperationFor<I, R, W::Weights>,
+> NoiseFunction<I> for LayeredNoise<R, W, N, true>
 {
     type Output = R::Result;
 
@@ -318,7 +328,10 @@ impl<T: VectorSpace> Default for Normed<T> {
     }
 }
 
-impl<T: VectorSpace> NoiseResultContext for Normed<T> {
+impl<T: VectorSpace> NoiseResultContext for Normed<T>
+where
+    NormedResult<T>: NoiseResult,
+{
     type Result = NormedResult<T>;
 
     #[inline]
@@ -342,23 +355,26 @@ pub struct NormedResult<T> {
     running_total: T,
 }
 
-impl<T> NoiseResult for NormedResult<T> {
+impl<T: Div<f32>> NoiseResult for NormedResult<T> {
+    type Output = T::Output;
+
     #[inline]
     fn add_unexpected_weight_to_total(&mut self, weight: f32) {
         self.total_weights += weight;
     }
-}
 
-impl<T: VectorSpace, I: Into<T>> NoiseResultFor<I> for NormedResult<T> {
     #[inline]
-    fn include_value(&mut self, value: I, weight: f32) {
-        self.running_total = self.running_total + (value.into() * weight);
+    fn finish(self, _rng: &mut NoiseRng) -> Self::Output {
+        self.running_total / self.total_weights
     }
 }
 
-impl<T: VectorSpace, O: From<T>> NoiseResultOf<O> for NormedResult<T> {
+impl<T: VectorSpace, I: Into<T>> NoiseResultFor<I> for NormedResult<T>
+where
+    Self: NoiseResult,
+{
     #[inline]
-    fn finish(self, _rng: &mut NoiseRng) -> O {
-        O::from(self.running_total / self.total_weights)
+    fn include_value(&mut self, value: I, weight: f32) {
+        self.running_total = self.running_total + (value.into() * weight);
     }
 }

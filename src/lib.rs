@@ -191,13 +191,11 @@ impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
     }
 }
 
-impl<T, I: VectorSpace, N: NoiseFunction<I, Output: NoiseResultOf<T>>> SampleableFor<I, T>
-    for Noise<N>
-{
+impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T> for Noise<N> {
     #[inline]
     fn sample(&self, loc: I) -> T {
-        let (result, mut rng) = self.sample_raw(loc);
-        result.finish(&mut rng)
+        let (result, _rng) = self.sample_raw(loc);
+        result.into()
     }
 }
 
@@ -250,17 +248,13 @@ impl<I: VectorSpace, N: NoiseFunction<I>, A> Sampleable<I> for AdaptiveNoise<N, 
     }
 }
 
-impl<
-    T,
-    I: VectorSpace,
-    N: NoiseFunction<I, Output: NoiseResultOf<T>>,
-    A: NoiseFunction<T, Output = T>,
-> SampleableFor<I, T> for AdaptiveNoise<N, A>
+impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>, A: NoiseFunction<T, Output = T>>
+    SampleableFor<I, T> for AdaptiveNoise<N, A>
 {
     #[inline]
     fn sample(&self, loc: I) -> T {
         let (result, mut rng) = self.noise.sample_raw(loc);
-        self.adapter.evaluate(result.finish(&mut rng), &mut rng)
+        self.adapter.evaluate(result.into(), &mut rng)
     }
 }
 
