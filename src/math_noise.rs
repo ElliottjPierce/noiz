@@ -27,6 +27,11 @@ pub struct Pow4;
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct PowF(pub f32);
 
+/// A [`NoiseFunction`] makes more positive numbers get closer to 0.
+/// Negative numbers are meaningless.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct PositiveApproachZero;
+
 macro_rules! impl_vector_spaces {
     ($n:ty) => {
         impl NoiseFunction<$n> for SNormToUNorm {
@@ -80,6 +85,15 @@ macro_rules! impl_vector_spaces {
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 input.powf(self.0)
+            }
+        }
+
+        impl NoiseFunction<$n> for PositiveApproachZero {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                1.0 / (input + 1.0)
             }
         }
     };

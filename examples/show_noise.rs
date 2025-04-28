@@ -14,9 +14,9 @@ use noiz::{
         SimplecticBlend, WorleyAverage, WorleyDifference, WorleyPointDistance, WorleySmoothMin,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
-    common_adapters::SNormToUNorm,
     curves::{CubicSMin, Linear, Smoothstep},
     layering::{DomainWarp, FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
+    math_noise::SNormToUNorm,
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };

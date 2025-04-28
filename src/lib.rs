@@ -10,9 +10,9 @@ extern crate alloc;
 
 pub mod cell_noise;
 pub mod cells;
-pub mod common_adapters;
 pub mod curves;
 pub mod layering;
+pub mod math_noise;
 pub mod misc_noise;
 pub mod rng;
 
