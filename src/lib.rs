@@ -185,9 +185,8 @@ impl<I: VectorSpace, N: NoiseFunction<I>> NoiseFunction<I> for Noise<N> {
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let res = self.noise.evaluate(input * self.frequency, seeds);
-        seeds.re_seed();
-        res
+        seeds.0 ^= self.seed.0;
+        self.noise.evaluate(input * self.frequency, seeds)
     }
 }
 
