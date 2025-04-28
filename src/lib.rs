@@ -29,43 +29,61 @@ pub trait NoiseFunction<I> {
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output;
 }
 
-impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>> NoiseFunction<I> for (T0, T1) {
-    type Output = T1::Output;
+impl<I, T0: NoiseFunction<I>> NoiseFunction<I> for (T0,) {
+    type Output = T0::Output;
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let input = self.0.evaluate(input, seeds);
-        self.1.evaluate(input, seeds)
+        self.0.evaluate(input, seeds)
     }
 }
 
-impl<I, T0: NoiseFunction<I>, T1: NoiseFunction<T0::Output>, T2: NoiseFunction<T1::Output>>
-    NoiseFunction<I> for (T0, T1, T2)
-{
-    type Output = T2::Output;
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let input = self.0.evaluate(input, seeds);
-        let input = self.1.evaluate(input, seeds);
-        self.2.evaluate(input, seeds)
-    }
+macro_rules! impl_noise_function_tuple {
+    ($($l:ident-$t:ident-$i:tt),*) => {
+        impl<
+            I,
+            T0: NoiseFunction<I>,
+            $($t: NoiseFunction<$l::Output>,)*
+        > NoiseFunction<I> for (T0, $($t,)*)
+        {
+            type Output = <impl_noise_function_tuple!(last $($t),*)>::Output;
+
+            #[inline]
+            fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+                let input = self.0.evaluate(input, seeds);
+                $(let input = self.$i.evaluate(input, seeds);)*
+                input
+            }
+        }
+    };
+
+
+    (last $f:ident $(,)? ) => {
+        $f
+    };
+
+    (last $f:ident, $($items:ident),+ $(,)?) => {
+        impl_noise_function_tuple!(last $($items),+)
+    };
 }
 
-impl<
-    I,
-    T0: NoiseFunction<I>,
-    T1: NoiseFunction<T0::Output>,
-    T2: NoiseFunction<T1::Output>,
-    T3: NoiseFunction<T2::Output>,
-> NoiseFunction<I> for (T0, T1, T2, T3)
-{
-    type Output = T3::Output;
-    #[inline]
-    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let input = self.0.evaluate(input, seeds);
-        let input = self.1.evaluate(input, seeds);
-        let input = self.2.evaluate(input, seeds);
-        self.3.evaluate(input, seeds)
-    }
+#[rustfmt::skip]
+mod function_impls {
+    use super::*;
+    impl_noise_function_tuple!(T0-T1-1);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10, T10-T11-11);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10, T10-T11-11, T11-T12-12);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10, T10-T11-11, T11-T12-12, T12-T13-13);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10, T10-T11-11, T11-T12-12, T12-T13-13, T13-T14-14);
+    impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10, T10-T11-11, T11-T12-12, T12-T13-13, T13-T14-14, T14-T15-15);
 }
 
 /// Specifies that this noise is configurable.
