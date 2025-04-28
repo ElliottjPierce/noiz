@@ -221,6 +221,45 @@ impl<
     }
 }
 
+/// Represents a [`LayerOperationFor`] that warps it's input by some [`NoiseFunction`] `T`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DomainWarp<T> {
+    /// The [`NoiseFunction`] doing the warping.
+    pub warper: T,
+    /// The strength to warp by.
+    pub strength: f32,
+}
+
+impl<T: Default> Default for DomainWarp<T> {
+    fn default() -> Self {
+        Self {
+            warper: T::default(),
+            strength: 1.0,
+        }
+    }
+}
+
+impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for DomainWarp<T> {
+    #[inline]
+    fn prepare(&self, _result_context: &mut R, _weights: &mut W) {}
+}
+
+impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: LayerWeights>
+    LayerOperationFor<I, R, W> for DomainWarp<T>
+{
+    #[inline]
+    fn do_noise_op(
+        &self,
+        seeds: &mut NoiseRng,
+        working_loc: &mut I,
+        _result: &mut <R as LayerResultContext>::Result,
+        _weights: &mut W,
+    ) {
+        let warp_by = self.warper.evaluate(*working_loc, seeds) * self.strength;
+        *working_loc = warp_by + warp_by;
+    }
+}
+
 /// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FractalOctaves<T> {
