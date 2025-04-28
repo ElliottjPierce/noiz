@@ -2,8 +2,8 @@
 
 use core::{marker::PhantomData, ops::Div};
 
-use crate::{cell_noise::LengthFunction, *};
-use bevy_math::{Vec4, VectorSpace};
+use crate::{cell_noise::LengthFunction, cells::WithGradient, *};
+use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 use rng::NoiseRng;
 
 /// This represents the context of some [`NoiseResult`].
@@ -490,12 +490,64 @@ impl<T: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, L, C> {
     }
 }
 
-impl<T: VectorSpace, I: Into<T>, L, C> LayerResultFor<I> for NormedByDerivativeResult<T, L, C>
+impl<T: VectorSpace, L, C> LayerResultFor<T> for NormedByDerivativeResult<T, L, C>
 where
     Self: LayerResult,
 {
     #[inline]
-    fn include_value(&mut self, value: I, weight: f32) {
-        self.running_total = self.running_total + (value.into() * weight);
+    fn include_value(&mut self, value: T, weight: f32) {
+        self.running_total = self.running_total + (value * weight);
+    }
+}
+
+/// This is effectively `Into<Vec4>` where any missing elements are left 0.
+pub trait DerivativeConvert: VectorSpace {
+    /// Converts to 4d, leaving missing dimensions 0.
+    fn into_4d(self) -> Vec4;
+}
+
+impl DerivativeConvert for Vec2 {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        self.extend(0.0).extend(0.0)
+    }
+}
+
+impl DerivativeConvert for Vec3 {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        self.extend(0.0)
+    }
+}
+
+impl DerivativeConvert for Vec3A {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        self.extend(0.0)
+    }
+}
+
+impl DerivativeConvert for Vec4 {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        self
+    }
+}
+
+impl<T: VectorSpace, I: Into<T>, G: DerivativeConvert, L: LengthFunction<Vec4>, C: Curve<f32>>
+    LayerResultFor<WithGradient<I, G>> for NormedByDerivativeResult<T, L, C>
+where
+    Self: LayerResult,
+{
+    #[inline]
+    fn include_value(&mut self, value: WithGradient<I, G>, weight: f32) {
+        self.running_derivative += value.gradient.into_4d();
+        let total_derivative = self
+            .derivative_calculator
+            .length_of(self.running_derivative);
+        let additional_weight = self
+            .derivative_contribution
+            .sample_unchecked(total_derivative);
+        self.running_total = self.running_total + value.value.into() * (weight * additional_weight);
     }
 }
