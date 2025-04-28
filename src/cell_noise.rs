@@ -586,7 +586,7 @@ pub trait Blender<I: VectorSpace, V> {
     /// When the value is computed as the dot product of the `offset` passed to [`weigh_value`](Blender::weigh_value), the value is already weighted to some extent.
     /// This counteracts that weight by opperating on the already weighted value.
     /// Assuming the collected value was the dot of some vec `a` with this `offset`, this will map the value into `±|a|`
-    fn counter_dot_product(&self, value: V) -> V;
+    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V;
 }
 
 /// A [`NoiseFunction`] that blends values sourced from a [`FastRandomMixed`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
@@ -753,8 +753,9 @@ impl<
             let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
             (dot, p.offset)
         });
+        let radius = cell.blending_half_radius();
         self.blender
-            .counter_dot_product(self.blender.blend(to_blend, cell.blending_half_radius()))
+            .counter_dot_product(self.blender.blend(to_blend, radius), radius)
     }
 }
 
@@ -781,8 +782,9 @@ impl<
                 p.offset,
             )
         });
+        let radius = cell.blending_half_radius();
         self.blender
-            .counter_dot_product(self.blender.blend(to_blend, cell.blending_half_radius()))
+            .counter_dot_product(self.blender.blend(to_blend, radius), radius)
     }
 }
 
@@ -989,7 +991,7 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
     }
 
     #[inline]
-    fn counter_dot_product(&self, value: V) -> V {
+    fn counter_dot_product(&self, value: V, _blending_half_radius: f32) -> V {
         value
     }
 }
@@ -1014,20 +1016,15 @@ impl<V, I: VectorSpace, B: Blender<I, V>> Blender<I, V> for LocalBlend<B> {
     }
 
     #[inline]
-    fn counter_dot_product(&self, value: V) -> V {
-        self.blender.counter_dot_product(value)
+    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
+        self.blender
+            .counter_dot_product(value, blending_half_radius)
     }
 }
 
 /// A [`Blender`] built for [`SimplexGrid`](crate::cells::SimplexGrid) that smoothly blends values in a pleasant way.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplecticBlend;
-
-const SIMPLECTIC_R_SQUARED: f32 = 0.5;
-const SIMPLECTIC_R_EFFECT: f32 = (1.0 / SIMPLECTIC_R_SQUARED)
-    * (1.0 / SIMPLECTIC_R_SQUARED)
-    * (1.0 / SIMPLECTIC_R_SQUARED)
-    * (1.0 / SIMPLECTIC_R_SQUARED);
 
 fn general_simplex_weight(length_sqrd: f32, blending_half_radius: f32) -> f32 {
     // We do the unorm mapping here instead of later to prevent precision issues.
@@ -1051,8 +1048,9 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for Simp
     }
 
     #[inline]
-    fn counter_dot_product(&self, value: V) -> V {
-        value * (99.836_85 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
+        let sqr = blending_half_radius * blending_half_radius;
+        value * (99.836_85 * sqr * sqr) // adapted from libnoise
     }
 }
 
@@ -1067,8 +1065,9 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3, V> for Simp
     }
 
     #[inline]
-    fn counter_dot_product(&self, value: V) -> V {
-        value * (76.883_76 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
+        let sqr = blending_half_radius * blending_half_radius;
+        value * (76.883_76 * sqr * sqr) // adapted from libnoise
     }
 }
 
@@ -1083,8 +1082,9 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3A, V> for Sim
     }
 
     #[inline]
-    fn counter_dot_product(&self, value: V) -> V {
-        value * (76.883_76 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
+        let sqr = blending_half_radius * blending_half_radius;
+        value * (76.883_76 * sqr * sqr) // adapted from libnoise
     }
 }
 
@@ -1099,7 +1099,8 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec4, V> for Simp
     }
 
     #[inline]
-    fn counter_dot_product(&self, value: V) -> V {
-        value * (62.795_597 / SIMPLECTIC_R_EFFECT) // adapted from libnoise
+    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
+        let sqr = blending_half_radius * blending_half_radius;
+        value * (62.795_597 * sqr * sqr) // adapted from libnoise
     }
 }
