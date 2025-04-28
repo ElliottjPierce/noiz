@@ -48,6 +48,17 @@ pub struct ReverseUNorm;
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Negate;
 
+/// A [`NoiseFunction`] produces a ping ponging effect for UNorm values.
+/// The inner value represents the strength of the ping pong.
+/// Inspired by [fastnoise_lite](https://docs.rs/fastnoise-lite/latest/fastnoise_lite/).
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct PingPong(pub f32);
+
+/// A [`NoiseFunction`] produces a billowing effect for SNorm values.
+/// Inspired by [libnoise](https://docs.rs/libnoise/latest/libnoise/).
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Billow;
+
 macro_rules! impl_vector_spaces {
     ($n:ty) => {
         impl NoiseFunction<$n> for SNormToUNorm {
@@ -148,6 +159,15 @@ macro_rules! impl_vector_spaces {
                 -input
             }
         }
+
+        impl NoiseFunction<$n> for Billow {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input * 2.0 - 1.0
+            }
+        }
     };
 }
 
@@ -156,3 +176,15 @@ impl_vector_spaces!(Vec2);
 impl_vector_spaces!(Vec3);
 impl_vector_spaces!(Vec3A);
 impl_vector_spaces!(Vec4);
+
+impl NoiseFunction<f32> for PingPong {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        let t = (input + 1.0) * self.0;
+        let t = t - (t * 0.5).trunc() * 2.;
+
+        if t < 1.0 { t } else { 2. - t }
+    }
+}
