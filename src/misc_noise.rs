@@ -99,3 +99,33 @@ impl<I: Add<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
         input + offset
     }
 }
+
+/// A [`NoiseFunction`] that scales its input by some factor from an inner [`NoiseFunction`] `N`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Scaled<N> {
+    /// The inner [`NoiseFunction`].
+    pub scaler: N,
+    /// The scale's strength.
+    pub scale_strength: f32,
+}
+
+impl<N: Default> Default for Scaled<N> {
+    fn default() -> Self {
+        Self {
+            scaler: N::default(),
+            scale_strength: 1.0,
+        }
+    }
+}
+
+impl<I: Mul<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::Output>>>
+    NoiseFunction<I> for Scaled<N>
+{
+    type Output = I::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let offset = self.scaler.evaluate(input, seeds) * self.scale_strength;
+        input * offset
+    }
+}
