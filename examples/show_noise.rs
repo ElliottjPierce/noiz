@@ -226,7 +226,7 @@ fn main() -> AppExit {
                                         octave: (
                                             DomainWarp {
                                                 warper: Default::default(),
-                                                strength: 4.0,
+                                                strength: 2.0,
                                             },
                                             Default::default(),
                                         ),
