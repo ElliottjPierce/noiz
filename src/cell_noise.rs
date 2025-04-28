@@ -44,9 +44,13 @@ pub trait LengthFunction<T: VectorSpace> {
     fn max_for_element_max(&self, element_max: f32) -> f32;
     /// Computes the length or magatude of `vec`.
     /// Must always be non-negative
-    fn length_of(&self, vec: T) -> f32;
+    fn length_of(&self, vec: T) -> f32 {
+        self.length_from_ordering(self.length_ordering(vec))
+    }
     /// Returns some measure of the length of the `vec` such that if the length ordering of one vec is less than that of another, that same ordering applies to their actual lengths.
     fn length_ordering(&self, vec: T) -> f32;
+    /// Returns the length of some `T` based on [`LengthFunction::length_ordering`].
+    fn length_from_ordering(&self, ordering: f32) -> f32;
 }
 
 /// A [`LengthFunction`] and for "as the crow flyies" length
@@ -104,8 +108,8 @@ macro_rules! impl_distances {
             }
 
             #[inline]
-            fn length_of(&self, vec: $t) -> f32 {
-                self.length_ordering(vec).sqrt()
+            fn length_from_ordering(&self, ordering: f32) -> f32 {
+                ordering.sqrt()
             }
         }
 
@@ -121,8 +125,8 @@ macro_rules! impl_distances {
             }
 
             #[inline]
-            fn length_of(&self, vec: $t) -> f32 {
-                self.length_ordering(vec)
+            fn length_from_ordering(&self, ordering: f32) -> f32 {
+                ordering
             }
         }
 
@@ -138,8 +142,8 @@ macro_rules! impl_distances {
             }
 
             #[inline]
-            fn length_of(&self, vec: $t) -> f32 {
-                self.length_ordering(vec)
+            fn length_from_ordering(&self, ordering: f32) -> f32 {
+                ordering
             }
         }
 
@@ -157,8 +161,8 @@ macro_rules! impl_distances {
             }
 
             #[inline]
-            fn length_of(&self, vec: $t) -> f32 {
-                self.length_ordering(vec)
+            fn length_from_ordering(&self, ordering: f32) -> f32 {
+                ordering
             }
         }
 
@@ -174,8 +178,8 @@ macro_rules! impl_distances {
             }
 
             #[inline]
-            fn length_of(&self, vec: $t) -> f32 {
-                self.length_ordering(vec)
+            fn length_from_ordering(&self, ordering: f32) -> f32 {
+                ordering
             }
         }
 
@@ -191,8 +195,8 @@ macro_rules! impl_distances {
             }
 
             #[inline]
-            fn length_of(&self, vec: $t) -> f32 {
-                self.length_ordering(vec).powf(1.0 / self.0)
+            fn length_from_ordering(&self, ordering: f32) -> f32 {
+                ordering.powf(1.0 / self.0)
             }
         }
     };
@@ -350,14 +354,32 @@ impl_distance_to_edge!(Vec4);
 
 /// Represents a way to compute worley noise, noise based on the distances of the two nearest [`CellPoints`]s to the sample point.
 pub trait WorleyMode {
-    /// Evaluates the result of this worley mode with the these distances to the `nearest` and `next_nearest` [`CellPoints`]s.
-    fn evaluate_worley(
+    /// Evaluates the result of this worley mode with the these offsets from the [`CellPoints`]s accorfing to this [`LengthFunction`].
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        nearest: f32,
-        max_nearest: f32,
-        next_nearest: f32,
-        max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        max_least_length: f32,
+        max_next_least_length: f32,
     ) -> f32;
+}
+
+/// Returns the least and then next least values of `vals`.
+#[inline]
+fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
+    let mut least = f32::INFINITY;
+    let mut next_least = f32::INFINITY;
+
+    for v in vals {
+        if v < least {
+            next_least = least;
+            least = v;
+        } else {
+            next_least = next_least.min(v);
+        }
+    }
+
+    (least, next_least)
 }
 
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`].
@@ -367,14 +389,18 @@ pub struct WorleyPointDistance;
 
 impl WorleyMode for WorleyPointDistance {
     #[inline]
-    fn evaluate_worley(
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        nearest: f32,
-        max_nearest: f32,
-        _next_nearest: f32,
-        _max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        max_least_length: f32,
+        _max_next_least_length: f32,
     ) -> f32 {
-        nearest / max_nearest
+        let mut res = f32::INFINITY;
+        for p in points {
+            res = res.min(lengths.length_ordering(p));
+        }
+        lengths.length_from_ordering(res) / max_least_length
     }
 }
 
@@ -385,14 +411,15 @@ pub struct WorleySecondPointDistance;
 
 impl WorleyMode for WorleySecondPointDistance {
     #[inline]
-    fn evaluate_worley(
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        _nearest: f32,
-        _max_nearest: f32,
-        next_nearest: f32,
-        max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        _max_least_length: f32,
+        max_next_least_length: f32,
     ) -> f32 {
-        next_nearest / max_next_nearest
+        let (_least, next_least) = two_least(points.map(|p| lengths.length_ordering(p)));
+        lengths.length_from_ordering(next_least) / max_next_least_length
     }
 }
 
@@ -403,14 +430,16 @@ pub struct WorleyDifference;
 
 impl WorleyMode for WorleyDifference {
     #[inline]
-    fn evaluate_worley(
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        nearest: f32,
-        _max_nearest: f32,
-        next_nearest: f32,
-        max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        _max_least_length: f32,
+        max_next_least_length: f32,
     ) -> f32 {
-        (next_nearest - nearest) / max_next_nearest
+        let (least, next_least) = two_least(points.map(|p| lengths.length_ordering(p)));
+        (lengths.length_from_ordering(next_least) - lengths.length_from_ordering(least))
+            / max_next_least_length
     }
 }
 
@@ -421,14 +450,17 @@ pub struct WorleyAverage;
 
 impl WorleyMode for WorleyAverage {
     #[inline]
-    fn evaluate_worley(
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        nearest: f32,
-        max_nearest: f32,
-        next_nearest: f32,
-        max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        max_least_length: f32,
+        max_next_least_length: f32,
     ) -> f32 {
-        (next_nearest / max_next_nearest + nearest / max_nearest) * 0.5
+        let (least, next_least) = two_least(points.map(|p| lengths.length_ordering(p)));
+        (lengths.length_from_ordering(next_least) / max_next_least_length
+            + lengths.length_from_ordering(least) / max_least_length)
+            * 0.5
     }
 }
 
@@ -439,14 +471,16 @@ pub struct WorleyProduct;
 
 impl WorleyMode for WorleyProduct {
     #[inline]
-    fn evaluate_worley(
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        nearest: f32,
-        max_nearest: f32,
-        next_nearest: f32,
-        max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        max_least_length: f32,
+        max_next_least_length: f32,
     ) -> f32 {
-        (next_nearest * nearest) / (max_nearest * max_next_nearest)
+        let (least, next_least) = two_least(points.map(|p| lengths.length_ordering(p)));
+        (lengths.length_from_ordering(next_least) * lengths.length_from_ordering(least))
+            / (max_least_length * max_next_least_length)
     }
 }
 
@@ -457,15 +491,16 @@ pub struct WorleyRatio;
 
 impl WorleyMode for WorleyRatio {
     #[inline]
-    fn evaluate_worley(
+    fn evaluate_worley<I: VectorSpace>(
         &self,
-        nearest: f32,
-        _max_nearest: f32,
-        next_nearest: f32,
-        _max_next_nearest: f32,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        _max_least_length: f32,
+        _max_next_least_length: f32,
     ) -> f32 {
+        let (least, next_least) = two_least(points.map(|p| lengths.length_ordering(p)));
         // For this to be a division by zero, the points would need to be ontop of eachother, which is impossible.
-        nearest / next_nearest
+        lengths.length_from_ordering(least) / lengths.length_from_ordering(next_least)
     }
 }
 
@@ -490,32 +525,18 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let cell = self.cells.partition(input);
-
-        let mut least_length_order = f32::INFINITY;
-        let mut least_length_offset = I::ZERO;
-        let mut next_least_length_order = f32::INFINITY;
-        let mut next_least_length_offset = I::ZERO;
-
-        for point in cell.iter_points(*seeds) {
-            let length_order = self.length_mode.length_ordering(point.offset);
-            if length_order < least_length_order {
-                next_least_length_order = least_length_order;
-                next_least_length_offset = least_length_offset;
-                least_length_order = length_order;
-                least_length_offset = point.offset;
-            } else if length_order < next_least_length_order {
-                next_least_length_order = length_order;
-                next_least_length_offset = point.offset;
-            }
-        }
+        let max_least_length = self
+            .length_mode
+            .max_for_element_max(cell.nearest_1d_point_always_within());
+        let max_next_least_length = self
+            .length_mode
+            .max_for_element_max(cell.next_nearest_1d_point_always_within());
 
         self.worley_mode.evaluate_worley(
-            self.length_mode.length_of(least_length_offset),
-            self.length_mode
-                .max_for_element_max(cell.nearest_1d_point_always_within()),
-            self.length_mode.length_of(next_least_length_offset),
-            self.length_mode
-                .max_for_element_max(cell.next_nearest_1d_point_always_within()),
+            cell.iter_points(*seeds).map(|p| p.offset),
+            &self.length_mode,
+            max_least_length,
+            max_next_least_length,
         )
     }
 }
