@@ -599,6 +599,41 @@ fn main() -> AppExit {
                                 Default::default(),
                             ))),
                         },
+                        NoiseOption {
+                            name: "Derivative Fractal Simplex noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    NormedByDerivative<
+                                        f32,
+                                        EuclideanLength,
+                                        PeakDerivativeContribution,
+                                    >,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                QuickGradients,
+                                                true,
+                                            >,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    NormedByDerivative::default().with_falloff(0.5),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
                     ],
                     selected: 0,
                     image: dummy_image,

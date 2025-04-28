@@ -1,5 +1,7 @@
 //! This contains logic for dividing a domain into segments.
 
+use core::ops::{Add, AddAssign, Mul, MulAssign};
+
 use bevy_math::{
     Curve, IVec2, IVec3, IVec4, Vec2, Vec3, Vec3A, Vec4, VectorSpace,
     curve::derivatives::SampleDerivative,
@@ -79,12 +81,52 @@ pub trait DiferentiableCell: InterpolatableCell {
 }
 
 /// A value `T` with its gradieht `G`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct WithGradient<T, G> {
     /// The value.
     pub value: T,
     /// The gradient of the value.
     pub gradient: G,
+}
+
+impl<T: Add<T, Output = T>, G: Add<G, Output = G>> Add<Self> for WithGradient<T, G> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            value: self.value + rhs.value,
+            gradient: self.gradient + rhs.gradient,
+        }
+    }
+}
+
+impl<T: AddAssign<T>, G: AddAssign<G>> AddAssign<Self> for WithGradient<T, G> {
+    #[inline(always)]
+    fn add_assign(&mut self, rhs: Self) {
+        self.gradient += rhs.gradient;
+        self.value += rhs.value;
+    }
+}
+
+impl<T: Mul<f32, Output = T>, G: Mul<f32, Output = G>> Mul<f32> for WithGradient<T, G> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self {
+            value: self.value * rhs,
+            gradient: self.gradient * rhs,
+        }
+    }
+}
+
+impl<T: MulAssign<f32>, G: MulAssign<f32>> MulAssign<f32> for WithGradient<T, G> {
+    #[inline(always)]
+    fn mul_assign(&mut self, rhs: f32) {
+        self.gradient *= rhs;
+        self.value *= rhs;
+    }
 }
 
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainCell`].
