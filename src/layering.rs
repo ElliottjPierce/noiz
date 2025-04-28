@@ -515,7 +515,7 @@ where
 }
 
 /// This is effectively `Into<Vec4>` where any missing elements are left 0.
-pub trait DerivativeConvert: VectorSpace {
+pub trait DerivativeConvert {
     /// Converts to 4d, leaving missing dimensions 0.
     fn into_4d(self) -> Vec4;
 }
@@ -545,6 +545,34 @@ impl DerivativeConvert for Vec4 {
     #[inline]
     fn into_4d(self) -> Vec4 {
         self
+    }
+}
+
+impl DerivativeConvert for f32 {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        Vec4::new(self, 0.0, 0.0, 0.0)
+    }
+}
+
+impl DerivativeConvert for [f32; 2] {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        Vec4::new(self[0], self[1], 0.0, 0.0)
+    }
+}
+
+impl DerivativeConvert for [f32; 3] {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        Vec4::new(self[0], self[1], self[2], 0.0)
+    }
+}
+
+impl DerivativeConvert for [f32; 4] {
+    #[inline]
+    fn into_4d(self) -> Vec4 {
+        self.into()
     }
 }
 
