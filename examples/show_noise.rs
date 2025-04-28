@@ -553,7 +553,7 @@ fn main() -> AppExit {
                                 SNormToUNorm,
                             )>::from((
                                 LayeredNoise::new(
-                                    NormedByDerivative::default(),
+                                    NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
                                     FractalOctaves {
                                         octave: Default::default(),

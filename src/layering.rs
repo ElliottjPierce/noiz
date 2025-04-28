@@ -447,6 +447,14 @@ impl<T: VectorSpace, L: Default, C: Default> Default for NormedByDerivative<T, L
     }
 }
 
+impl<T: VectorSpace, L, C> NormedByDerivative<T, L, C> {
+    /// Sets [`NormedByDerivative::derivative_falloff`].
+    pub fn with_falloff(mut self, derivative_falloff: f32) -> Self {
+        self.derivative_falloff = derivative_falloff;
+        self
+    }
+}
+
 impl<T: VectorSpace, L: Copy, C: Copy> LayerResultContext for NormedByDerivative<T, L, C>
 where
     NormedResult<T>: LayerResult,
