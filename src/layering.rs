@@ -1,6 +1,6 @@
 //! Contains logic for layering different noise ontop of eachother.
 
-use core::{marker::PhantomData, ops::Div};
+use core::{f32, marker::PhantomData, ops::Div};
 
 use crate::{cell_noise::LengthFunction, cells::WithGradient, *};
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
@@ -555,5 +555,43 @@ where
             .derivative_contribution
             .sample_unchecked(total_derivative * self.derivative_falloff);
         self.running_total = self.running_total + value.value.into() * (weight * additional_weight);
+    }
+}
+
+/// A [`Curve`] designed for [`NormedByDerivatie`] that decreases from 1 to 0 for positive values.
+/// This produces sharper high values.
+///
+/// This is a fast, good default option.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct PeakDerivativeContribution;
+
+impl Curve<f32> for PeakDerivativeContribution {
+    #[inline]
+    fn domain(&self) -> bevy_math::curve::Interval {
+        // SAFETY: nothing is greater than infinity.
+        unsafe { bevy_math::curve::Interval::new(0.0, f32::INFINITY).unwrap_unchecked() }
+    }
+
+    #[inline]
+    fn sample_unchecked(&self, t: f32) -> f32 {
+        1.0 / (1.0 + t)
+    }
+}
+
+/// A [`Curve`] designed for [`NormedByDerivatie`] that decreases from 1 to 0 for positive values.
+/// This produces more rounded high values.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SmoothDerivativeContribution;
+
+impl Curve<f32> for SmoothDerivativeContribution {
+    #[inline]
+    fn domain(&self) -> bevy_math::curve::Interval {
+        // SAFETY: nothing is greater than infinity.
+        unsafe { bevy_math::curve::Interval::new(0.0, f32::INFINITY).unwrap_unchecked() }
+    }
+
+    #[inline]
+    fn sample_unchecked(&self, t: f32) -> f32 {
+        1.0 / (1.0 + t)
     }
 }
