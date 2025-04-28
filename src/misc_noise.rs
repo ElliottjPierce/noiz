@@ -142,3 +142,34 @@ impl<I, T: Copy> NoiseFunction<I> for Constant<T> {
         self.0
     }
 }
+
+/// A [`NoiseFunction`] that multiplies the result of two other [`NoiseFunction`]s at the same input.
+///
+/// This is generally commutative, so `N` and `M` can swap without changing what kind of noise it is (though due to rng, the results may differ).
+/// If you need to mask more than two noise functions, you can nest `M` or `N` in another [`Masked`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Masked<N, M>(pub N, pub M);
+
+impl<I: Copy, N: NoiseFunction<I>, M: NoiseFunction<I, Output: Mul<N::Output>>> NoiseFunction<I>
+    for Masked<N, M>
+{
+    type Output = <M::Output as Mul<N::Output>>::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        self.1.evaluate(input, seeds) * self.0.evaluate(input, seeds)
+    }
+}
+
+/// A [`NoiseFunction`] that multiplies the two results of an inner [`NoiseFunction`]s at each input.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct SelfMasked<N>(pub N);
+
+impl<I: Copy, N: NoiseFunction<I, Output: Mul<N::Output>>> NoiseFunction<I> for SelfMasked<N> {
+    type Output = <N::Output as Mul<N::Output>>::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        self.0.evaluate(input, seeds) * self.0.evaluate(input, seeds)
+    }
+}
