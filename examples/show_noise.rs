@@ -18,7 +18,7 @@ use noiz::{
     curves::{CubicSMin, Linear, Smoothstep},
     layering::{DomainWarp, FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
     misc_noise::RandomElements,
-    rng::{Random, UNorm},
+    rng::{Random, SNorm, UNorm},
 };
 
 /// Holds a version of the noise
@@ -245,7 +245,7 @@ fn main() -> AppExit {
                                     Persistence,
                                     FractalOctaves<(
                                         DomainWarp<
-                                            MixCellValuesForDomain<OrthoGrid, Smoothstep, UNorm>,
+                                            MixCellValuesForDomain<OrthoGrid, Smoothstep, SNorm>,
                                         >,
                                         Octave<
                                             MixCellValues<
