@@ -1,5 +1,5 @@
 //! Contains common adaptive [`NoiseFunction`].
-use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
+use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
 
 use crate::NoiseFunction;
 
@@ -192,5 +192,103 @@ impl NoiseFunction<f32> for PingPong {
         let t = t - (t * 0.5).trunc() * 2.;
 
         if t < 1.0 { t } else { 2. - t }
+    }
+}
+
+/// A [`NoiseFunction`] that samples some [`Curve`] directly.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct NoiseCurve<C>(pub C);
+
+impl<C: Curve<f32>> NoiseFunction<f32> for NoiseCurve<C> {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        self.0.sample_unchecked(input)
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec2> for NoiseCurve<C> {
+    type Output = Vec2;
+
+    #[inline]
+    fn evaluate(&self, input: Vec2, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_unchecked(t))
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec3> for NoiseCurve<C> {
+    type Output = Vec3;
+
+    #[inline]
+    fn evaluate(&self, input: Vec3, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_unchecked(t))
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec3A> for NoiseCurve<C> {
+    type Output = Vec3A;
+
+    #[inline]
+    fn evaluate(&self, input: Vec3A, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_unchecked(t))
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec4> for NoiseCurve<C> {
+    type Output = Vec4;
+
+    #[inline]
+    fn evaluate(&self, input: Vec4, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_unchecked(t))
+    }
+}
+
+/// A [`NoiseFunction`] that samples some [`Curve`] in the proper range by clamping.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct NoiseCurveClamped<C>(pub C);
+
+impl<C: Curve<f32>> NoiseFunction<f32> for NoiseCurveClamped<C> {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        self.0.sample_clamped(input)
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec2> for NoiseCurveClamped<C> {
+    type Output = Vec2;
+
+    #[inline]
+    fn evaluate(&self, input: Vec2, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_clamped(t))
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec3> for NoiseCurveClamped<C> {
+    type Output = Vec3;
+
+    #[inline]
+    fn evaluate(&self, input: Vec3, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_clamped(t))
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec3A> for NoiseCurveClamped<C> {
+    type Output = Vec3A;
+
+    #[inline]
+    fn evaluate(&self, input: Vec3A, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_clamped(t))
+    }
+}
+
+impl<C: Curve<f32>> NoiseFunction<Vec4> for NoiseCurveClamped<C> {
+    type Output = Vec4;
+
+    #[inline]
+    fn evaluate(&self, input: Vec4, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        input.map(|t| self.0.sample_clamped(t))
     }
 }
