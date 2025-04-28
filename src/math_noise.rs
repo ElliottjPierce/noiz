@@ -51,8 +51,14 @@ pub struct Negate;
 /// A [`NoiseFunction`] produces a ping ponging effect for UNorm values.
 /// The inner value represents the strength of the ping pong.
 /// Inspired by [fastnoise_lite](https://docs.rs/fastnoise-lite/latest/fastnoise_lite/).
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PingPong(pub f32);
+
+impl Default for PingPong {
+    fn default() -> Self {
+        Self(1.0)
+    }
+}
 
 /// A [`NoiseFunction`] produces a billowing effect for SNorm values.
 /// Inspired by [libnoise](https://docs.rs/libnoise/latest/libnoise/).

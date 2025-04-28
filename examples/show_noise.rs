@@ -16,7 +16,7 @@ use noiz::{
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{CubicSMin, Linear, Smoothstep},
     layering::{DomainWarp, FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
-    math_noise::SNormToUNorm,
+    math_noise::{Abs, Billow, PingPong, SNormToUNorm},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
@@ -462,6 +462,69 @@ fn main() -> AppExit {
                                 pealer: MixCellGradients::default(),
                                 layers: 5.0,
                             })),
+                        },
+                        NoiseOption {
+                            name: "Billowing Fractal Simplex noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<(
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                QuickGradients,
+                                            >,
+                                            Abs,
+                                            Billow,
+                                        )>,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Pingpong Fractal Simplex noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<(
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                QuickGradients,
+                                            >,
+                                            PingPong,
+                                        )>,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
                         },
                     ],
                     selected: 0,
