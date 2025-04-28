@@ -16,7 +16,8 @@ use noiz::{
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
     curves::{CubicSMin, Linear, Smoothstep},
-    layering::{FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
+    layering::{DomainWarp, FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
+    misc_noise::RandomElements,
     rng::{Random, UNorm},
 };
 
@@ -184,6 +185,92 @@ fn main() -> AppExit {
                                     Persistence(0.6),
                                     FractalOctaves {
                                         octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Domain Warped Fractal Simplex noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<(
+                                        DomainWarp<
+                                            RandomElements<
+                                                BlendCellGradients<
+                                                    SimplexGrid,
+                                                    SimplecticBlend,
+                                                    QuickGradients,
+                                                >,
+                                            >,
+                                        >,
+                                        Octave<
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                QuickGradients,
+                                            >,
+                                        >,
+                                    )>,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: (
+                                            DomainWarp {
+                                                warper: Default::default(),
+                                                strength: 1.0,
+                                            },
+                                            Default::default(),
+                                        ),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Domain Warped Fractal Perlin noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<(
+                                        DomainWarp<
+                                            RandomElements<
+                                                MixCellGradients<
+                                                    OrthoGrid,
+                                                    Smoothstep,
+                                                    QuickGradients,
+                                                >,
+                                            >,
+                                        >,
+                                        Octave<
+                                            MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                        >,
+                                    )>,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: (
+                                            DomainWarp {
+                                                warper: Default::default(),
+                                                strength: 1.0,
+                                            },
+                                            Default::default(),
+                                        ),
                                         lacunarity: 1.8,
                                         octaves: 8,
                                     },
