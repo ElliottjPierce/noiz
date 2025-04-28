@@ -180,6 +180,17 @@ impl<N> From<N> for Noise<N> {
     }
 }
 
+impl<I: VectorSpace, N: NoiseFunction<I>> NoiseFunction<I> for Noise<N> {
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        let res = self.noise.evaluate(input * self.frequency, seeds);
+        seeds.re_seed();
+        res
+    }
+}
+
 impl<N> ConfigurableNoise for Noise<N> {
     fn set_seed(&mut self, seed: u32) {
         self.seed = NoiseRng(seed);
