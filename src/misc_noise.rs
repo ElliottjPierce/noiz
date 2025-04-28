@@ -173,3 +173,18 @@ impl<I: Copy, N: NoiseFunction<I, Output: Mul<N::Output>>> NoiseFunction<I> for 
         self.0.evaluate(input, seeds) * self.0.evaluate(input, seeds)
     }
 }
+
+/// A [`NoiseFunction`] that just [`NoiseRng::re_seed`]s the seed.
+/// This is useful if one [`NoiseFunction`] is being used back to back and you want the two to be additionally disjoint.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ExtraRng;
+
+impl<T> NoiseFunction<T> for ExtraRng {
+    type Output = T;
+
+    #[inline]
+    fn evaluate(&self, input: T, seeds: &mut NoiseRng) -> Self::Output {
+        seeds.re_seed();
+        input
+    }
+}
