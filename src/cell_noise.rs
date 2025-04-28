@@ -383,7 +383,7 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
 }
 
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`] via a [`SmoothMin`].
-/// This is similar to [`WorleyPointDistance`] but instead of dividing nearby cells, it smooths between them.
+/// This is similar to [`WorleyPointDistance`], but instead of dividing nearby cells, it smooths between them.
 /// Note that when cells are close together, this can merge them into a single value.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WorleySmoothMin<T> {
@@ -421,6 +421,45 @@ impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
             );
         }
         lengths.length_from_ordering(res)
+    }
+}
+
+/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`] via a [`SmoothMin`].
+/// This is similar to [`WorleySmoothMin`], but instead smoothing every cell, it smooths the nearest two points.
+/// Note that when cells are close together, this can merge them into a single value.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WorleyNearestSmoothMin<T> {
+    /// The [`SmoothMin`].
+    pub smooth_min: T,
+    /// The inverse of the radius to smooth cells together.
+    /// Positive values between 0 and 1 are recommended.
+    pub smoothing_inverse_radius: f32,
+}
+
+impl<T: Default> Default for WorleyNearestSmoothMin<T> {
+    fn default() -> Self {
+        Self {
+            smooth_min: T::default(),
+            smoothing_inverse_radius: 1.0 / 16.0,
+        }
+    }
+}
+
+impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
+    #[inline]
+    fn evaluate_worley<I: VectorSpace>(
+        &self,
+        points: impl Iterator<Item = I>,
+        lengths: &impl LengthFunction<I>,
+        _max_least_length: f32,
+        _max_next_least_length: f32,
+    ) -> f32 {
+        let (least, next_least) = two_least(points.map(|p| lengths.length_ordering(p)));
+        lengths.length_from_ordering(self.smooth_min.smin_norm(
+            lengths.length_from_ordering(least),
+            lengths.length_from_ordering(next_least),
+            self.smoothing_inverse_radius,
+        ))
     }
 }
 
