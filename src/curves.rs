@@ -51,6 +51,38 @@ impl Curve<f32> for Smoothstep {
     }
 }
 
+/// Smoothstep interpolation composed on itself.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct DoubleSmoothstep;
+
+impl Curve<f32> for DoubleSmoothstep {
+    #[inline]
+    fn domain(&self) -> Interval {
+        Interval::UNIT
+    }
+
+    #[inline]
+    fn sample_unchecked(&self, t: f32) -> f32 {
+        Smoothstep.sample_unchecked(Smoothstep.sample_unchecked(t))
+    }
+}
+
+/// Smoothstep interpolation composed on itself twice.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct TripleSmoothstep;
+
+impl Curve<f32> for TripleSmoothstep {
+    #[inline]
+    fn domain(&self) -> Interval {
+        Interval::UNIT
+    }
+
+    #[inline]
+    fn sample_unchecked(&self, t: f32) -> f32 {
+        Smoothstep.sample_unchecked(Smoothstep.sample_unchecked(Smoothstep.sample_unchecked(t)))
+    }
+}
+
 /// Represents a way to smoothly take the minimum between two numbers.
 pub trait SmoothMin {
     /// Takes a smooth, minimum between `a` and `b`.
