@@ -50,3 +50,24 @@ impl Curve<f32> for Smoothstep {
         t * t * (t * (-2.0) + 3.0)
     }
 }
+
+/// Represents a way to smoothly take the minimum between two numbers.
+pub trait SmoothMin {
+    /// Takes a smooth, minimum between `a` and `b`.
+    /// The `blend_radius` denotes how close `a` and `b` must be to be smoothed together.
+    fn smin(a: f32, b: f32, blend_radius: f32) -> f32;
+}
+
+/// One way to produce a [`SmoothMin`] quickly.
+/// Inspired by [this](https://iquilezles.org/articles/smin/).
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct CubicSMin;
+
+impl SmoothMin for CubicSMin {
+    fn smin(a: f32, b: f32, blend_radius: f32) -> f32 {
+        let k = 4.0 * blend_radius;
+        let diff = (a - b).abs();
+        let h = 0f32.max(k - diff) / k;
+        a.min(b) - h * h * blend_radius
+    }
+}
