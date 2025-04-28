@@ -129,3 +129,16 @@ impl<I: Mul<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
         input * offset
     }
 }
+
+/// A [`NoiseFunction`] always returns a constant `T`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Constant<T>(pub T);
+
+impl<I, T: Copy> NoiseFunction<I> for Constant<T> {
+    type Output = T;
+
+    #[inline]
+    fn evaluate(&self, _input: I, _seeds: &mut NoiseRng) -> Self::Output {
+        self.0
+    }
+}
