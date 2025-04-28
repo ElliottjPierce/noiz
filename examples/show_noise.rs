@@ -226,7 +226,7 @@ fn main() -> AppExit {
                                         octave: (
                                             DomainWarp {
                                                 warper: Default::default(),
-                                                strength: 1.0,
+                                                strength: 4.0,
                                             },
                                             Default::default(),
                                         ),
@@ -265,7 +265,7 @@ fn main() -> AppExit {
                                         octave: (
                                             DomainWarp {
                                                 warper: Default::default(),
-                                                strength: 2.0,
+                                                strength: 4.0,
                                             },
                                             Default::default(),
                                         ),
@@ -306,7 +306,7 @@ fn main() -> AppExit {
                                         octave: (
                                             DomainWarp {
                                                 warper: Default::default(),
-                                                strength: 1.0,
+                                                strength: 4.0,
                                             },
                                             Default::default(),
                                         ),
