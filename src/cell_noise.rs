@@ -994,6 +994,31 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
     }
 }
 
+/// A [`Blender`] defers to another [`Blender`] `T` and scales its blending radius by some value.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub struct LocalBlend<T> {
+    /// The inner [`Blender`].
+    pub blender: T,
+    /// The scale of the blending radius.
+    /// Values in (0, 1) will decrease the blending, producing more localized values.
+    /// Values higher than 1 will produce discontinuities.
+    /// Negative values have no meaning (and may have either no effect or look really cool/strange).
+    pub radius_scale: f32,
+}
+
+impl<V, I: VectorSpace, B: Blender<I, V>> Blender<I, V> for LocalBlend<B> {
+    #[inline]
+    fn blend(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
+        self.blender
+            .blend(to_blend, blending_half_radius * self.radius_scale)
+    }
+
+    #[inline]
+    fn counter_dot_product(&self, value: V) -> V {
+        self.blender.counter_dot_product(value)
+    }
+}
+
 /// A [`Blender`] built for [`SimplexGrid`](crate::cells::SimplexGrid) that smoothly blends values in a pleasant way.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct SimplecticBlend;
