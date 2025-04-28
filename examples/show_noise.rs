@@ -10,9 +10,9 @@ use noiz::{
     Persistence,
     cell_noise::{
         BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
-        EuclideanLength, MixCellGradients, MixCellValues, PerCell, PerLeastDistances,
-        PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend, WorleyAverage,
-        WorleyDifference, WorleyPointDistance,
+        EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, PerCell,
+        PerLeastDistances, PerNearestPoint, QualityGradients, QuickGradients, SimplecticBlend,
+        WorleyAverage, WorleyDifference, WorleyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     common_adapters::SNormToUNorm,
@@ -242,6 +242,16 @@ fn main() -> AppExit {
                                     Voronoi,
                                     DistanceBlend<EuclideanLength>,
                                     Random<UNorm, f32>,
+                                >,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Blend voronoi gradient noise",
+                            noise: Box::new(Noise::<
+                                BlendCellGradients<
+                                    Voronoi,
+                                    DistanceBlend<ManhatanLength>,
+                                    QuickGradients,
                                 >,
                             >::default()),
                         },
