@@ -1,7 +1,5 @@
 //! An example for displaying noise as an image.
 
-use core::time::Duration;
-
 use bevy::{
     asset::RenderAssetUsages,
     prelude::*,
@@ -33,7 +31,7 @@ pub struct NoiseOption<V> {
 }
 
 impl NoiseOption<Vec2> {
-    fn display_image(&mut self, image: &mut Image) {
+    fn display_image(&self, image: &mut Image) {
         let width = image.width();
         let height = image.height();
 
@@ -42,6 +40,29 @@ impl NoiseOption<Vec2> {
                 let loc = Vec2::new(
                     x as f32 - (width / 2) as f32,
                     -(y as f32 - (height / 2) as f32),
+                );
+                let out = self.noise.sample_dyn(loc);
+
+                let color = Color::linear_rgb(out, out, out);
+                if let Err(err) = image.set_color_at(x, y, color) {
+                    warn!("Failed to set image color with error: {err:?}");
+                }
+            }
+        }
+    }
+}
+
+impl NoiseOption<Vec3> {
+    fn display_image(&self, image: &mut Image, z: f32) {
+        let width = image.width();
+        let height = image.height();
+
+        for x in 0..width {
+            for y in 0..height {
+                let loc = Vec3::new(
+                    x as f32 - (width / 2) as f32,
+                    -(y as f32 - (height / 2) as f32),
+                    z,
                 );
                 let out = self.noise.sample_dyn(loc);
 
@@ -78,6 +99,17 @@ impl NoiseOptions {
                 noise.display_image(images.get_mut(self.image.id()).unwrap());
                 Some(noise.name)
             }
+            ExampleMode::Image3d => {
+                let selected = self.selected % self.options3d.len();
+                let noise = &mut self.options3d[selected];
+                noise.noise.set_seed(self.seed);
+                noise.noise.set_period(self.period);
+                noise.display_image(
+                    images.get_mut(self.image.id()).unwrap(),
+                    time.elapsed_secs() * self.time_scale,
+                );
+                changed.then_some(noise.name)
+            }
             _ => None,
         };
         if let Some(name) = name {
@@ -92,6 +124,16 @@ impl NoiseOptions {
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum ExampleMode {
     Image,
+    Image3d,
+}
+
+impl ExampleMode {
+    fn change(&self) -> Self {
+        match *self {
+            ExampleMode::Image => ExampleMode::Image3d,
+            ExampleMode::Image3d => ExampleMode::Image,
+        }
+    }
 }
 
 fn main() -> AppExit {
@@ -103,6 +145,7 @@ fn main() -> AppExit {
         - Right arrow and left arrow change noise types.
         - W and S change seeds.
         - A and D change noise scale. Image resolution doesn't change so there are limits.
+        - B changes the noise mode (ex: image, image3d, etc.)
 
         "#
     );
@@ -110,7 +153,7 @@ fn main() -> AppExit {
         .add_plugins(DefaultPlugins)
         .add_systems(
             Startup,
-            |mut commands: Commands, mut images: ResMut<Assets<Image>>| {
+            |mut commands: Commands, mut images: ResMut<Assets<Image>>, time: Res<Time>| {
                 let dummy_image = images.add(Image::default_uninit());
                 let mut noise = NoiseOptions {
                     options2d: vec![
@@ -874,7 +917,7 @@ fn main() -> AppExit {
                     ],
                     selected: 0,
                     image: dummy_image,
-                    time_scale: 1.0,
+                    time_scale: 10.0,
                     seed: 0,
                     period: 32.0,
                     mode: ExampleMode::Image,
@@ -892,11 +935,7 @@ fn main() -> AppExit {
                 );
                 let handle = images.add(image);
                 noise.image = handle.clone();
-                noise.update(
-                    &mut images,
-                    &Time::from_duration(Duration::from_secs(0)).as_generic(),
-                    true,
-                );
+                noise.update(&mut images, &time, true);
                 commands.spawn((
                     ImageNode {
                         image: handle,
@@ -955,6 +994,11 @@ fn update_system(
     }
     if input.just_pressed(KeyCode::KeyA) {
         noise.period *= 0.5;
+        changed = true;
+    }
+
+    if input.just_pressed(KeyCode::KeyB) {
+        noise.mode = noise.mode.change();
         changed = true;
     }
 
