@@ -153,4 +153,4 @@ jobs:
       - name: Build and check doc
         run: cargo doc --workspace --all-features --no-deps --document-private-items --keep-going
         env:
-          RUSTFLAGS: "-C debuginfo=0 -D warnings"
+          RUSTDOCFLAGS: "-D warnings"
