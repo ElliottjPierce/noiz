@@ -19,7 +19,7 @@ use noiz::{
         DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
     },
-    math_noise::{Billow, PingPong, SNormToUNorm},
+    math_noise::{Billow, PingPong, SNormToUNorm, Spiral},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
@@ -40,7 +40,10 @@ impl NoiseOption {
 
         for x in 0..width {
             for y in 0..height {
-                let loc = Vec2::new(x as f32 - (x / 2) as f32, -(y as f32 - (y / 2) as f32));
+                let loc = Vec2::new(
+                    x as f32 - (width / 2) as f32,
+                    -(y as f32 - (height / 2) as f32),
+                );
                 let out = self.noise.sample_dyn(loc);
 
                 let color = Color::linear_rgb(out, out, out);
@@ -632,6 +635,13 @@ fn main() -> AppExit {
                                 ),
                                 Default::default(),
                             ))),
+                        },
+                        NoiseOption {
+                            name: "Domain Mapping",
+                            noise: Box::new(Noise::<(
+                                Spiral<EuclideanLength>,
+                                PerCell<OrthoGrid, Random<UNorm, f32>>,
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Usecase: Tileable Heightmap",

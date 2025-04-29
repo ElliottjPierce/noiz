@@ -1,7 +1,7 @@
 //! Contains common adaptive [`NoiseFunction`].
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
 
-use crate::NoiseFunction;
+use crate::{NoiseFunction, cell_noise::LengthFunction};
 
 /// A [`NoiseFunction`] that maps vectors from (-1,1) to (0, 1).
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
@@ -259,3 +259,24 @@ impl_mapped_vector_spaces!(Vec2);
 impl_mapped_vector_spaces!(Vec3);
 impl_mapped_vector_spaces!(Vec3A);
 impl_mapped_vector_spaces!(Vec4);
+
+/// A [`NoiseFunction`] that turns a cartesian cordinate into a polar cordinate.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Spiral<L>(pub f32, pub L);
+
+impl<L: Default> Default for Spiral<L> {
+    fn default() -> Self {
+        Self(1.0, L::default())
+    }
+}
+
+impl<L: LengthFunction<Vec2>> NoiseFunction<Vec2> for Spiral<L> {
+    type Output = Vec2;
+
+    #[inline]
+    fn evaluate(&self, input: Vec2, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        let len = self.1.length_of(input);
+        let theta = input.to_angle();
+        Vec2::new(theta * self.0 * len, len)
+    }
+}
