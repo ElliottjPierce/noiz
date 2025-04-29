@@ -6,7 +6,7 @@ use crate::{cell_noise::LengthFunction, cells::WithGradient, *};
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 use rng::NoiseRng;
 
-/// This represents the context of some [`NoiseResult`].
+/// This represents the context of some [`LayerResult`].
 pub trait LayerResultContext {
     /// This is the type that actually computes the result based on this context.
     type Result: LayerResult;
@@ -700,7 +700,7 @@ where
     }
 }
 
-/// A [`Curve`] designed for [`NormedByDerivatie`] that decreases from 1 to 0 for positive values.
+/// A [`Curve`] designed for [`NormedByDerivative`] that decreases from 1 to 0 for positive values.
 /// This produces sharper high values.
 ///
 /// This is a fast, good default option.
@@ -723,7 +723,7 @@ impl Curve<f32> for PeakDerivativeContribution {
     }
 }
 
-/// A [`Curve`] designed for [`NormedByDerivatie`] that decreases from 1 to 0 for positive values.
+/// A [`Curve`] designed for [`NormedByDerivative`] that decreases from 1 to 0 for positive values.
 /// This produces more rounded high values.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]

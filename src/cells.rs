@@ -156,7 +156,7 @@ impl<T: MulAssign<T>, G: MulAssign<G>> MulAssign<Self> for WithGradient<T, G> {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct CellPoint<T> {
     /// Identifies this point roughly from others, roughly meaning the ids are not necessarily unique.
-    /// The ids must be determenistaic per point. Ids for the same point must match, even if they are from different [`DomainCells`].
+    /// The ids must be determenistaic per point. Ids for the same point must match, even if they are from different [`DomainCell`]s.
     pub rough_id: u32,
     /// Defines the offset of the sample point from this one.
     pub offset: T,

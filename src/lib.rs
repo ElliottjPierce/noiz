@@ -115,7 +115,7 @@ pub trait Sampleable<I: VectorSpace> {
     /// Represents the raw result of the sample.
     type Result;
 
-    /// Samples the [`Noise`] at `loc`, returning the raw [`NoiseResult`] and the rng used for the sample.
+    /// Samples the [`Noise`] at `loc`, returning the raw [`Sampleable::Result`] and the rng used for the sample.
     /// This result may be incomplete and may depend on some cleanup to make the result meaningful.
     /// Use this with caution.
     fn sample_raw(&self, loc: I) -> (Self::Result, NoiseRng);

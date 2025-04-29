@@ -248,7 +248,7 @@ pub trait ConcreteAnyValueFromBits: AnyValueFromBits<Self::Concrete> {
     type Concrete;
 }
 
-/// A [`NoiseFunction`] that takes any [`RngNoiseInput`] and produces a fully random `u32`.
+/// A [`NoiseFunction`] that takes any [`NoiseRngInput`] and produces a fully random `u32`.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -329,7 +329,7 @@ pub trait AnyValueFromBits<T> {
     /// This will only hold true if the values are always mixed linearly. (The linear interpolator `t` doesn't need to be linear but the end lerp does.)
     fn linear_equivalent_value(&self, bits: u32) -> T;
 
-    /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](linear_equivalent_value::AnyValueFromBits)
+    /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](AnyValueFromBits::linear_equivalent_value)
     fn finish_linear_equivalent_value(&self, value: T) -> T;
 
     /// Returns the derivative of [`finish_linear_equivalent_value`](AnyValueFromBits::finish_linear_equivalent_value).

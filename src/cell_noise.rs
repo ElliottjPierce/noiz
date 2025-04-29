@@ -228,8 +228,8 @@ impl_distances!(Vec3, 3.0, 1.732_050_8);
 impl_distances!(Vec3A, 3.0, 1.732_050_8);
 impl_distances!(Vec4, 4.0, 2.0);
 
-/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoint`]s form a [`Partitioner`] `P`,
-/// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoint`]s.
+/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoint`](crate::cells::CellPoint)s form a [`Partitioner`] `P`,
+/// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoint`](crate::cells::CellPoint)s.
 /// The [`LengthFunction`] `L` is used to determine which point is nearest.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -379,9 +379,9 @@ impl_distance_to_edge!(Vec3);
 impl_distance_to_edge!(Vec3A);
 impl_distance_to_edge!(Vec4);
 
-/// Represents a way to compute worley noise, noise based on the distances of the two nearest [`CellPoints`]s to the sample point.
+/// Represents a way to compute worley noise, noise based on the distances of the two nearest [`CellPoint`](crate::cells::CellPoint)s to the sample point.
 pub trait WorleyMode {
-    /// Evaluates the result of this worley mode with the these offsets from the [`CellPoints`]s accorfing to this [`LengthFunction`].
+    /// Evaluates the result of this worley mode with the these offsets from the [`CellPoint`](crate::cells::CellPoint)s accorfing to this [`LengthFunction`].
     fn evaluate_worley<I: VectorSpace>(
         &self,
         points: impl Iterator<Item = I>,
@@ -409,7 +409,7 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
     (least, next_least)
 }
 
-/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`] via a [`SmoothMin`].
+/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint) via a [`SmoothMin`].
 /// This is similar to [`WorleyPointDistance`], but instead of dividing nearby cells, it smooths between them.
 /// Note that when cells are close together, this can merge them into a single value.
 #[derive(Clone, Copy, PartialEq)]
@@ -454,7 +454,7 @@ impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`] via a [`SmoothMin`].
+/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint) via a [`SmoothMin`].
 /// This is similar to [`WorleySmoothMin`], but instead smoothing every cell, it smooths the nearest two points.
 /// Note that when cells are close together, this can merge them into a single value.
 #[derive(Clone, Copy, PartialEq)]
@@ -496,7 +496,7 @@ impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint).
 /// This is traditional worley noise.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -521,7 +521,7 @@ impl WorleyMode for WorleyPointDistance {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm distance to the second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm distance to the second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -543,7 +543,7 @@ impl WorleyMode for WorleySecondPointDistance {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -566,7 +566,7 @@ impl WorleyMode for WorleyDifference {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm average of the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm average of the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -590,7 +590,7 @@ impl WorleyMode for WorleyAverage {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm product between the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm product between the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -613,7 +613,7 @@ impl WorleyMode for WorleyProduct {
     }
 }
 
-/// A [`WorleyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`].
+/// A [`WorleyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -637,7 +637,7 @@ impl WorleyMode for WorleyRatio {
 }
 
 /// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`]s,
-/// and then provides the distance to each [`CellPoints`] to some [`WorleyMode`] `M` by some [`LengthFunction`] `L`.
+/// and then provides the distance to each [`CellPoint`](crate::cells::CellPoint)s to some [`WorleyMode`] `M` by some [`LengthFunction`] `L`.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -683,7 +683,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
-    /// The [`FastRandomMixed`].
+    /// The [`ConcreteAnyValueFromBits`].
     pub noise: N,
     /// The [`Curve`].
     pub curve: C,
@@ -744,7 +744,7 @@ impl<
 pub struct MixCellValuesForDomain<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
-    /// The [`FastRandomMixed`].
+    /// The [`ConcreteAnyValueFromBits`].
     pub noise: N,
     /// The [`Curve`].
     pub curve: C,
@@ -802,13 +802,13 @@ pub trait Blender<I: VectorSpace, V> {
     /// `blending_half_radius` cuts off the blend before it hits discontinuities.
     fn blend(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V;
 
-    /// When the value is computed as the dot product of the `offset` passed to [`weigh_value`](Blender::weigh_value), the value is already weighted to some extent.
+    /// When the values to blend are computed as the dot product of the `offset`s passed to [`blend`](Blender::blend), the values are already weighted to some extent.
     /// This counteracts that weight by opperating on the already weighted value.
     /// Assuming the collected value was the dot of some vec `a` with this `offset`, this will map the value into `±|a|`
     fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V;
 }
 
-/// A [`NoiseFunction`] that blends values sourced from a [`FastRandomMixed`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// A [`NoiseFunction`] that blends values sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -816,7 +816,7 @@ pub trait Blender<I: VectorSpace, V> {
 pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
-    /// The [`FastRandomMixed`].
+    /// The [`ConcreteAnyValueFromBits`].
     pub noise: N,
     /// The [`Blender`].
     pub blender: B,
