@@ -253,7 +253,6 @@ pub trait ConcreteAnyValueFromBits: AnyValueFromBits<Self::Concrete> {
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
-#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Random<R, T>(pub R, pub PhantomData<T>);
 
 impl<O, R: AnyValueFromBits<O>> AnyValueFromBits<O> for Random<R, O> {
