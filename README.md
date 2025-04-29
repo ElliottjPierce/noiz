@@ -121,4 +121,41 @@ You can get a taste of what's possible by running the example.
 
 ## Cargo Config
 
+### Performance
+
+One of the reasons this crate is so fast is due to inlining and generics.
+Composing types together (`MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>`) is just as fast as having one big complex specialized function.
+However, with no optimizations, this can still be slow.
+To get the most out of performance, add to Cargo.toml:
+
+```toml
+[profile.dev]
+opt-level = 3 # go fast, even in development
+
+[profile.test]
+opt-level = 1  # You probably won't be testing bulk noise functions. Trade runtime speed for compile time speed.
+
+[profile.release]
+# Maximum Link Time Optimization for best performance
+lto = "fat"
+# Single codegen unit maximizes optimization opportunities
+codegen-units = 1
+# Disable incremental compilation for maximum optimization
+incremental = false
+opt-level = 3
+
+[build]
+rustflags = ["-O"] # More optimizations
+```
+
+See also [this](https://github.com/lineality/rust_compile_optimizations_cheatsheet) amazing cheat sheet.
+
+### Features
+
+Either "std" (on by default), "libm" (enhanced determinism), or "nostd-libm" (use "libm" if and only if "std" is not available) must be enabled.
+The "serialize" (on by default) feature enables serialization via [serde](https://docs.rs/serde/latest/serde/).
+The "bevy_reflect" (on by default) feature enables reflection via [bevy_reflect](https://docs.rs/bevy_reflect/latest/bevy_reflect/).
+The "debug" (off by default) feature enables the `Debug` trait where possible.
+This is off by default because it increases build times, etc due to the complex type combinations, but it can be turned on for, well, debugging.
+
 ## Comparing to Other Noise Crates
