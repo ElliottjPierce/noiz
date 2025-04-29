@@ -43,8 +43,8 @@ impl NoiseRng {
         let mut r1 = i ^ Self::KEY;
         let mut r2 = i ^ self.0;
         r2 = r2.rotate_left(11) ^ r1;
-        r1 = r1.wrapping_mul(r2).wrapping_add(r1);
-        r2 = r2.rotate_left(27) ^ r1;
+        r1 = r1.wrapping_mul(r2);
+        r2 = r2.rotate_left(27);
         r1.wrapping_mul(r2)
 
         // let a = i.rotate_left(11) ^ i;
