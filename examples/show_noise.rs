@@ -1,5 +1,7 @@
 //! An example for displaying noise as an image.
 
+use core::time::Duration;
+
 use bevy::{
     asset::RenderAssetUsages,
     prelude::*,
@@ -56,29 +58,34 @@ impl NoiseOption<Vec2> {
 #[derive(Resource)]
 pub struct NoiseOptions {
     options2d: Vec<NoiseOption<Vec2>>,
+    options3d: Vec<NoiseOption<Vec3>>,
     selected: usize,
     mode: ExampleMode,
+    time_scale: f32,
     image: Handle<Image>,
     seed: u32,
     period: f32,
 }
 
 impl NoiseOptions {
-    fn update(&mut self, images: &mut Assets<Image>) {
+    fn update(&mut self, images: &mut Assets<Image>, time: &Time, changed: bool) {
         let name = match self.mode {
-            ExampleMode::Image => {
+            ExampleMode::Image if changed => {
                 let selected = self.selected % self.options2d.len();
                 let noise = &mut self.options2d[selected];
                 noise.noise.set_seed(self.seed);
                 noise.noise.set_period(self.period);
                 noise.display_image(images.get_mut(self.image.id()).unwrap());
-                &noise.name
+                Some(noise.name)
             }
+            _ => None,
         };
-        println!(
-            "Updated {} {:?}, period: {} seed: {}.",
-            name, self.mode, self.period, self.seed
-        );
+        if let Some(name) = name {
+            println!(
+                "Updated {} {:?}, period: {} seed: {}.",
+                name, self.mode, self.period, self.seed
+            );
+        }
     }
 }
 
@@ -763,8 +770,111 @@ fn main() -> AppExit {
                             ))),
                         },
                     ],
+                    options3d: vec![
+                        NoiseOption {
+                            name: "Basic white noise",
+                            noise: Box::new(
+                                Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default(),
+                            ),
+                        },
+                        NoiseOption {
+                            name: "Simlex white noise",
+                            noise: Box::new(
+                                Noise::<PerCell<SimplexGrid, Random<UNorm, f32>>>::default(),
+                            ),
+                        },
+                        NoiseOption {
+                            name: "hexagonal noise",
+                            noise: Box::new(Noise::<
+                                PerNearestPoint<SimplexGrid, EuclideanLength, Random<UNorm, f32>>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Smooth value noise",
+                            noise: Box::new(Noise::<
+                                MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Simlex value noise",
+                            noise: Box::new(Noise::<
+                                BlendCellValues<SimplexGrid, SimplecticBlend, Random<UNorm, f32>>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Perlin noise",
+                            noise: Box::new(Noise::<(
+                                MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                SNormToUNorm,
+                            )>::default()),
+                        },
+                        NoiseOption {
+                            name: "Simlex noise",
+                            noise: Box::new(Noise::<(
+                                BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>,
+                                SNormToUNorm,
+                            )>::default()),
+                        },
+                        NoiseOption {
+                            name: "Fractal Perlin noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Fractal Simplex noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalOctaves<
+                                        Octave<
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                QuickGradients,
+                                            >,
+                                        >,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalOctaves {
+                                        octave: Default::default(),
+                                        lacunarity: 1.8,
+                                        octaves: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                    ],
                     selected: 0,
                     image: dummy_image,
+                    time_scale: 1.0,
                     seed: 0,
                     period: 32.0,
                     mode: ExampleMode::Image,
@@ -782,7 +892,11 @@ fn main() -> AppExit {
                 );
                 let handle = images.add(image);
                 noise.image = handle.clone();
-                noise.update(&mut images);
+                noise.update(
+                    &mut images,
+                    &Time::from_duration(Duration::from_secs(0)).as_generic(),
+                    true,
+                );
                 commands.spawn((
                     ImageNode {
                         image: handle,
@@ -805,6 +919,7 @@ fn main() -> AppExit {
 fn update_system(
     mut noise: ResMut<NoiseOptions>,
     mut images: ResMut<Assets<Image>>,
+    time: Res<Time>,
     input: Res<ButtonInput<KeyCode>>,
 ) {
     let mut changed = false;
@@ -843,7 +958,5 @@ fn update_system(
         changed = true;
     }
 
-    if changed {
-        noise.update(&mut images);
-    }
+    noise.update(&mut images, &time, changed);
 }
