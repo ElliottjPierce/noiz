@@ -207,6 +207,62 @@ impl WrappingAmount<IVec4> for i32 {
         corner % *self
     }
 }
+impl WrappingAmount<IVec2> for IVec4 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec2) -> IVec2 {
+        corner % self.truncate().truncate()
+    }
+}
+impl WrappingAmount<IVec3> for IVec4 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec3) -> IVec3 {
+        corner % self.truncate()
+    }
+}
+impl WrappingAmount<IVec4> for IVec4 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec4) -> IVec4 {
+        corner % *self
+    }
+}
+impl WrappingAmount<IVec2> for IVec3 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec2) -> IVec2 {
+        corner % self.truncate()
+    }
+}
+impl WrappingAmount<IVec3> for IVec3 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec3) -> IVec3 {
+        corner % *self
+    }
+}
+impl WrappingAmount<IVec4> for IVec3 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec4) -> IVec4 {
+        (corner.truncate() % *self).extend(corner.w)
+    }
+}
+impl WrappingAmount<IVec2> for IVec2 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec2) -> IVec2 {
+        corner % *self
+    }
+}
+impl WrappingAmount<IVec3> for IVec2 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec3) -> IVec3 {
+        (corner.truncate() % *self).extend(corner.z)
+    }
+}
+impl WrappingAmount<IVec4> for IVec2 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec4) -> IVec4 {
+        (corner.truncate().truncate() % *self)
+            .extend(corner.z)
+            .extend(corner.w)
+    }
+}
 
 impl<F, I, W> WorleyDomainCell for SquareCell<F, I, W>
 where
