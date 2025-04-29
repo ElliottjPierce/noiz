@@ -271,6 +271,61 @@ impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: 
     }
 }
 
+/// Represents a [`LayerOperation`] that configures an inner layer by changing its weight.
+/// This is currently only implemented for [`Persistence`], but can work for anything by implementing [`LayerOperation`] on this type.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PersistenceConfig<T> {
+    /// The [`LayerOperation`] having its weights configured.
+    pub configured: T,
+    /// The persistence / weight multiplier.
+    /// A values of 0 is invalid (and makes no sense).
+    pub config: f32,
+}
+
+impl<T: Default> Default for PersistenceConfig<T> {
+    fn default() -> Self {
+        Self {
+            configured: T::default(),
+            config: 2.0,
+        }
+    }
+}
+
+impl<T: LayerOperation<R, PersistenceWeights>, R: LayerResultContext>
+    LayerOperation<R, PersistenceWeights> for PersistenceConfig<T>
+{
+    #[inline]
+    fn prepare(&self, result_context: &mut R, weights: &mut PersistenceWeights) {
+        weights.persistence.0 *= self.config;
+        weights.next *= self.config;
+        self.configured.prepare(result_context, weights);
+        weights.persistence.0 /= self.config;
+        weights.next /= self.config;
+    }
+}
+
+impl<T: LayerOperationFor<I, R, PersistenceWeights>, I: VectorSpace, R: LayerResultContext>
+    LayerOperationFor<I, R, PersistenceWeights> for PersistenceConfig<T>
+where
+    Self: LayerOperation<R, PersistenceWeights>,
+{
+    #[inline]
+    fn do_noise_op(
+        &self,
+        seeds: &mut NoiseRng,
+        working_loc: &mut I,
+        result: &mut <R as LayerResultContext>::Result,
+        weights: &mut PersistenceWeights,
+    ) {
+        weights.persistence.0 *= self.config;
+        weights.next *= self.config;
+        self.configured
+            .do_noise_op(seeds, working_loc, result, weights);
+        weights.persistence.0 /= self.config;
+        weights.next /= self.config;
+    }
+}
+
 /// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FractalOctaves<T> {

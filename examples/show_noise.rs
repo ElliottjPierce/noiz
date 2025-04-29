@@ -17,7 +17,7 @@ use noiz::{
     curves::{CubicSMin, DoubleSmoothstep, Linear, Smoothstep},
     layering::{
         DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
-        PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
+        PeakDerivativeContribution, Persistence, PersistenceConfig, SmoothDerivativeContribution,
     },
     math_noise::{Billow, PingPong, SNormToUNorm, Spiral},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
@@ -702,14 +702,16 @@ fn main() -> AppExit {
                                                     >,
                                                 >,
                                             )>,
-                                            Octave<(
-                                                MixCellGradients<
-                                                    OrthoGrid<i32>,
-                                                    Smoothstep,
-                                                    QuickGradients,
-                                                >,
-                                                Billow,
-                                            )>,
+                                            PersistenceConfig<
+                                                Octave<(
+                                                    MixCellGradients<
+                                                        OrthoGrid<i32>,
+                                                        Smoothstep,
+                                                        QuickGradients,
+                                                    >,
+                                                    Billow,
+                                                )>,
+                                            >,
                                         )>,
                                         FractalOctaves<
                                             Octave<
@@ -740,15 +742,17 @@ fn main() -> AppExit {
                                                         curve: Smoothstep,
                                                     }),
                                                 )),
-                                                Octave((
-                                                    MixCellGradients {
-                                                        // The size of the tile
-                                                        cells: OrthoGrid(256),
-                                                        gradients: QuickGradients,
-                                                        curve: Smoothstep,
-                                                    },
-                                                    Billow::default(),
-                                                )),
+                                                PersistenceConfig {
+                                                    configured: Octave((
+                                                        MixCellGradients {
+                                                            cells: OrthoGrid(256),
+                                                            gradients: QuickGradients,
+                                                            curve: Smoothstep,
+                                                        },
+                                                        Billow::default(),
+                                                    )),
+                                                    config: 2.0,
+                                                },
                                             ),
                                             lacunarity: 1.8,
                                             octaves: 6,
@@ -849,12 +853,6 @@ fn main() -> AppExit {
                             )>::default()),
                         },
                     ],
-                    selected: 0,
-                    image: dummy_image,
-                    time_scale: 10.0,
-                    seed: 0,
-                    period: 32.0,
-                    mode: ExampleMode::Image,
                     options4d: vec![
                         NoiseOption {
                             name: "Basic white noise",
@@ -935,6 +933,12 @@ fn main() -> AppExit {
                             )>::default()),
                         },
                     ],
+                    selected: 0,
+                    image: dummy_image,
+                    time_scale: 10.0,
+                    seed: 0,
+                    period: 32.0,
+                    mode: ExampleMode::Image,
                 };
                 let image = Image::new_fill(
                     Extent3d {
