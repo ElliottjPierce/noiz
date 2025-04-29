@@ -38,12 +38,20 @@ impl NoiseRng {
     /// Note that there will be more entropy in higher bits than others.
     #[inline(always)]
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
-        let i = input.collapse_for_rng();
+        let mut r1 = input.collapse_for_rng();
+        let mut r2 = self.0 ^ r1;
+        r1 = r1.rotate_left(11);
+        r2 = r2.rotate_right(11) ^ r1;
+        r1 = r1.wrapping_mul(r2);
+        // r2 = r2.rotate_left(11);
+        r1 = r1.rotate_left(11);
+        r1.wrapping_mul(r2)
 
-        let a = i.rotate_left(11) ^ i ^ self.0;
-        let b = a.wrapping_mul(a);
-        let c = b.rotate_right(11);
-        c.wrapping_mul(c)
+        // let i = input.collapse_for_rng();
+        // let a = i.rotate_left(11) ^ i ^ self.0;
+        // let b = a.wrapping_mul(a);
+        // let c = b.rotate_right(11);
+        // c.wrapping_mul(c)
 
         // Good hash. Pretty fast. Not as fast as others.
         // let a = i
