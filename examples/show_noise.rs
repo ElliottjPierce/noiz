@@ -637,7 +637,7 @@ fn main() -> AppExit {
                             ))),
                         },
                         NoiseOption {
-                            name: "Domain Mapping",
+                            name: "Domain Mapping White",
                             noise: Box::new(Noise::<(
                                 Spiral<EuclideanLength>,
                                 PerCell<OrthoGrid, Random<UNorm, f32>>,

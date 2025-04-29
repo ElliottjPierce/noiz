@@ -262,11 +262,11 @@ impl_mapped_vector_spaces!(Vec4);
 
 /// A [`NoiseFunction`] that turns a cartesian cordinate into a polar cordinate.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Spiral<L>(pub f32, pub L);
+pub struct Spiral<L>(pub L);
 
 impl<L: Default> Default for Spiral<L> {
     fn default() -> Self {
-        Self(1.0, L::default())
+        Self(L::default())
     }
 }
 
@@ -275,8 +275,8 @@ impl<L: LengthFunction<Vec2>> NoiseFunction<Vec2> for Spiral<L> {
 
     #[inline]
     fn evaluate(&self, input: Vec2, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-        let len = self.1.length_of(input);
-        let theta = input.to_angle();
-        Vec2::new(theta * self.0 * len, len)
+        let len = self.0.length_of(input);
+        let theta = (input.to_angle() * core::f32::consts::FRAC_1_PI) + 1.0;
+        Vec2::new(theta * len.floor(), len)
     }
 }
