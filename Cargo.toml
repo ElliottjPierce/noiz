@@ -5,6 +5,12 @@ edition = "2024"
 
 [dependencies]
 bevy_math = { version = "0.16", default-features = false, features = ["curve"] }
+bevy_reflect = { version = "0.16", default-features = false, features = [
+  "glam",
+], optional = true }
+serde = { version = "1", default-features = false, features = [
+  "derive",
+], optional = true }
 
 [dev-dependencies]
 # for examples
@@ -19,9 +25,12 @@ libnoise = "1.1"
 [features]
 default = ["std"]
 
-std = ["bevy_math/std"]
+std = ["bevy_math/std", "bevy_reflect?/std", "serde?/std"]
 libm = ["bevy_math/libm"]
 nostd-libm = ["bevy_math/nostd-libm"]
+
+serialize = ["dep:serde", "bevy_math/serialize"]
+bevy_reflect = ["dep:bevy_reflect"]
 
 [profile.dev]
 opt-level = 3

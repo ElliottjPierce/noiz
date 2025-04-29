@@ -126,6 +126,8 @@ impl_all_operation_tuples!(
 
 /// Represents a [`NoiseFunction`] based on layers of [`LayerOperation`]s.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct LayeredNoise<R, W, N, const DONT_FINISH: bool = false> {
     result_context: R,
     weight_settings: W,
@@ -202,6 +204,8 @@ impl<
 
 /// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Octave<T>(pub T);
 
 impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for Octave<T> {
@@ -234,6 +238,8 @@ impl<
 
 /// Represents a [`LayerOperationFor`] that warps it's input by some [`NoiseFunction`] `T`.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct DomainWarp<T> {
     /// The [`NoiseFunction`] doing the warping.
     pub warper: T,
@@ -274,6 +280,8 @@ impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: 
 /// Represents a [`LayerOperation`] that configures an inner layer by changing its weight.
 /// This is currently only implemented for [`Persistence`], but can work for anything by implementing [`LayerOperation`] on this type.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct PersistenceConfig<T> {
     /// The [`LayerOperation`] having its weights configured.
     pub configured: T,
@@ -328,6 +336,8 @@ where
 
 /// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct FractalOctaves<T> {
     /// The [`LayerOperation`] to perform.
     pub octave: T,
@@ -389,6 +399,8 @@ impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: La
 /// Values greater than 1 make later octaves weigh more, while values less than 1 make earlier octaves weigh more.
 /// A value of 1 makes all octaves equally weighted. Values of 0 or nan have no defined meaning.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Persistence(pub f32);
 
 impl Default for Persistence {
@@ -435,6 +447,8 @@ impl LayerWeightsSettings for Persistence {
 ///
 /// `T` is the [`VectorSpace`] you want to collect.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Normed<T> {
     marker: PhantomData<T>,
     total_weights: f32,
@@ -505,6 +519,8 @@ where
 /// `T` is the [`VectorSpace`] you want to collect.
 /// `L` is the [`LengthFunction`] to calculate the derivative from the gradient.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct NormedByDerivative<T, L, C> {
     /// The [`LengthFunction`] to calculate the derivative from the gradient.
     pub derivative_calculator: L,
@@ -681,6 +697,8 @@ where
 ///
 /// This is a fast, good default option.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct PeakDerivativeContribution;
 
 impl Curve<f32> for PeakDerivativeContribution {
@@ -699,6 +717,8 @@ impl Curve<f32> for PeakDerivativeContribution {
 /// A [`Curve`] designed for [`NormedByDerivatie`] that decreases from 1 to 0 for positive values.
 /// This produces more rounded high values.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct SmoothDerivativeContribution;
 
 impl Curve<f32> for SmoothDerivativeContribution {

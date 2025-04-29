@@ -150,6 +150,8 @@ pub trait DynamicSampleable<I: VectorSpace, T>: ConfigurableNoise + SampleableFo
 
 /// This is the standard end interface of a [`NoiseFunction`].
 #[derive(Debug, PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Noise<N> {
     /// The [`NoiseFunction`] powering this noise.
     pub noise: N,

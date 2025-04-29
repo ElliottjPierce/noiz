@@ -12,6 +12,8 @@ use crate::NoiseFunction;
 ///
 /// This stores the seed of the RNG.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct NoiseRng(pub u32);
 
 /// Represents something that can be used as an input to [`NoiseRng`]'s randomizers.

@@ -7,6 +7,8 @@ use bevy_math::{
 
 /// Linear interpolation.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Linear;
 
 impl Curve<f32> for Linear {
@@ -33,6 +35,8 @@ impl SampleDerivative<f32> for Linear {
 
 /// Smoothstep interpolation.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Smoothstep;
 
 impl Curve<f32> for Smoothstep {
@@ -76,6 +80,8 @@ impl SampleDerivative<f32> for Smoothstep {
 
 /// Smoothstep interpolation composed on itself.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct DoubleSmoothstep;
 
 impl Curve<f32> for DoubleSmoothstep {
@@ -106,6 +112,8 @@ impl SampleDerivative<f32> for DoubleSmoothstep {
 
 /// Smoothstep interpolation composed on itself twice.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct TripleSmoothstep;
 
 impl Curve<f32> for TripleSmoothstep {
@@ -145,6 +153,8 @@ pub trait SmoothMin {
 /// One way to produce a [`SmoothMin`] quickly.
 /// Inspired by [this](https://iquilezles.org/articles/smin/).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct CubicSMin;
 
 impl SmoothMin for CubicSMin {

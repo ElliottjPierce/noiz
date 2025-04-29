@@ -21,6 +21,8 @@ use crate::{
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct PerCell<P, N> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -55,22 +57,32 @@ pub trait LengthFunction<T: VectorSpace> {
 
 /// A [`LengthFunction`] and for "as the crow flyies" length
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct EuclideanLength;
 
 /// A [`LengthFunction`] and for squared [`EuclideanLength`] length
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct EuclideanSqrdLength;
 
 /// A [`LengthFunction`] and for "manhatan" or diagonal length
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct ManhatanLength;
 
 /// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`]
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct HybridLength;
 
 /// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct ChebyshevLength;
 
 /// A configurable [`LengthFunction`] that bends space according to the inner float.
@@ -86,6 +98,8 @@ pub struct ChebyshevLength;
 /// this can produce asymptotes that bleed across cell lines and cause artifacts.
 /// This works fine with traditional worley noise for example, but other [`WorleyMode`]s may yield harsh lines.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct MinkowskiLength(pub f32);
 
 impl Default for MinkowskiLength {
@@ -211,6 +225,8 @@ impl_distances!(Vec4, 4.0, 2.0);
 /// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoint`]s.
 /// The [`LengthFunction`] `L` is used to determine which point is nearest.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct PerNearestPoint<P, L, N> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -253,6 +269,8 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
 /// This is kept generic over `L` to enable custom functions that are
 /// similar enough to euclidiean to not artifact and different enough to require a custom [`EuclideanLength`].
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct DistanceToEdge<P, L = EuclideanLength, const APPROXIMATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -386,6 +404,8 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
 /// This is similar to [`WorleyPointDistance`], but instead of dividing nearby cells, it smooths between them.
 /// Note that when cells are close together, this can merge them into a single value.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleySmoothMin<T> {
     /// The [`SmoothMin`].
     pub smooth_min: T,
@@ -428,6 +448,8 @@ impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
 /// This is similar to [`WorleySmoothMin`], but instead smoothing every cell, it smooths the nearest two points.
 /// Note that when cells are close together, this can merge them into a single value.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleyNearestSmoothMin<T> {
     /// The [`SmoothMin`].
     pub smooth_min: T,
@@ -466,6 +488,8 @@ impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`].
 /// This is traditional worley noise.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleyPointDistance;
 
 impl WorleyMode for WorleyPointDistance {
@@ -488,6 +512,8 @@ impl WorleyMode for WorleyPointDistance {
 /// A [`WorleyMode`] that returns the unorm distance to the second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleySecondPointDistance;
 
 impl WorleyMode for WorleySecondPointDistance {
@@ -507,6 +533,8 @@ impl WorleyMode for WorleySecondPointDistance {
 /// A [`WorleyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleyDifference;
 
 impl WorleyMode for WorleyDifference {
@@ -527,6 +555,8 @@ impl WorleyMode for WorleyDifference {
 /// A [`WorleyMode`] that returns the unorm average of the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleyAverage;
 
 impl WorleyMode for WorleyAverage {
@@ -548,6 +578,8 @@ impl WorleyMode for WorleyAverage {
 /// A [`WorleyMode`] that returns the unorm product between the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleyProduct;
 
 impl WorleyMode for WorleyProduct {
@@ -568,6 +600,8 @@ impl WorleyMode for WorleyProduct {
 /// A [`WorleyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`].
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WorleyRatio;
 
 impl WorleyMode for WorleyRatio {
@@ -588,6 +622,8 @@ impl WorleyMode for WorleyRatio {
 /// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`]s,
 /// and then provides the distance to each [`CellPoints`] to some [`WorleyMode`] `M` by some [`LengthFunction`] `L`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct PerCellPointDistances<P, L, W> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -623,6 +659,8 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -681,6 +719,8 @@ impl<
 /// A [`NoiseFunction`] that mixes a value sourced from a [`AnyValueFromBits`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 /// This is similar to [`MixCellValues`] but more restricted.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct MixCellValuesForDomain<P, C, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -750,6 +790,8 @@ pub trait Blender<I: VectorSpace, V> {
 
 /// A [`NoiseFunction`] that blends values sourced from a [`FastRandomMixed`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -820,6 +862,8 @@ pub trait GradientGenerator<I: VectorSpace> {
 
 /// A [`NoiseFunction`] that integrates gradients sourced from a [`GradientGenerator`] `G` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct MixCellGradients<P, C, G, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -887,6 +931,8 @@ impl<
 
 /// A [`NoiseFunction`] that blends gradients sourced from a [`GradientGenerator`] `G` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct BlendCellGradients<P, B, G, const DIFFERENTIATE: bool = false> {
     /// The [`Partitioner`].
     pub cells: P,
@@ -950,6 +996,8 @@ impl<
 /// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
 /// This is the fastest provided [`GradientGenerator`].
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct QuickGradients;
 
 impl GradientGenerator<Vec2> for QuickGradients {
@@ -1056,6 +1104,8 @@ const GRADIENT_TABLE: [Vec4; 32] = [
 /// A medium qualaty [`GradientGenerator`] that distributes normalized gradient vectors.
 /// This is not uniform because it normalizes vectors *in* a square *onto* a circle (and so on for higher dimensions).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct RandomGradients;
 
 macro_rules! impl_random_gradients {
@@ -1084,6 +1134,8 @@ impl_random_gradients!(Vec4);
 /// Note that this is not yet implemented for [`Vec4`].
 // TODO: implement for 4d
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct QualityGradients;
 
 impl GradientGenerator<Vec2> for QualityGradients {
@@ -1128,6 +1180,8 @@ impl GradientGenerator<Vec3A> for QualityGradients {
 
 /// A [`Blender`] that weighs each values by it's distance, as computed by a [`LengthFunction`].
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct DistanceBlend<L>(pub L);
 
 impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: VectorSpace>
@@ -1157,6 +1211,8 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
 
 /// A [`Blender`] defers to another [`Blender`] `T` and scales its blending radius by some value.
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct LocalBlend<T> {
     /// The inner [`Blender`].
     pub blender: T,
@@ -1183,6 +1239,8 @@ impl<V, I: VectorSpace, B: Blender<I, V>> Blender<I, V> for LocalBlend<B> {
 
 /// A [`Blender`] built for [`SimplexGrid`](crate::cells::SimplexGrid) that smoothly blends values in a pleasant way.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct SimplecticBlend;
 
 fn general_simplex_weight(length_sqrd: f32, blending_half_radius: f32) -> f32 {

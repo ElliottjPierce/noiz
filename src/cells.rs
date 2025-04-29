@@ -82,6 +82,8 @@ pub trait DiferentiableCell: InterpolatableCell {
 
 /// A value `T` with its gradieht `G`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct WithGradient<T, G> {
     /// The value.
     pub value: T,
@@ -172,6 +174,8 @@ pub trait Partitioner<T: VectorSpace> {
 ///
 /// Also holds a [`WrappingAmount`] if desired but defaults to `()` (no wrapping).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct OrthoGrid<W = ()>(pub W);
 
 /// Represents a hyper cube of some N dimensions.
@@ -1204,6 +1208,8 @@ impl DomainCell for SimplexCell<Vec4, IVec4> {
 
 /// A [`Partitioner`] that produces various [`SimplexCell`]s.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct SimplexGrid;
 
 impl Partitioner<Vec2> for SimplexGrid {
@@ -1284,6 +1290,8 @@ impl Partitioner<Vec4> for SimplexGrid {
 /// If something looks fishy, turn it off, and it might help.
 /// This option is included because, where it does't artifact, it can greatly improve performance.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
     /// The inner [`Partitioner`] that will have its [`DomainCell`]'s [`CellPoint`]s moved
     pub partitoner: P,
