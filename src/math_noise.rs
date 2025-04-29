@@ -50,7 +50,7 @@ pub struct Negate;
 
 /// A [`NoiseFunction`] that produces a billowing effect for SNorm values.
 /// Inspired by [libnoise](https://docs.rs/libnoise/latest/libnoise/).
-pub type Billow = (Abs, SNormToUNorm);
+pub type Billow = (Abs, UNormToSNorm);
 
 /// A [`NoiseFunction`] that wraps values over this one back below it.
 #[derive(Debug, Clone, Copy, PartialEq)]
