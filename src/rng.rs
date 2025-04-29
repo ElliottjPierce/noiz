@@ -11,9 +11,10 @@ use crate::NoiseFunction;
 /// This is similar to a hash function, but does not use std's hash traits, as those produce `u64` outputs only.
 ///
 /// This stores the seed of the RNG.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct NoiseRng(pub u32);
 
 /// Represents something that can be used as an input to [`NoiseRng`]'s randomizers.
@@ -248,7 +249,11 @@ pub trait ConcreteAnyValueFromBits: AnyValueFromBits<Self::Concrete> {
 }
 
 /// A [`NoiseFunction`] that takes any [`RngNoiseInput`] and produces a fully random `u32`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Random<R, T>(pub R, pub PhantomData<T>);
 
 impl<O, R: AnyValueFromBits<O>> AnyValueFromBits<O> for Random<R, O> {
@@ -288,21 +293,33 @@ impl<I: NoiseRngInput, O, R: AnyValueFromBits<O>> NoiseFunction<I> for Random<R,
 }
 
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (0, 1).
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct UNorm;
 
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (0, 0.5).
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct UNormHalf;
 
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (-1, 1).
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SNorm;
 
 /// A [`NoiseFunction`] that takes a `u32` and produces an arbitrary `f32` in range (-1, 1).
 /// This has a slightly better distribution than [`SNorm`] and is guaranteed to not produce 0.
 /// But, it's a bit more expensive than [`SNorm`].
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SNormSplit;
 
 /// Represents some type that can convert some random bits into an output `T`.

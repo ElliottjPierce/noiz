@@ -4,70 +4,81 @@ use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
 use crate::{NoiseFunction, cell_noise::LengthFunction};
 
 /// A [`NoiseFunction`] that maps vectors from (-1,1) to (0, 1).
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Default, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SNormToUNorm;
 
 /// A [`NoiseFunction`] that maps vectors from (0, 1) to (-1,1).
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Default, PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct UNormToSNorm;
 
 /// A [`NoiseFunction`] that raises the input to the second power.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Pow2;
 
 /// A [`NoiseFunction`] that raises the input to the third power.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Pow3;
 
 /// A [`NoiseFunction`] that raises the input to the fourth power.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Pow4;
 
 /// A [`NoiseFunction`] that raises the input to some power.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct PowF(pub f32);
 
 /// A [`NoiseFunction`] makes more positive numbers get closer to 0.
 /// Negative numbers are meaningless. Positive numbers will produce UNorm results.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct PositiveApproachZero;
 
 /// A [`NoiseFunction`] that takes the absolute value of its input.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Abs;
 
 /// A [`NoiseFunction`] that divides 1.0 by its input.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Inverse;
 
 /// A [`NoiseFunction`] that subtracts its input from 1.0.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct ReverseUNorm;
 
 /// A [`NoiseFunction`] that negates its input.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Negate;
 
 /// A [`NoiseFunction`] that produces a billowing effect for SNorm values.
@@ -75,9 +86,10 @@ pub struct Negate;
 pub type Billow = (Abs, UNormToSNorm);
 
 /// A [`NoiseFunction`] that wraps values over this one back below it.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Wrapped(pub f32);
 
 macro_rules! impl_vector_spaces {
@@ -201,9 +213,10 @@ impl_vector_spaces!(Vec4);
 /// A [`NoiseFunction`] produces a ping ponging effect for UNorm values.
 /// The inner value represents the strength of the ping pong.
 /// Inspired by [fastnoise_lite](https://docs.rs/fastnoise-lite/latest/fastnoise_lite/).
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct PingPong(pub f32);
 
 impl Default for PingPong {
@@ -225,9 +238,10 @@ impl NoiseFunction<f32> for PingPong {
 }
 
 /// A [`NoiseFunction`] that samples some [`Curve`] directly.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct NoiseCurve<C>(pub C);
 
 impl<C: Curve<f32>> NoiseFunction<f32> for NoiseCurve<C> {
@@ -240,9 +254,10 @@ impl<C: Curve<f32>> NoiseFunction<f32> for NoiseCurve<C> {
 }
 
 /// A [`NoiseFunction`] that samples some [`Curve`] in the proper range by clamping.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct NoiseCurveClamped<C>(pub C);
 
 impl<C: Curve<f32>> NoiseFunction<f32> for NoiseCurveClamped<C> {
@@ -292,9 +307,10 @@ impl_mapped_vector_spaces!(Vec4);
 
 /// A [`NoiseFunction`] that turns a cartesian cordinate into a polar cordinate.
 /// Contains a [`LengthFunction`] and a scale for radial cells.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Spiral<L>(pub L, f32);
 
 impl<L: Default> Default for Spiral<L> {

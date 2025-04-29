@@ -31,6 +31,7 @@ nostd-libm = ["bevy_math/nostd-libm"]
 
 serialize = ["dep:serde", "bevy_math/serialize"]
 bevy_reflect = ["dep:bevy_reflect"]
+debug = []
 
 [profile.dev]
 opt-level = 3

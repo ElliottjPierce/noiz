@@ -7,9 +7,10 @@ use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 use crate::{NoiseFunction, rng::NoiseRng};
 
 /// A [`NoiseFunction`] that wraps an inner [`NoiseFunction`] and produces values of the same type as the input with random elements.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct RandomElements<N>(pub N);
 
 impl<N: NoiseFunction<Vec2, Output = f32>> NoiseFunction<Vec2> for RandomElements<N> {
@@ -73,9 +74,10 @@ impl<N: NoiseFunction<Vec4, Output = f32>> NoiseFunction<Vec4> for RandomElement
 }
 
 /// A [`NoiseFunction`] that pushes its input by some offset from an inner [`NoiseFunction`] `N`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Offset<N> {
     /// The inner [`NoiseFunction`].
     pub offseter: N,
@@ -105,9 +107,10 @@ impl<I: Add<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
 }
 
 /// A [`NoiseFunction`] that scales its input by some factor from an inner [`NoiseFunction`] `N`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Scaled<N> {
     /// The inner [`NoiseFunction`].
     pub scaler: N,
@@ -137,9 +140,10 @@ impl<I: Mul<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
 }
 
 /// A [`NoiseFunction`] always returns a constant `T`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Constant<T>(pub T);
 
 impl<I, T: Copy> NoiseFunction<I> for Constant<T> {
@@ -155,9 +159,10 @@ impl<I, T: Copy> NoiseFunction<I> for Constant<T> {
 ///
 /// This is generally commutative, so `N` and `M` can swap without changing what kind of noise it is (though due to rng, the results may differ).
 /// If you need to mask more than two noise functions, you can nest `M` or `N` in another [`Masked`].
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Masked<N, M>(pub N, pub M);
 
 impl<I: Copy, N: NoiseFunction<I>, M: NoiseFunction<I, Output: Mul<N::Output>>> NoiseFunction<I>
@@ -172,9 +177,10 @@ impl<I: Copy, N: NoiseFunction<I>, M: NoiseFunction<I, Output: Mul<N::Output>>> 
 }
 
 /// A [`NoiseFunction`] that multiplies the two results of an inner [`NoiseFunction`]s at each input.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SelfMasked<N>(pub N);
 
 impl<I: Copy, N: NoiseFunction<I, Output: Mul<N::Output>>> NoiseFunction<I> for SelfMasked<N> {
@@ -188,9 +194,10 @@ impl<I: Copy, N: NoiseFunction<I, Output: Mul<N::Output>>> NoiseFunction<I> for 
 
 /// A [`NoiseFunction`] that just [`NoiseRng::re_seed`]s the seed.
 /// This is useful if one [`NoiseFunction`] is being used back to back and you want the two to be additionally disjoint.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct ExtraRng;
 
 impl<T> NoiseFunction<T> for ExtraRng {
@@ -204,9 +211,10 @@ impl<T> NoiseFunction<T> for ExtraRng {
 }
 
 /// A [`NoiseFunction`] that changes the seed of an inner [`NoiseFunction`] `N` based on the output of another [`NoiseFunction`] `P`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Peeled<N, P> {
     /// The [`NoiseFunction`] that determines where to peel the seed.
     pub pealer: P,

@@ -81,9 +81,10 @@ pub trait DiferentiableCell: InterpolatableCell {
 }
 
 /// A value `T` with its gradieht `G`.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct WithGradient<T, G> {
     /// The value.
     pub value: T,
@@ -152,7 +153,7 @@ impl<T: MulAssign<T>, G: MulAssign<G>> MulAssign<Self> for WithGradient<T, G> {
 }
 
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainCell`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct CellPoint<T> {
     /// Identifies this point roughly from others, roughly meaning the ids are not necessarily unique.
     /// The ids must be determenistaic per point. Ids for the same point must match, even if they are from different [`DomainCells`].
@@ -173,13 +174,14 @@ pub trait Partitioner<T: VectorSpace> {
 /// A [`Partitioner`] that produces various [`SquareCell`]s.
 ///
 /// Also holds a [`WrappingAmount`] if desired but defaults to `()` (no wrapping).
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct OrthoGrid<W = ()>(pub W);
 
 /// Represents a hyper cube of some N dimensions.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct SquareCell<F, I, W> {
     /// The least corner of this grid square.
     pub floored: I,
@@ -906,7 +908,7 @@ impl<W: WrappingAmount<IVec4> + Copy> Partitioner<Vec4> for OrthoGrid<W> {
 }
 
 /// Represents a simplex grid cell as its skewed base grid square.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct SimplexCell<F, I>(pub SquareCell<F, I, ()>);
 
 impl<F, I> BlendableDomainCell for SimplexCell<F, I>
@@ -1207,9 +1209,10 @@ impl DomainCell for SimplexCell<Vec4, IVec4> {
 }
 
 /// A [`Partitioner`] that produces various [`SimplexCell`]s.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SimplexGrid;
 
 impl Partitioner<Vec2> for SimplexGrid {
@@ -1289,9 +1292,10 @@ impl Partitioner<Vec4> for SimplexGrid {
 /// **Artifact Warning:** Depending how you use this, turning on `HALF_SCALE` can produce artifacts.
 /// If something looks fishy, turn it off, and it might help.
 /// This option is included because, where it does't artifact, it can greatly improve performance.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
     /// The inner [`Partitioner`] that will have its [`DomainCell`]'s [`CellPoint`]s moved
     pub partitoner: P,
@@ -1347,7 +1351,7 @@ impl<P, const HALF_SCALE: bool> Voronoi<HALF_SCALE, P> {
 /// A [`DomainCell`] that wraps an inner [`DomainCell`] and nudges each [`CellPoint`]s by some value.
 /// See [`Voronoi`] for details.
 /// This is currently only implemented for [`SquareCell`]s.
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Default, Clone, Copy, PartialEq)]
 pub struct VoronoiCell<const HALF_SCALE: bool, C> {
     /// The inner cell that will have it's [`CellPoint`]s moved
     pub cell: C,
