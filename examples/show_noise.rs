@@ -19,7 +19,7 @@ use noiz::{
         DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
     },
-    math_noise::{Abs, Billow, PingPong, SNormToUNorm, Wrapped},
+    math_noise::{Abs, Billow, PingPong, SNormToUNorm},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
@@ -637,7 +637,6 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Usecase: Tileable Heightmap",
                             noise: Box::new(Noise::<(
-                                Wrapped,
                                 LayeredNoise<
                                     NormedByDerivative<
                                         f32,
@@ -648,7 +647,7 @@ fn main() -> AppExit {
                                     FractalOctaves<
                                         Octave<
                                             MixCellGradients<
-                                                OrthoGrid,
+                                                OrthoGrid<i32>,
                                                 Smoothstep,
                                                 QuickGradients,
                                                 true,
@@ -658,13 +657,16 @@ fn main() -> AppExit {
                                 >,
                                 SNormToUNorm,
                             )>::from((
-                                Wrapped(8.0),
                                 LayeredNoise::new(
                                     NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
                                     FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
+                                        octave: Octave(MixCellGradients {
+                                            cells: OrthoGrid(8),
+                                            gradients: QuickGradients,
+                                            curve: Smoothstep,
+                                        }),
+                                        lacunarity: 2.0,
                                         octaves: 8,
                                     },
                                 ),

@@ -149,19 +149,66 @@ pub trait Partitioner<T: VectorSpace> {
 }
 
 /// A [`Partitioner`] that produces various [`SquareCell`]s.
+///
+/// Also holds a [`WrappingAmount`] if desired but defaults to `()` (no wrapping).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct OrthoGrid;
+pub struct OrthoGrid<W = ()>(pub W);
 
 /// Represents a hyper cube of some N dimensions.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SquareCell<F, I> {
+pub struct SquareCell<F, I, W> {
     /// The least corner of this grid square.
     pub floored: I,
     /// The positive offset from [`floored`](Self::floored) to the point in the grid square.
     pub offset: F,
+    /// The [`WrappingAmount`].
+    pub wrapping: W,
 }
 
-impl<F, I> WorleyDomainCell for SquareCell<F, I>
+/// Represents a way to wrap a domain over itself, ex: to tile noise.
+pub trait WrappingAmount<T> {
+    /// Performs any wrapping on `T` if any.
+    fn wrap(&self, corner: T) -> T;
+}
+
+impl WrappingAmount<IVec2> for () {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec2) -> IVec2 {
+        corner
+    }
+}
+impl WrappingAmount<IVec3> for () {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec3) -> IVec3 {
+        corner
+    }
+}
+impl WrappingAmount<IVec4> for () {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec4) -> IVec4 {
+        corner
+    }
+}
+impl WrappingAmount<IVec2> for i32 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec2) -> IVec2 {
+        corner % *self
+    }
+}
+impl WrappingAmount<IVec3> for i32 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec3) -> IVec3 {
+        corner % *self
+    }
+}
+impl WrappingAmount<IVec4> for i32 {
+    #[inline(always)]
+    fn wrap(&self, corner: IVec4) -> IVec4 {
+        corner % *self
+    }
+}
+
+impl<F, I, W> WorleyDomainCell for SquareCell<F, I, W>
 where
     Self: DomainCell,
 {
@@ -176,7 +223,7 @@ where
     }
 }
 
-impl<F, I> BlendableDomainCell for SquareCell<F, I>
+impl<F, I, W> BlendableDomainCell for SquareCell<F, I, W>
 where
     Self: DomainCell,
 {
@@ -186,11 +233,11 @@ where
     }
 }
 
-impl SquareCell<Vec2, IVec2> {
+impl<W: WrappingAmount<IVec2>> SquareCell<Vec2, IVec2, W> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec2) -> CellPoint<Vec2> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
+            rough_id: rng.rand_u32(self.wrapping.wrap(self.floored.wrapping_add(offset))),
             offset: self.offset - offset.as_vec2(),
         }
     }
@@ -206,7 +253,7 @@ impl SquareCell<Vec2, IVec2> {
     }
 }
 
-impl DomainCell for SquareCell<Vec2, IVec2> {
+impl<W: WrappingAmount<IVec2>> DomainCell for SquareCell<Vec2, IVec2, W> {
     type Full = Vec2;
 
     #[inline]
@@ -220,7 +267,7 @@ impl DomainCell for SquareCell<Vec2, IVec2> {
     }
 }
 
-impl InterpolatableCell for SquareCell<Vec2, IVec2> {
+impl<W: WrappingAmount<IVec2>> InterpolatableCell for SquareCell<Vec2, IVec2, W> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -239,7 +286,7 @@ impl InterpolatableCell for SquareCell<Vec2, IVec2> {
     }
 }
 
-impl DiferentiableCell for SquareCell<Vec2, IVec2> {
+impl<W: WrappingAmount<IVec2>> DiferentiableCell for SquareCell<Vec2, IVec2, W> {
     type Gradient<D> = [D; 2];
 
     #[inline]
@@ -270,11 +317,11 @@ impl DiferentiableCell for SquareCell<Vec2, IVec2> {
     }
 }
 
-impl SquareCell<Vec3, IVec3> {
+impl<W: WrappingAmount<IVec3>> SquareCell<Vec3, IVec3, W> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
+            rough_id: rng.rand_u32(self.wrapping.wrap(self.floored.wrapping_add(offset))),
             offset: self.offset - offset.as_vec3(),
         }
     }
@@ -294,7 +341,7 @@ impl SquareCell<Vec3, IVec3> {
     }
 }
 
-impl DomainCell for SquareCell<Vec3, IVec3> {
+impl<W: WrappingAmount<IVec3>> DomainCell for SquareCell<Vec3, IVec3, W> {
     type Full = Vec3;
 
     #[inline]
@@ -308,7 +355,7 @@ impl DomainCell for SquareCell<Vec3, IVec3> {
     }
 }
 
-impl InterpolatableCell for SquareCell<Vec3, IVec3> {
+impl<W: WrappingAmount<IVec3>> InterpolatableCell for SquareCell<Vec3, IVec3, W> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -331,7 +378,7 @@ impl InterpolatableCell for SquareCell<Vec3, IVec3> {
     }
 }
 
-impl DiferentiableCell for SquareCell<Vec3, IVec3> {
+impl<W: WrappingAmount<IVec3>> DiferentiableCell for SquareCell<Vec3, IVec3, W> {
     type Gradient<D> = [D; 3];
 
     #[inline]
@@ -390,11 +437,11 @@ impl DiferentiableCell for SquareCell<Vec3, IVec3> {
     }
 }
 
-impl SquareCell<Vec3A, IVec3> {
+impl<W: WrappingAmount<IVec3>> SquareCell<Vec3A, IVec3, W> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec3) -> CellPoint<Vec3A> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
+            rough_id: rng.rand_u32(self.wrapping.wrap(self.floored.wrapping_add(offset))),
             offset: self.offset - offset.as_vec3a(),
         }
     }
@@ -414,7 +461,7 @@ impl SquareCell<Vec3A, IVec3> {
     }
 }
 
-impl DomainCell for SquareCell<Vec3A, IVec3> {
+impl<W: WrappingAmount<IVec3>> DomainCell for SquareCell<Vec3A, IVec3, W> {
     type Full = Vec3A;
 
     #[inline]
@@ -428,7 +475,7 @@ impl DomainCell for SquareCell<Vec3A, IVec3> {
     }
 }
 
-impl InterpolatableCell for SquareCell<Vec3A, IVec3> {
+impl<W: WrappingAmount<IVec3>> InterpolatableCell for SquareCell<Vec3A, IVec3, W> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -451,7 +498,7 @@ impl InterpolatableCell for SquareCell<Vec3A, IVec3> {
     }
 }
 
-impl DiferentiableCell for SquareCell<Vec3A, IVec3> {
+impl<W: WrappingAmount<IVec3>> DiferentiableCell for SquareCell<Vec3A, IVec3, W> {
     type Gradient<D> = [D; 3];
 
     #[inline]
@@ -510,11 +557,11 @@ impl DiferentiableCell for SquareCell<Vec3A, IVec3> {
     }
 }
 
-impl SquareCell<Vec4, IVec4> {
+impl<W: WrappingAmount<IVec4>> SquareCell<Vec4, IVec4, W> {
     #[inline]
     fn point_at_offset(&self, rng: NoiseRng, offset: IVec4) -> CellPoint<Vec4> {
         CellPoint {
-            rough_id: rng.rand_u32(self.floored.wrapping_add(offset)),
+            rough_id: rng.rand_u32(self.wrapping.wrap(self.floored.wrapping_add(offset))),
             offset: self.offset - offset.as_vec4(),
         }
     }
@@ -542,7 +589,7 @@ impl SquareCell<Vec4, IVec4> {
     }
 }
 
-impl DomainCell for SquareCell<Vec4, IVec4> {
+impl<W: WrappingAmount<IVec4>> DomainCell for SquareCell<Vec4, IVec4, W> {
     type Full = Vec4;
 
     #[inline]
@@ -556,7 +603,7 @@ impl DomainCell for SquareCell<Vec4, IVec4> {
     }
 }
 
-impl InterpolatableCell for SquareCell<Vec4, IVec4> {
+impl<W: WrappingAmount<IVec4>> InterpolatableCell for SquareCell<Vec4, IVec4, W> {
     #[inline]
     fn interpolate_within<T: VectorSpace>(
         &self,
@@ -604,7 +651,7 @@ impl InterpolatableCell for SquareCell<Vec4, IVec4> {
     }
 }
 
-impl DiferentiableCell for SquareCell<Vec4, IVec4> {
+impl<W: WrappingAmount<IVec4>> DiferentiableCell for SquareCell<Vec4, IVec4, W> {
     type Gradient<D> = [D; 4];
 
     #[inline]
@@ -722,8 +769,8 @@ impl DiferentiableCell for SquareCell<Vec4, IVec4> {
     }
 }
 
-impl Partitioner<Vec2> for OrthoGrid {
-    type Cell = SquareCell<Vec2, IVec2>;
+impl<W: WrappingAmount<IVec2> + Copy> Partitioner<Vec2> for OrthoGrid<W> {
+    type Cell = SquareCell<Vec2, IVec2, W>;
 
     #[inline]
     fn partition(&self, full: Vec2) -> Self::Cell {
@@ -731,12 +778,13 @@ impl Partitioner<Vec2> for OrthoGrid {
         SquareCell {
             floored: floor.as_ivec2(),
             offset: full - floor,
+            wrapping: self.0,
         }
     }
 }
 
-impl Partitioner<Vec3> for OrthoGrid {
-    type Cell = SquareCell<Vec3, IVec3>;
+impl<W: WrappingAmount<IVec3> + Copy> Partitioner<Vec3> for OrthoGrid<W> {
+    type Cell = SquareCell<Vec3, IVec3, W>;
 
     #[inline]
     fn partition(&self, full: Vec3) -> Self::Cell {
@@ -744,12 +792,13 @@ impl Partitioner<Vec3> for OrthoGrid {
         SquareCell {
             floored: floor.as_ivec3(),
             offset: full - floor,
+            wrapping: self.0,
         }
     }
 }
 
-impl Partitioner<Vec3A> for OrthoGrid {
-    type Cell = SquareCell<Vec3A, IVec3>;
+impl<W: WrappingAmount<IVec3> + Copy> Partitioner<Vec3A> for OrthoGrid<W> {
+    type Cell = SquareCell<Vec3A, IVec3, W>;
 
     #[inline]
     fn partition(&self, full: Vec3A) -> Self::Cell {
@@ -757,12 +806,13 @@ impl Partitioner<Vec3A> for OrthoGrid {
         SquareCell {
             floored: floor.as_ivec3(),
             offset: full - floor,
+            wrapping: self.0,
         }
     }
 }
 
-impl Partitioner<Vec4> for OrthoGrid {
-    type Cell = SquareCell<Vec4, IVec4>;
+impl<W: WrappingAmount<IVec4> + Copy> Partitioner<Vec4> for OrthoGrid<W> {
+    type Cell = SquareCell<Vec4, IVec4, W>;
 
     #[inline]
     fn partition(&self, full: Vec4) -> Self::Cell {
@@ -770,13 +820,14 @@ impl Partitioner<Vec4> for OrthoGrid {
         SquareCell {
             floored: floor.as_ivec4(),
             offset: full - floor,
+            wrapping: self.0,
         }
     }
 }
 
 /// Represents a simplex grid cell as its skewed base grid square.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct SimplexCell<F, I>(pub SquareCell<F, I>);
+pub struct SimplexCell<F, I>(pub SquareCell<F, I, ()>);
 
 impl<F, I> BlendableDomainCell for SimplexCell<F, I>
 where
@@ -1091,6 +1142,7 @@ impl Partitioner<Vec2> for SimplexGrid {
         SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec2(),
             offset,
+            wrapping: (),
         })
     }
 }
@@ -1107,6 +1159,7 @@ impl Partitioner<Vec3> for SimplexGrid {
         SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec3(),
             offset,
+            wrapping: (),
         })
     }
 }
@@ -1123,6 +1176,7 @@ impl Partitioner<Vec3A> for SimplexGrid {
         SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec3(),
             offset,
+            wrapping: (),
         })
     }
 }
@@ -1139,6 +1193,7 @@ impl Partitioner<Vec4> for SimplexGrid {
         SimplexCell(SquareCell {
             floored: skewed_floored.as_ivec4(),
             offset,
+            wrapping: (),
         })
     }
 }
@@ -1256,7 +1311,7 @@ where
 /// We use this as an xor. The number doesn't matter as long as it is unique (relative to other numbers used like this) and changes some bits in every part of the u32;
 const VORONOI_RNG_DIFF: u32 = 0b_011010011010110110110100110101001;
 
-impl DomainCell for VoronoiCell<true, SquareCell<Vec2, IVec2>> {
+impl<W: WrappingAmount<IVec2>> DomainCell for VoronoiCell<true, SquareCell<Vec2, IVec2, W>> {
     type Full = Vec2;
 
     #[inline]
@@ -1275,7 +1330,7 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec2, IVec2>> {
     }
 }
 
-impl DomainCell for VoronoiCell<true, SquareCell<Vec3, IVec3>> {
+impl<W: WrappingAmount<IVec3>> DomainCell for VoronoiCell<true, SquareCell<Vec3, IVec3, W>> {
     type Full = Vec3;
 
     #[inline]
@@ -1294,7 +1349,7 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec3, IVec3>> {
     }
 }
 
-impl DomainCell for VoronoiCell<true, SquareCell<Vec3A, IVec3>> {
+impl<W: WrappingAmount<IVec3>> DomainCell for VoronoiCell<true, SquareCell<Vec3A, IVec3, W>> {
     type Full = Vec3A;
 
     #[inline]
@@ -1313,7 +1368,7 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec3A, IVec3>> {
     }
 }
 
-impl DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4>> {
+impl<W: WrappingAmount<IVec4>> DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4, W>> {
     type Full = Vec4;
 
     #[inline]
@@ -1332,7 +1387,7 @@ impl DomainCell for VoronoiCell<true, SquareCell<Vec4, IVec4>> {
     }
 }
 
-impl DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2>> {
+impl<W: WrappingAmount<IVec2>> DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2, W>> {
     type Full = Vec2;
 
     #[inline]
@@ -1364,7 +1419,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec2, IVec2>> {
     }
 }
 
-impl DomainCell for VoronoiCell<false, SquareCell<Vec3, IVec3>> {
+impl<W: WrappingAmount<IVec3>> DomainCell for VoronoiCell<false, SquareCell<Vec3, IVec3, W>> {
     type Full = Vec3;
 
     #[inline]
@@ -1413,7 +1468,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec3, IVec3>> {
     }
 }
 
-impl DomainCell for VoronoiCell<false, SquareCell<Vec3A, IVec3>> {
+impl<W: WrappingAmount<IVec3>> DomainCell for VoronoiCell<false, SquareCell<Vec3A, IVec3, W>> {
     type Full = Vec3A;
 
     #[inline]
@@ -1462,7 +1517,7 @@ impl DomainCell for VoronoiCell<false, SquareCell<Vec3A, IVec3>> {
     }
 }
 
-impl DomainCell for VoronoiCell<false, SquareCell<Vec4, IVec4>> {
+impl<W: WrappingAmount<IVec4>> DomainCell for VoronoiCell<false, SquareCell<Vec4, IVec4, W>> {
     type Full = Vec4;
 
     #[inline]
