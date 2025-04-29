@@ -50,8 +50,7 @@ pub struct Negate;
 
 /// A [`NoiseFunction`] that produces a billowing effect for SNorm values.
 /// Inspired by [libnoise](https://docs.rs/libnoise/latest/libnoise/).
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct Billow;
+pub type Billow = (Abs, SNormToUNorm);
 
 /// A [`NoiseFunction`] that wraps values over this one back below it.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -155,15 +154,6 @@ macro_rules! impl_vector_spaces {
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 -input
-            }
-        }
-
-        impl NoiseFunction<$n> for Billow {
-            type Output = $n;
-
-            #[inline]
-            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-                input * 2.0 - 1.0
             }
         }
 

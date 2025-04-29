@@ -129,6 +129,26 @@ impl<T: MulAssign<f32>, G: MulAssign<f32>> MulAssign<f32> for WithGradient<T, G>
     }
 }
 
+impl<T: Mul<T, Output = T>, G: Mul<G, Output = G>> Mul<Self> for WithGradient<T, G> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn mul(self, rhs: Self) -> Self::Output {
+        Self {
+            value: self.value * rhs.value,
+            gradient: self.gradient * rhs.gradient,
+        }
+    }
+}
+
+impl<T: MulAssign<T>, G: MulAssign<G>> MulAssign<Self> for WithGradient<T, G> {
+    #[inline(always)]
+    fn mul_assign(&mut self, rhs: Self) {
+        self.gradient *= rhs.gradient;
+        self.value *= rhs.value;
+    }
+}
+
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainCell`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CellPoint<T> {

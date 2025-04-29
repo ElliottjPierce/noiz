@@ -19,7 +19,7 @@ use noiz::{
         DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
     },
-    math_noise::{Abs, Billow, PingPong, SNormToUNorm},
+    math_noise::{Billow, PingPong, SNormToUNorm},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
@@ -479,7 +479,6 @@ fn main() -> AppExit {
                                                 SimplecticBlend,
                                                 QuickGradients,
                                             >,
-                                            Abs,
                                             Billow,
                                         )>,
                                     >,
@@ -644,31 +643,89 @@ fn main() -> AppExit {
                                         PeakDerivativeContribution,
                                     >,
                                     Persistence,
-                                    FractalOctaves<
-                                        Octave<
-                                            MixCellGradients<
-                                                OrthoGrid<i32>,
-                                                Smoothstep,
-                                                QuickGradients,
-                                                true,
+                                    (
+                                        FractalOctaves<(
+                                            Octave<(
+                                                Offset<
+                                                    RandomElements<
+                                                        MixCellGradients<
+                                                            OrthoGrid,
+                                                            Smoothstep,
+                                                            QuickGradients,
+                                                        >,
+                                                    >,
+                                                >,
+                                                SelfMasked<
+                                                    MixCellGradients<
+                                                        OrthoGrid<i32>,
+                                                        Smoothstep,
+                                                        QuickGradients,
+                                                        true,
+                                                    >,
+                                                >,
+                                            )>,
+                                            Octave<(
+                                                MixCellGradients<
+                                                    OrthoGrid<i32>,
+                                                    Smoothstep,
+                                                    QuickGradients,
+                                                >,
+                                                Billow,
+                                            )>,
+                                        )>,
+                                        FractalOctaves<
+                                            Octave<
+                                                MixCellValues<
+                                                    OrthoGrid<i32>,
+                                                    Smoothstep,
+                                                    Random<SNorm, f32>,
+                                                    false,
+                                                >,
                                             >,
                                         >,
-                                    >,
+                                    ),
                                 >,
                                 SNormToUNorm,
                             )>::from((
                                 LayeredNoise::new(
                                     NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Octave(MixCellGradients {
-                                            cells: OrthoGrid(8),
-                                            gradients: QuickGradients,
-                                            curve: Smoothstep,
-                                        }),
-                                        lacunarity: 2.0,
-                                        octaves: 8,
-                                    },
+                                    (
+                                        FractalOctaves {
+                                            octave: (
+                                                Octave((
+                                                    Default::default(),
+                                                    SelfMasked(MixCellGradients {
+                                                        // The size of the tile
+                                                        cells: OrthoGrid(256),
+                                                        gradients: QuickGradients,
+                                                        curve: Smoothstep,
+                                                    }),
+                                                )),
+                                                Octave((
+                                                    MixCellGradients {
+                                                        // The size of the tile
+                                                        cells: OrthoGrid(256),
+                                                        gradients: QuickGradients,
+                                                        curve: Smoothstep,
+                                                    },
+                                                    Billow::default(),
+                                                )),
+                                            ),
+                                            lacunarity: 1.8,
+                                            octaves: 6,
+                                        },
+                                        FractalOctaves {
+                                            octave: Octave(MixCellValues {
+                                                // The size of the tile
+                                                cells: OrthoGrid(256),
+                                                noise: Default::default(),
+                                                curve: Smoothstep,
+                                            }),
+                                            lacunarity: 1.8,
+                                            octaves: 4,
+                                        },
+                                    ),
                                 ),
                                 Default::default(),
                             ))),
