@@ -23,7 +23,7 @@ noise = "0.9"
 libnoise = "1.1"
 
 [features]
-default = ["std", "bevy_reflect", "serialize", "debug"]
+default = ["std", "bevy_reflect", "serialize"]
 
 std = ["bevy_math/std", "bevy_reflect?/std", "serde?/std"]
 libm = ["bevy_math/libm"]
