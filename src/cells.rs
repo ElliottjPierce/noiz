@@ -148,6 +148,10 @@ pub trait Partitioner<T: VectorSpace> {
     fn partition(&self, full: T) -> Self::Cell;
 }
 
+/// A [`Partitioner`] that produces various [`SquareCell`]s.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct OrthoGrid;
+
 /// Represents a hyper cube of some N dimensions.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SquareCell<F, I> {
@@ -181,10 +185,6 @@ where
         0.5
     }
 }
-
-/// A [`Partitioner`] that produces various [`SquareCell`]s.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct OrthoGrid;
 
 impl SquareCell<Vec2, IVec2> {
     #[inline]
