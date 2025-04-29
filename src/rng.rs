@@ -45,7 +45,7 @@ impl NoiseRng {
         let mut r2 = i ^ self.0;
         r2 = r2.rotate_left(11) ^ r1;
         r1 = r1.wrapping_mul(r2);
-        r2 = r2.rotate_left(27);
+        // r2 = r2.rotate_left(27); // unescessary
         r1.wrapping_mul(r2)
 
         // This can be faster but has rotational symmetry
