@@ -25,16 +25,13 @@ use noiz::{
 };
 
 /// Holds a version of the noise
-pub struct NoiseOption {
+pub struct NoiseOption<V> {
     name: &'static str,
-    noise: Box<dyn DynamicSampleable<Vec2, f32> + Send + Sync>,
+    noise: Box<dyn DynamicSampleable<V, f32> + Send + Sync>,
 }
 
-impl NoiseOption {
-    /// Displays the noise on the image.
-    pub fn display_image(&mut self, image: &mut Image, seed: u32, period: f32) {
-        self.noise.set_seed(seed);
-        self.noise.set_period(period);
+impl NoiseOption<Vec2> {
+    fn display_image(&mut self, image: &mut Image) {
         let width = image.width();
         let height = image.height();
 
@@ -58,11 +55,36 @@ impl NoiseOption {
 /// Holds the current noise
 #[derive(Resource)]
 pub struct NoiseOptions {
-    options: Vec<NoiseOption>,
+    options2d: Vec<NoiseOption<Vec2>>,
     selected: usize,
+    mode: ExampleMode,
     image: Handle<Image>,
     seed: u32,
     period: f32,
+}
+
+impl NoiseOptions {
+    fn update(&mut self, images: &mut Assets<Image>) {
+        let name = match self.mode {
+            ExampleMode::Image => {
+                let selected = self.selected % self.options2d.len();
+                let noise = &mut self.options2d[selected];
+                noise.noise.set_seed(self.seed);
+                noise.noise.set_period(self.period);
+                noise.display_image(images.get_mut(self.image.id()).unwrap());
+                &noise.name
+            }
+        };
+        println!(
+            "Updated {} {:?}, period: {} seed: {}.",
+            name, self.mode, self.period, self.seed
+        );
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum ExampleMode {
+    Image,
 }
 
 fn main() -> AppExit {
@@ -84,7 +106,7 @@ fn main() -> AppExit {
             |mut commands: Commands, mut images: ResMut<Assets<Image>>| {
                 let dummy_image = images.add(Image::default_uninit());
                 let mut noise = NoiseOptions {
-                    options: vec![
+                    options2d: vec![
                         NoiseOption {
                             name: "Basic white noise",
                             noise: Box::new(
@@ -745,8 +767,9 @@ fn main() -> AppExit {
                     image: dummy_image,
                     seed: 0,
                     period: 32.0,
+                    mode: ExampleMode::Image,
                 };
-                let mut image = Image::new_fill(
+                let image = Image::new_fill(
                     Extent3d {
                         width: 1920,
                         height: 1080,
@@ -757,9 +780,9 @@ fn main() -> AppExit {
                     TextureFormat::Rgba16Unorm,
                     RenderAssetUsages::all(),
                 );
-                noise.options[noise.selected].display_image(&mut image, 0, 32.0);
                 let handle = images.add(image);
                 noise.image = handle.clone();
+                noise.update(&mut images);
                 commands.spawn((
                     ImageNode {
                         image: handle,
@@ -790,15 +813,15 @@ fn update_system(
     let seed_jump = 83745238u32;
 
     if input.just_pressed(KeyCode::ArrowRight) {
-        noise.selected = (noise.selected.wrapping_add(1)) % noise.options.len();
+        noise.selected = (noise.selected.wrapping_add(1)) % noise.options2d.len();
         changed = true;
     }
     if input.just_pressed(KeyCode::ArrowLeft) {
         noise.selected = noise
             .selected
             .checked_sub(1)
-            .map(|v| v % noise.options.len())
-            .unwrap_or(noise.options.len() - 1);
+            .map(|v| v % noise.options2d.len())
+            .unwrap_or(noise.options2d.len() - 1);
         changed = true;
     }
 
@@ -821,12 +844,6 @@ fn update_system(
     }
 
     if changed {
-        let image = noise.image.id();
-        let selected = noise.selected;
-        let seed = noise.seed;
-        let period = noise.period;
-        let current = &mut noise.options[selected];
-        current.display_image(images.get_mut(image).unwrap(), seed, period);
-        println!("Updated {}, period: {}.", current.name, period);
+        noise.update(&mut images);
     }
 }
