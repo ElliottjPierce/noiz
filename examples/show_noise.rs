@@ -266,18 +266,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Fractal Simplex noise",
@@ -296,18 +285,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Domain Warped Fractal Simplex noise",
@@ -415,24 +393,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Octave((
-                                            Offset {
-                                                offseter: Default::default(),
-                                                offset_strength: 1.0,
-                                            },
-                                            Default::default(),
-                                        )),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Fast Cellular noise",
@@ -528,18 +489,7 @@ fn main() -> AppExit {
                                     >,
                                     SNormToUNorm,
                                 )>,
-                            >::from(SelfMasked((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            )))),
+                            >::default()),
                         },
                         NoiseOption {
                             name: "Pealed noise",
@@ -564,18 +514,7 @@ fn main() -> AppExit {
                                     MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
                                 >,
                             >::from(Peeled {
-                                noise: (
-                                    LayeredNoise::new(
-                                        Normed::default(),
-                                        Persistence(0.6),
-                                        FractalOctaves {
-                                            octave: Default::default(),
-                                            lacunarity: 1.8,
-                                            octaves: 8,
-                                        },
-                                    ),
-                                    Default::default(),
-                                ),
+                                noise: Default::default(),
                                 pealer: MixCellGradients::default(),
                                 layers: 5.0,
                             })),
@@ -598,18 +537,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Pingpong Fractal Simplex noise",
@@ -629,18 +557,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Derivative Fractal Perlin noise",
@@ -910,18 +827,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Fractal Simplex noise",
@@ -940,18 +846,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                     ],
                     selected: 0,
@@ -1018,18 +913,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                         NoiseOption {
                             name: "Fractal Simplex noise",
@@ -1048,18 +932,7 @@ fn main() -> AppExit {
                                     >,
                                 >,
                                 SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    Normed::default(),
-                                    Persistence(0.6),
-                                    FractalOctaves {
-                                        octave: Default::default(),
-                                        lacunarity: 1.8,
-                                        octaves: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            )>::default()),
                         },
                     ],
                 };

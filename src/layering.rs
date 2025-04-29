@@ -132,6 +132,17 @@ pub struct LayeredNoise<R, W, N, const DONT_FINISH: bool = false> {
     noise: N,
 }
 
+impl<
+    R: LayerResultContext + Default,
+    W: LayerWeightsSettings + Default,
+    N: LayerOperation<R, W::Weights> + Default,
+> Default for LayeredNoise<R, W, N>
+{
+    fn default() -> Self {
+        Self::new(Default::default(), Default::default(), Default::default())
+    }
+}
+
 impl<R: LayerResultContext, W: LayerWeightsSettings, N: LayerOperation<R, W::Weights>>
     LayeredNoise<R, W, N>
 {
@@ -272,7 +283,18 @@ pub struct FractalOctaves<T> {
     /// A good default is 2.
     pub lacunarity: f32,
     /// The number of times to do this octave.
+    /// Defaults to 8.
     pub octaves: u32,
+}
+
+impl<T: Default> Default for FractalOctaves<T> {
+    fn default() -> Self {
+        Self {
+            octave: T::default(),
+            lacunarity: 2.0,
+            octaves: 8,
+        }
+    }
 }
 
 impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W>
@@ -314,6 +336,11 @@ impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: La
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Persistence(pub f32);
 
+impl Default for Persistence {
+    fn default() -> Self {
+        Self(0.5)
+    }
+}
 impl Persistence {
     /// Makes every octave get the same weight.
     pub const CONSTANT: Self = Self(1.0);
