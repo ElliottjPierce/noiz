@@ -6,7 +6,7 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
-    DynamicSampleable, Noise,
+    DynamicConfigurableSampleable, Noise,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, DistanceToEdge, MixCellGradients,
         MixCellValues, MixCellValuesForDomain, PerCell, PerCellPointDistances, PerNearestPoint,
@@ -28,7 +28,7 @@ use noiz::{
 /// Holds a version of the noise
 pub struct NoiseOption<V> {
     name: &'static str,
-    noise: Box<dyn DynamicSampleable<V, f32> + Send + Sync>,
+    noise: Box<dyn DynamicConfigurableSampleable<V, f32> + Send + Sync>,
 }
 
 impl NoiseOption<Vec2> {

@@ -1,7 +1,8 @@
 //! Contains common imports
 
 pub use crate::{
-    ConfigurableNoise, DynamicSampleable, Noise, NoiseFunction, Sampleable, SampleableFor,
+    ConfigurableNoise, DynamicConfigurableSampleable, DynamicSampleable, Noise, NoiseFunction,
+    Sampleable, SampleableFor,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, MixCellGradients, MixCellValues,
         PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyPointDistance,
