@@ -5,8 +5,6 @@ A simple noise library built for and with [Bevy](https://bevyengine.org/).
 Here's some fbm simplex noise as a taste:
 ![FbmSimplex](images/FbmSimplex.png)
 
-## Quick Facts
-
 Noiz is:
 - Simple
 - Extendable
@@ -17,11 +15,13 @@ Noiz is:
 - Serializable
 - Reflectable
 - Readable
+- Under development (as I have time and features are requested)
+- Free and open source forever (feel free to open issues and prs!)
 
 Noiz is not:
 - Spelled correctly (noise was already taken)
 - Mathematically precise (only supports `f32` types for now)
-- Fully optimized (algebraic float math is not stable in rust yet)
+- Fully optimized yet (algebraic float math is not stable in rust yet)
 - Meant to replace art tools for asset generation
 - Meant to be standalone (you'll want to also depend on either `bevy_math` or `bevy`.)
 
@@ -164,7 +164,7 @@ This is off by default because it increases build times, etc due to the complex 
 > There may have been updates, etc, or there may be other ways to improve their performance from a user's perspective.
 > If you see a way to represent them more fairly, feel free to submit a PR!
 
-## Summary
+### Quick Facts
 
 | Feature               | Noiz        | Noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
@@ -173,13 +173,13 @@ This is off by default because it increases build times, etc due to the complex 
 | cusomizability        | total       | some         | some           | limited choices |
 | cross-language        | ❌           | ❌            | ❌              | ✅              |
 | overall performance   | Great       | Poor         | Great          | Good            |
-| overall noise qualaty | Great       | untested     | Ok             | Ok              |
+| overall noise qualaty | Good        | untested     | Ok for small domains | Ok              |
 
 ## Benchmarks
 
 All benchmarks are on a standard M2 Max.
 
-**2D**
+### 2D
 
 Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 
@@ -197,7 +197,7 @@ Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 | worly                 | 5.2      ✅ | 24.5         | 11.8           | 17.8            |
 | worly approximate     | 2.7      ✅ | ---          | ---            | ---             |
 
-**3D**
+### 3D
 
 Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
 
@@ -215,7 +215,7 @@ Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
 | worly                 | 50.8        | 51.1         | 78.9           | 52.9            | 42.3         ✅ |
 | worly approximate     | 6.0      ✅ | 13.6         | ---            | ---             | ---             |
 
-**4D**
+### 4D
 
 Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 
@@ -233,7 +233,7 @@ Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 | worly                 | 169.3       | 156.3     ✅ | 205.8          | ---             |
 | worly approximate     | 26.0     ✅ | ---          | ---            | ---             |
 
-**Summary**
+### Summary
 
 For value noise, `libnoise` is the clear winner for performance.
 Both `fastnoise_lite` and `noise` are far behind. `noiz` is close, but not quite as fast.
@@ -248,3 +248,27 @@ By contrast, here's `noiz` at a frequency of 1024:
 No tiling. Yay!
 Note that some artifacting (not quite tiling) does happen at excessively large scales.
 But that's not a big deal in practice. (Ever wonder why the far lands exist in minecraft?)
+
+For perlin noise, `noiz` is generally faster for 2d and 4d but `libnoise` just beats it for 3d.
+This is likely also due to the difference in rng methods, and the same qualaty issues, etc apply here too.
+
+For simplex noise, `noiz` is the clear winner.
+
+For Worly noise, the results vary depending on use-case. See for yourself.
+Worly approximate, if you're wondering, is a version of worly noise that is much faster but restricts the voronoi points to be only half as random as normal.
+This works great if you only need an approximation.
+
+## What to Choose
+
+Use `fastnoise_lite` if you need consistncy across languages.
+Use `libnoise` if you don't need a ton of configuration, are using relatively small domains, and are primarily doing value and perlin noise.
+If you absolutely need `f64` support, use `libnoise`, but again, the permutation table rng makes the large domain kinda a moot point. Same goes for `noise`.
+If you are integrating with `bevy`, need lots of customization, need general, high performance, need `no_std` support, or need serialization and reflection, use `noiz`.
+I am not aware of a reason to use `noise` (though there may well be).
+
+## Rough Roadmap
+
+- [ ] Optimize with fastmath coming in rust 1.88
+- [ ] Add dynamic types to switch between noise functions via reflection.
+- [ ] (Maybe) Let noise types generate WESL code. (Specify noise in rust, build to WESL.) Possible, but maybe not worth it.
+- [ ] Any reasonable suggestions that come in.
