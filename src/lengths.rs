@@ -63,7 +63,7 @@ pub struct ChebyshevLength;
 ///
 /// **Artifact Warning:** Depending on the inner value,
 /// this can produce asymptotes that bleed across cell lines and cause artifacts.
-/// This works fine with traditional worley noise for example, but other [`WorleyMode`](crate::cel_noise::WorleyMode)s may yield harsh lines.
+/// This works fine with traditional worley noise for example, but other [`WorleyMode`](crate::cell_noise::WorleyMode)s may yield harsh lines.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
