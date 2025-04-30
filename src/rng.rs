@@ -44,9 +44,9 @@ impl NoiseRng {
         let mut r1 = i ^ Self::KEY;
         let mut r2 = i ^ self.0;
         r2 = r2.rotate_left(11);
-        r2 ^= r1; // better hash and worth it.
+        r2 ^= r1;
         r1 = r1.wrapping_mul(r2);
-        // r2 = r2.rotate_left(27); // better hash but not worth it.
+        r2 = r2.rotate_left(27);
         r1.wrapping_mul(r2)
 
         // This can be faster but has rotational symmetry
