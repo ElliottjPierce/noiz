@@ -48,9 +48,12 @@ Let's start with white noise.
 ```rust
 use bevy_math::prelude::*;
 use noiz::prelude::*;
-// Create noise that, per cell, where each cell is on an orthogonal (cartesian) grid, creates a random unorm (between 0 and 1) `f32`.
+// Create noise that, per cell,
+// where each cell is on an orthogonal (cartesian) grid,
+// creates a random unorm (between 0 and 1) `f32`.
 let white_noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
-// Sample the noise in 2d to return an f32. We could also do 3d or 4d and ask for anything that implements `From` f32.
+// Sample the noise in 2d to return an f32.
+// We could also do 3d or 4d and ask for anything that implements `From` f32.
 let some_value: f32 = white_noise.sample(Vec2::new(1.0, 2.3));
 ```
 
@@ -71,12 +74,16 @@ Lots of `NoiseFunction`s are available. Here's another example:
 ```rust
 use bevy_math::prelude::*;
 use noiz::prelude::*;
-// Create noise that, mixes gradients from `QuickGradients` (a lookup table) across each cell via a smoothstep, where each cell is on an orthogonal (cartesian) grid, then maps those snorm values to unorm.
+// Create noise that:
 let mut perlin_noise = Noise::<(
+    // mixes gradients from `QuickGradients` (a lookup table)
+    // across each cell via a smoothstep,
+    // where each cell is on an orthogonal (cartesian) grid,
     MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+    // then maps those snorm values to unorm.
     SNormToUNorm,
 )>::default();
-perlin_noise.set_seed(12345); // Any seed will do. There are no requirements. Even 0 is fine!
+perlin_noise.set_seed(12345); // Any seed will do. Even 0 is fine!
 let some_value: f32 = perlin_noise.sample(Vec3::new(1.0, 2.3, -100.0));
 ```
 
@@ -92,7 +99,8 @@ use bevy_math::prelude::*;
 use noiz::prelude::*;
 // Create noise made of layers
 let perlin_fbm_noise = Noise::<LayeredNoise<
-    // that finishes to a normalized value (snorm here since this is perlin noise, which is snorm)
+    // that finishes to a normalized value
+    // (snorm here since this is perlin noise, which is snorm)
     Normed<f32>,
     // where each layer persists less and less
     Persistence,
@@ -123,7 +131,7 @@ let some_value: f32 = perlin_fbm_noise.sample(Vec4::new(1.0, 2.3, -100.0, 0.0));
 Here, `LayeredNoise` is powered by the `LayerOperation` trait, in this case, the `FractalOctaves`.
 Tuples work here too, ex: `(L1, L2)`.
 For example, maybe you want the more persistent layers to be simplex noise, and, to save on performance, the details to be perlin noise.
-Just put the simplex and perlin noise in an octave!
+Just put the simplex and perlin noise in a tuple!
 An `Octave` is just a `LayerOperation` that contribures a `NoiseFunction`, even including the `NoiseFunction`, `LayeredNoise`!
 Other `LayerOperation`s may effect how each layer is weighed (ex: weight this octave a little extra) or morph the input (ex: domain warping).
 
