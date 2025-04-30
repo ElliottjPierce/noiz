@@ -1,7 +1,7 @@
+# Noiz
+
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 [![CI](https://github.com/ElliottjPierce/noiz/workflows/CI/badge.svg)](https://github.com/ElliottjPierce/noiz/actions)
-
-# Noiz
 
 A simple noise library built for and with [Bevy](https://bevyengine.org/).
 
