@@ -32,7 +32,7 @@ Noiz is not:
 ## What Makes Noiz Unique?
 
 - Noiz is powered by a custom random number generator built on a hash function instead of the traditional permutation table.
-This gives competitive performance while using less memory and reducing tiling artifacts.
+  This gives competitive performance while using less memory and reducing tiling artifacts.
 - Noiz seamlessly integrates with Bevy!
 - Noiz changes seed automatically between octaves (which prevents some artifacting common in other libraries).
 - Noiz is endlessly cusomizable. Really, the combinations and settings are limitless!
