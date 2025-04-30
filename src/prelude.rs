@@ -1,7 +1,7 @@
 //! Contains common imports
 
 pub use crate::{
-    DynamicSampleable, Noise, NoiseFunction, Sampleable,
+    ConfigurableNoise, DynamicSampleable, Noise, NoiseFunction, Sampleable, SampleableFor,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, EuclideanLength, ManhatanLength,
         MixCellGradients, MixCellValues, PerCell, PerCellPointDistances, QuickGradients,
