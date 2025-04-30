@@ -4,7 +4,13 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 keywords = ["noise", "bevy", "math", "graphics", "random"]
-categories = ["no-std::no-alloc", "no-std", "mathematics", "game-development", "graphics"]
+categories = [
+  "no-std::no-alloc",
+  "no-std",
+  "mathematics",
+  "game-development",
+  "graphics",
+]
 readme = "README.md"
 repository = "https://github.com/ElliottjPierce/noiz"
 homepage = "https://github.com/ElliottjPierce/noiz"
