@@ -115,7 +115,7 @@ let perlin_fbm_noise = Noise::<LayeredNoise<
         octaves: 8,
     },
 ));
-let some_value: f32 = perlin_fbm_noise.sample(Vec4::new(1.0, 2.3, -100, 0.0));
+let some_value: f32 = perlin_fbm_noise.sample(Vec4::new(1.0, 2.3, -100.0, 0.0));
 ```
 
 Here, `LayeredNoise` is powered by the `LayerOperation` trait, in this case, the `FractalOctaves`.
