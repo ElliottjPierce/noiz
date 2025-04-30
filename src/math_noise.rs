@@ -1,7 +1,7 @@
 //! Contains common adaptive [`NoiseFunction`].
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
 
-use crate::{NoiseFunction, cell_noise::LengthFunction};
+use crate::{NoiseFunction, lengths::LengthFunction};
 
 /// A [`NoiseFunction`] that maps vectors from (-1,1) to (0, 1).
 #[derive(Default, PartialEq, Clone, Copy)]

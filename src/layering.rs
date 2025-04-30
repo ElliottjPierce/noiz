@@ -2,7 +2,7 @@
 
 use core::{f32, marker::PhantomData, ops::Div};
 
-use crate::{cell_noise::LengthFunction, cells::WithGradient, *};
+use crate::{cells::WithGradient, lengths::LengthFunction, *};
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 use rng::NoiseRng;
 

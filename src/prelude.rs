@@ -3,9 +3,8 @@
 pub use crate::{
     ConfigurableNoise, DynamicSampleable, Noise, NoiseFunction, Sampleable, SampleableFor,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, DistanceBlend, EuclideanLength, ManhatanLength,
-        MixCellGradients, MixCellValues, PerCell, PerCellPointDistances, QuickGradients,
-        SimplecticBlend, WorleyPointDistance,
+        BlendCellGradients, BlendCellValues, DistanceBlend, MixCellGradients, MixCellValues,
+        PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{DoubleSmoothstep, Linear, Smoothstep},
@@ -13,6 +12,7 @@ pub use crate::{
         FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence,
     },
+    lengths::{EuclideanLength, ManhatanLength},
     math_noise::{Billow, PingPong, SNormToUNorm, UNormToSNorm},
     rng::{Random, SNorm, UNorm},
 };

@@ -12,6 +12,7 @@ pub mod cell_noise;
 pub mod cells;
 pub mod curves;
 pub mod layering;
+pub mod lengths;
 pub mod math_noise;
 pub mod misc_noise;
 pub mod prelude;

@@ -8,10 +8,10 @@ use bevy::{
 use noiz::{
     DynamicSampleable, Noise,
     cell_noise::{
-        BlendCellGradients, BlendCellValues, ChebyshevLength, DistanceBlend, DistanceToEdge,
-        EuclideanLength, ManhatanLength, MixCellGradients, MixCellValues, MixCellValuesForDomain,
-        PerCell, PerCellPointDistances, PerNearestPoint, QualityGradients, QuickGradients,
-        SimplecticBlend, WorleyAverage, WorleyDifference, WorleyPointDistance, WorleySmoothMin,
+        BlendCellGradients, BlendCellValues, DistanceBlend, DistanceToEdge, MixCellGradients,
+        MixCellValues, MixCellValuesForDomain, PerCell, PerCellPointDistances, PerNearestPoint,
+        QualityGradients, QuickGradients, SimplecticBlend, WorleyAverage, WorleyDifference,
+        WorleyPointDistance, WorleySmoothMin,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{CubicSMin, DoubleSmoothstep, Linear, Smoothstep},
@@ -19,6 +19,7 @@ use noiz::{
         DomainWarp, FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, PersistenceConfig, SmoothDerivativeContribution,
     },
+    lengths::{ChebyshevLength, EuclideanLength, ManhatanLength},
     math_noise::{Billow, PingPong, SNormToUNorm, Spiral},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},

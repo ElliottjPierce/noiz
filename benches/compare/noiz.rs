@@ -6,12 +6,13 @@ use criterion::{measurement::WallTime, *};
 use noiz::{
     ConfigurableNoise, Noise, Sampleable, SampleableFor,
     cell_noise::{
-        BlendCellGradients, EuclideanLength, MixCellGradients, MixCellValues,
-        PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyPointDistance,
+        BlendCellGradients, MixCellGradients, MixCellValues, PerCellPointDistances, QuickGradients,
+        SimplecticBlend, WorleyPointDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::Smoothstep,
     layering::{FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
+    lengths::EuclideanLength,
     rng::{Random, UNorm},
 };
 
