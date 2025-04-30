@@ -267,10 +267,14 @@ This is because `libnoise` uses a permutation table for it's rng where `noiz` us
 This mean two things:
 First, `libnoise` will invalidate a cache line, which is not reflected in these benches since nothing was competing for the cache.
 Second, `libnoise` will produce repeating noise from far away.
+
 ![problem](images/value_2d_libnoise.png)
+
 See the tiling? This is at a frequency of 200.
 By contrast, here's `noiz` at a frequency of 1024:
+
 ![good](images/value.png)
+
 No tiling. Yay!
 Note that some artifacting (not quite tiling) does happen at excessively large scales.
 But that's not a big deal in practice. (Ever wonder why the far lands exist in minecraft?)
