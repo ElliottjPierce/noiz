@@ -177,56 +177,69 @@ This is off by default because it increases build times, etc due to the complex 
 
 ## Benchmarks
 
+All benchmarks are on a standard M2 Max.
+
 **2D**
 
 Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 
-| Noise Type            | Noiz        | Noise        | libnoise       | fastnoise_lite  |
+| Noise Type            | noiz        | noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
-| value                 | 1.522       | 3.1          | 1.8831         | 14.8            |
-| value fbm 2 octave    | 6.5         | 8.6          | 5.8            | 31.4            |
-| value fbm 8 octave    | 26.6        | 33.4         | 22.0           | 112.0           |
-| perlin                | 2.9         | 8.8          | 3.0            | 8.1             |
-| perlin fbm 2 octave   | 7.6         | 18.4         | 8.1            | 17.2            |
-| perlin fbm 8 octave   | 31.7        | 71.8         | 31.1           | 58.0            |
-| simplex               | 6.7         | 8.6          | 8.1            | 10.6            |
-| simplex fbm 2 octave  | 14.3        | 22.3         | 17.7           | 21.6            |
-| simplex fbm 8 octave  | 55.9        | 108.5        | 89.2           | 116.0           |
-| worly                 | 4.9         | 24.5         | 11.8           | 17.8            |
-| worly approximate     | 2.5         | ---          | ---            | ---             |
+| value                 | 1.522    ✅ | 3.1          | 1.8831         | 14.8            |
+| value fbm 2 octave    | 6.5         | 8.6          | 5.8         ✅ | 31.4            |
+| value fbm 8 octave    | 26.6        | 33.4         | 22.0        ✅ | 112.0           |
+| perlin                | 2.9      ✅ | 8.8          | 3.0         ✅ | 8.1             |
+| perlin fbm 2 octave   | 7.6      ✅ | 18.4         | 8.1            | 17.2            |
+| perlin fbm 8 octave   | 31.7     ✅ | 71.8         | 31.1        ✅ | 58.0            |
+| simplex               | 6.7      ✅ | 8.6          | 8.1            | 10.6            |
+| simplex fbm 2 octave  | 14.3     ✅ | 22.3         | 17.7           | 21.6            |
+| simplex fbm 8 octave  | 55.9     ✅ | 108.5        | 89.2           | 116.0           |
+| worly                 | 4.9      ✅ | 24.5         | 11.8           | 17.8            |
+| worly approximate     | 2.5      ✅ | ---          | ---            | ---             |
 
 **3D**
 
 Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
 
-| Noise Type            | Noiz        | Noiz `Vec3A` | Noise          | libnoise        | fastnoise_lite  |
+| Noise Type            | noiz        | noiz `Vec3A` | noise          | libnoise        | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|-----------------|
-| value                 | 2.7         | 7.7          | 11.4           | 2.7             | 39.6            |
-| value fbm 2 octave    | 11.7        | 15.7         | 22.5           | 8.2             | 85.7            |
-| value fbm 8 octave    | 52.3        | 61.8         | 89.3           | 33.5            | 336.6           |
-| perlin                | 7.0         | 9.8          | 76.9           | 6.4             | 13.8            |
-| perlin fbm 2 octave   | 19.1        | 19.4         | 28.5           | 15.8            | 29.7            |
-| perlin fbm 8 octave   | 78.4        | 73.3         | 368.9          | 69.7            | 132.0           |
-| simplex               | 12.5        | 19.0         | 14.2           | 16.3            | 20.1            |
-| simplex fbm 2 octave  | 26.6        | 38.0         | 51.8           | 25.9            | 43.0            |
-| simplex fbm 8 octave  | 105.5       | 149.0        | 207.8          | 181.7           | 175.1           |
-| worly                 | 49.7        | 50.0         | 78.9           | 52.9            | 42.3            |
-| worly approximate     | 5.8         | 13.2         | ---            | ---             | ---             |
+| value                 | 2.7      ✅ | 7.7          | 11.4           | 2.7          ✅ | 39.6            |
+| value fbm 2 octave    | 11.7        | 15.7         | 22.5           | 8.2          ✅ | 85.7            |
+| value fbm 8 octave    | 52.3        | 61.8         | 89.3           | 33.5         ✅ | 336.6           |
+| perlin                | 7.0         | 9.8          | 76.9           | 6.4          ✅ | 13.8            |
+| perlin fbm 2 octave   | 19.1        | 19.4         | 28.5           | 15.8         ✅ | 29.7            |
+| perlin fbm 8 octave   | 78.4        | 73.3         | 368.9          | 69.7         ✅ | 132.0           |
+| simplex               | 12.5     ✅ | 19.0         | 14.2           | 16.3            | 20.1            |
+| simplex fbm 2 octave  | 26.6     ✅ | 38.0         | 51.8           | 25.9         ✅ | 43.0            |
+| simplex fbm 8 octave  | 105.5    ✅ | 149.0        | 207.8          | 181.7           | 175.1           |
+| worly                 | 49.7        | 50.0         | 78.9           | 52.9            | 42.3         ✅ |
+| worly approximate     | 5.8      ✅ | 13.2         | ---            | ---             | ---             |
 
 **4D**
 
 Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 
-| Noise Type            | Noiz        | Noise        | libnoise       | fastnoise_lite  |
+| Noise Type            | noiz        | noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
-| value                 | 13.2        | 21.2         | 3.9            | ---             |
-| value fbm 2 octave    | 26.8        | 46.0         | 14.3           | ---             |
-| value fbm 8 octave    | 104.9       | 167.3        | 57.3           | ---             |
-| perlin                | 16.4        | 177.6        | 17.6           | ---             |
-| perlin fbm 2 octave   | 36.4        | 53.5         | 38.4           | ---             |
-| perlin fbm 8 octave   | 135.1       | 824.2        | 203.1          | ---             |
-| simplex               | 19.4        | 35.5         | 29.5           | ---             |
-| simplex fbm 2 octave  | 38.6        | 108.8        | 41.0           | ---             |
-| simplex fbm 8 octave  | 150.2       | 421.0        | 234.4          | ---             |
-| worly                 | 169.3       | 156.3        | 205.8          | ---             |
-| worly approximate     | 25.2        | ---          | ---            | ---             |
+| value                 | 13.2        | 21.2         | 3.9         ✅ | ---             |
+| value fbm 2 octave    | 26.8        | 46.0         | 14.3        ✅ | ---             |
+| value fbm 8 octave    | 104.9       | 167.3        | 57.3        ✅ | ---             |
+| perlin                | 16.4     ✅ | 177.6        | 17.6           | ---             |
+| perlin fbm 2 octave   | 36.4     ✅ | 53.5         | 38.4           | ---             |
+| perlin fbm 8 octave   | 135.1    ✅ | 824.2        | 203.1          | ---             |
+| simplex               | 19.4     ✅ | 35.5         | 29.5           | ---             |
+| simplex fbm 2 octave  | 38.6     ✅ | 108.8        | 41.0           | ---             |
+| simplex fbm 8 octave  | 150.2    ✅ | 421.0        | 234.4          | ---             |
+| worly                 | 169.3       | 156.3     ✅ | 205.8          | ---             |
+| worly approximate     | 25.2     ✅ | ---          | ---            | ---             |
+
+**Summary**
+
+For value noise, `libnoise` is the clear winner for performance.
+Both `fastnoise_lite` and `noise` are far behind. `noiz` is close, but not quite as fast.
+This is because `libnoise` uses a permutation table for it's rng where `noiz` uses a custom hash function.
+This mean two things:
+First, `libnoise` will invalidate a cache line, which is not reflected in these benches since nothing was competing for the cache.
+Second, `libnoise` will yiled repeating noise from far away.
+![problem](images/value_2d_libnoise.png)
+See the tiling? This is at a frequency of 200.
