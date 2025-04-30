@@ -1,4 +1,8 @@
-//! Contains common adaptive [`NoiseFunction`].
+//! Contains common math-based [`NoiseFunction`]s.
+//! These are some of the smallest but most powerful noise functions.
+//! Note that some of them have specific requirements for the domain of their inputs.
+//! To see some examples of this, see the "show_noise" example.
+
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
 
 use crate::{NoiseFunction, lengths::LengthFunction};
@@ -60,21 +64,21 @@ pub struct PositiveApproachZero;
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Abs;
 
-/// A [`NoiseFunction`] that divides 1.0 by its input.
+/// A [`NoiseFunction`] that divides 1.0 by its input, ex: `1.0 / input`.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Inverse;
 
-/// A [`NoiseFunction`] that subtracts its input from 1.0.
+/// A [`NoiseFunction`] that subtracts its input from 1.0, ex: `1.0 - input`.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct ReverseUNorm;
 
-/// A [`NoiseFunction`] that negates its input.
+/// A [`NoiseFunction`] that negates its input, ex: `-input`.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -86,6 +90,7 @@ pub struct Negate;
 pub type Billow = (Abs, UNormToSNorm);
 
 /// A [`NoiseFunction`] that wraps values over this one back below it.
+/// This can produce a ridging effect.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
