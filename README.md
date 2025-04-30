@@ -44,6 +44,8 @@ Noiz is not:
 Let's start with white noise.
 
 ```rust
+use bevy_math::prelude::*;
+use noiz::prelude::*;
 // Create noise that, per cell, where each cell is on an orthogonal (cartesian) grid, creates a random unorm (between 0 and 1) `f32`.
 let white_noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
 // Sample the noise in 2d to return an f32. We could also do 3d or 4d and ask for anything that implements `From` f32.
@@ -65,6 +67,8 @@ In the example above, `PerCell` is a noise function.
 Lots of `NoiseFunction`s are available. Here's another example:
 
 ```rust
+use bevy_math::prelude::*;
+use noiz::prelude::*;
 // Create noise that, mixes gradients from `QuickGradients` (a lookup table) across each cell via a smoothstep, where each cell is on an orthogonal (cartesian) grid, then maps those snorm values to unorm.
 let mut perlin_noise = Noise::<(
     MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
@@ -82,6 +86,8 @@ The `Smoothstep` is just one kind of `Curve` (a bevy curve) that describes how t
 Here's an example of fractional brownian motion:
 
 ```rust
+use bevy_math::prelude::*;
+use noiz::prelude::*;
 // Create noise made of layers
 let perlin_fbm_noise = Noise::<LayeredNoise<
     // that finishes to a normalized value (snorm here since this is perlin noise, which is snorm)

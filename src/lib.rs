@@ -14,6 +14,7 @@ pub mod curves;
 pub mod layering;
 pub mod math_noise;
 pub mod misc_noise;
+pub mod prelude;
 pub mod rng;
 
 use bevy_math::VectorSpace;
