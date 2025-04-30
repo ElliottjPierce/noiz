@@ -33,4 +33,7 @@ pub mod common_noise {
 
     /// A [`NoiseFunction`] that produces simplex noise `f32`s between -1 and 1.
     pub type Simplex = BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>;
+
+    /// Represents traditional fractal brownian motion.
+    pub type Fbm<T> = LayeredNoise<Normed<f32>, Persistence, FractalOctaves<Octave<T>>>;
 }
