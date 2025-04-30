@@ -7,8 +7,13 @@ use bevy_math::{IVec2, IVec3, IVec4, UVec2, UVec3, UVec4, Vec2, Vec3, Vec3A, Vec
 
 use crate::NoiseFunction;
 
-/// A seeded RNG.
+/// A seeded random number generator (rng), specialized for procedural noise.
+///
 /// This is similar to a hash function, but does not use std's hash traits, as those produce `u64` outputs only.
+/// Most noise rngs use a permutation table of random numbers.
+/// Although that is very fast, it means there are only so many random numbers that can be produced.
+/// That can lead to artifacting and tiling from far away.
+/// Instead, this rng, uses a hash custom built to be visually pleasing while still having competitive performance.
 ///
 /// This stores the seed of the RNG.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -20,15 +25,24 @@ pub struct NoiseRng(pub u32);
 /// Represents something that can be used as an input to [`NoiseRng`]'s randomizers.
 pub trait NoiseRngInput {
     /// Collapses these values into a single [`u32`] to be put through the RNG.
+    ///
+    /// As a guide to implementers, try to make each field non-commutative and non-linear.
+    /// For example, some combination of multiplication and addition usually works well.
     fn collapse_for_rng(self) -> u32;
 }
 
 impl NoiseRng {
     /// This is a large prime number with even bit distribution.
-    /// This lets use use this as a multiplier in the rng.
+    /// This lets use use this as a multiplier and xor in the rng.
     const KEY: u32 = 249_222_277;
 
     /// Determenisticly changes the seed significantly.
+    ///
+    /// ```
+    /// let mut rng = NoiseRng(1234);
+    /// // do some noise
+    /// rng.re_seed() // give the next noise a fresh seed.
+    /// ```
     #[inline(always)]
     pub fn re_seed(&mut self) {
         self.0 = Self::KEY.wrapping_mul(self.0 ^ Self::KEY);
@@ -239,13 +253,53 @@ impl NoiseRngInput for IVec4 {
     }
 }
 
+/// Represents some type that can convert some random bits into an output `T`.
+/// This does not randomize the input bits, it simply constructs an arbetrary value *based* on the bits.
+///
+/// This is similar to the `Distribution` trait from the `rand` crate, but it provides some additional flexibility.
+pub trait AnyValueFromBits<T> {
+    /// Produces a value `T` from `bits` that can be linearly mapped back to the proper distriburion.
+    ///
+    /// This is useful if you want to linearly mix these values together, only remapping them at the end.
+    /// This will only hold true if the values are always mixed linearly. (The linear interpolator `t` doesn't need to be linear but the end lerp does.)
+    ///
+    /// ```
+    /// let val1: f32 = UNorm.linear_equivalent_value(12345);
+    /// let val2: f32 = UNorm.linear_equivalent_value(54321);
+    /// let averabe = UNorm.finish_linear_equivalent_value((val1 + val2) * 0.5);
+    /// ```
+    fn linear_equivalent_value(&self, bits: u32) -> T;
+
+    /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](AnyValueFromBits::linear_equivalent_value).
+    fn finish_linear_equivalent_value(&self, value: T) -> T;
+
+    /// Returns the derivative of [`finish_linear_equivalent_value`](AnyValueFromBits::finish_linear_equivalent_value).
+    /// This is a single `f32` since the function is always linear.
+    fn finishing_derivative(&self) -> f32;
+
+    /// Generates a valid value in this distriburion.
+    #[inline]
+    fn any_value(&self, bits: u32) -> T {
+        self.finish_linear_equivalent_value(self.linear_equivalent_value(bits))
+    }
+}
+
 /// A version of [`AnyValueFromBits`] that is for a specific value type.
 pub trait ConcreteAnyValueFromBits: AnyValueFromBits<Self::Concrete> {
     /// The type that this generates values for.
     type Concrete;
 }
 
-/// A [`NoiseFunction`] that takes any [`NoiseRngInput`] and produces a fully random `u32`.
+/// This generates random values of `T` using a [`AnyValueFromBits<T>`], `R`.
+/// Specifically, this is a:
+/// - [`ConcreteAnyValueFromBits`] that uses `R`, a [`AnyValueFromBits<T>`], to produce a value `T`.
+/// - [`NoiseFunction`] that takes any [`NoiseRngInput`] and uses `R` to produce a value `T`.
+///
+/// ```
+/// let unorm = Random::<UNorm, f32>::default().any_value(12345);
+/// ```
+///
+/// This is commonly used in [`MixCellValues`](crate::cell_noise::MixCellValues), and other similar [`NoiseFunction`]s.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -317,28 +371,6 @@ pub struct SNorm;
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SNormSplit;
-
-/// Represents some type that can convert some random bits into an output `T`.
-pub trait AnyValueFromBits<T> {
-    /// Produces a value `T` from `bits` that can be linearly mapped back to the proper distriburion.
-    ///
-    /// This is useful if you want to linearly mix these values together, only remapping them at the end.
-    /// This will only hold true if the values are always mixed linearly. (The linear interpolator `t` doesn't need to be linear but the end lerp does.)
-    fn linear_equivalent_value(&self, bits: u32) -> T;
-
-    /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](AnyValueFromBits::linear_equivalent_value)
-    fn finish_linear_equivalent_value(&self, value: T) -> T;
-
-    /// Returns the derivative of [`finish_linear_equivalent_value`](AnyValueFromBits::finish_linear_equivalent_value).
-    /// This is a single `f32` since the function is always linear.
-    fn finishing_derivative(&self) -> f32;
-
-    /// Generates a valid value in this distriburion.
-    #[inline]
-    fn any_value(&self, bits: u32) -> T {
-        self.finish_linear_equivalent_value(self.linear_equivalent_value(bits))
-    }
-}
 
 macro_rules! impl_norms {
     ($t:ty, $builder:expr, $split_builder:expr, $half_builder:expr) => {
