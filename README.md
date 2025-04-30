@@ -224,8 +224,8 @@ Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 | value                 | 15.9        | 21.2         | 3.9         ✅ | ---             |
 | value fbm 2 octave    | 31.7        | 46.0         | 14.3        ✅ | ---             |
 | value fbm 8 octave    | 122.7       | 167.3        | 57.3        ✅ | ---             |
-| perlin                | 18.6     ✅ | 177.6        | 17.6           | ---             |
-| perlin fbm 2 octave   | 38.5     ✅ | 53.5         | 38.4           | ---             |
+| perlin                | 18.6        | 177.6        | 17.6        ✅ | ---             |
+| perlin fbm 2 octave   | 38.5     ✅ | 53.5         | 38.4        ✅ | ---             |
 | perlin fbm 8 octave   | 144.5    ✅ | 824.2        | 203.1          | ---             |
 | simplex               | 19.4     ✅ | 35.5         | 29.5           | ---             |
 | simplex fbm 2 octave  | 38.6     ✅ | 108.8        | 41.0           | ---             |
