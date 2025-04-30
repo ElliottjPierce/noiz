@@ -246,3 +246,93 @@ impl<I: Copy, N: NoiseFunction<I>, P: NoiseFunction<I, Output = f32>> NoiseFunct
         self.noise.evaluate(input, &mut layered)
     }
 }
+
+/// A [`NoiseFunction`] changes it's input to an allighned version if one is available.
+/// Ex, this will convert [`Vec3`] to [`Vec3A`]. This enables SIMD instructions but consumes more memory.
+/// Justify this with a benchmark. See also [`DisAligned`].
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Aligned;
+
+impl NoiseFunction<Vec2> for Aligned {
+    type Output = Vec2;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec2, _seeds: &mut NoiseRng) -> Self::Output {
+        input
+    }
+}
+
+impl NoiseFunction<Vec3> for Aligned {
+    type Output = Vec3A;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec3, _seeds: &mut NoiseRng) -> Self::Output {
+        input.into()
+    }
+}
+
+impl NoiseFunction<Vec3A> for Aligned {
+    type Output = Vec3A;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec3A, _seeds: &mut NoiseRng) -> Self::Output {
+        input
+    }
+}
+
+impl NoiseFunction<Vec4> for Aligned {
+    type Output = Vec4;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec4, _seeds: &mut NoiseRng) -> Self::Output {
+        input
+    }
+}
+
+/// A [`NoiseFunction`] changes it's input to an un-allighned version if one is available.
+/// Ex, this will convert [`Vec3A`] to [`Vec3`]. This disables SIMD instructions but reduces memory.
+/// Justify this with a benchmark. See also [`Aligned`].
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct DisAligned;
+
+impl NoiseFunction<Vec2> for DisAligned {
+    type Output = Vec2;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec2, _seeds: &mut NoiseRng) -> Self::Output {
+        input
+    }
+}
+
+impl NoiseFunction<Vec3> for DisAligned {
+    type Output = Vec3;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec3, _seeds: &mut NoiseRng) -> Self::Output {
+        input
+    }
+}
+
+impl NoiseFunction<Vec3A> for DisAligned {
+    type Output = Vec3;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec3A, _seeds: &mut NoiseRng) -> Self::Output {
+        input.into()
+    }
+}
+
+impl NoiseFunction<Vec4> for DisAligned {
+    type Output = Vec4;
+
+    #[inline(always)]
+    fn evaluate(&self, input: Vec4, _seeds: &mut NoiseRng) -> Self::Output {
+        input
+    }
+}
