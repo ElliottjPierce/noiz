@@ -267,6 +267,8 @@ impl<I, T, N: ConfigurableNoise + DynamicSampleable<I, T>> DynamicConfigurableSa
 /// ```
 ///
 /// See also [`Sampleable`], [`DynamicSampleable`], [`SampleableFor`], [`ConfigurableNoise`], and [`DynamicConfigurableSampleable`].
+///
+/// See the "show_noise" example to see a few ways you can use this.
 #[derive(PartialEq, Clone, Copy)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]

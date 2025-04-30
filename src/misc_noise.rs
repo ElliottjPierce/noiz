@@ -1,4 +1,4 @@
-//! A grab bag of miscelenious noise functions that have no bette place to be.
+//! A grab bag of miscelenious noise functions that have no better place to be.
 
 use core::ops::{Add, Mul};
 
@@ -6,7 +6,17 @@ use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 
 use crate::{NoiseFunction, rng::NoiseRng};
 
-/// A [`NoiseFunction`] that wraps an inner [`NoiseFunction`] and produces values of the same type as the input with random elements.
+/// A [`NoiseFunction`] that wraps an inner [`NoiseFunction`] `N` and produces values of the same type as the input with random elements sourced from `N`.
+///
+/// This is most commonly used for domain warping:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// # use bevy_math::prelude::*;
+/// # use noiz::misc_noise::{RandomElements, Offset};
+/// let noise = Noise::<(Offset<RandomElements<common_noise::Value>>, common_noise::Perlin)>::default();
+/// let value = noise.sample_for::<f32>(Vec2::new(1.0, -1.0));
+/// ```
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -73,7 +83,17 @@ impl<N: NoiseFunction<Vec4, Output = f32>> NoiseFunction<Vec4> for RandomElement
     }
 }
 
-/// A [`NoiseFunction`] that pushes its input by some offset from an inner [`NoiseFunction`] `N`.
+/// A [`NoiseFunction`] that pushes its input by some offset calculated by an inner [`NoiseFunction`] `N`.
+///
+/// This is most commonly used for domain warping:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// # use bevy_math::prelude::*;
+/// # use noiz::misc_noise::{RandomElements, Offset};
+/// let noise = Noise::<(Offset<RandomElements<common_noise::Value>>, common_noise::Perlin)>::default();
+/// let value = noise.sample_for::<f32>(Vec2::new(1.0, -1.0));
+/// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -81,7 +101,7 @@ impl<N: NoiseFunction<Vec4, Output = f32>> NoiseFunction<Vec4> for RandomElement
 pub struct Offset<N> {
     /// The inner [`NoiseFunction`].
     pub offseter: N,
-    /// The offset's strength.
+    /// The offset's strength/multiplier.
     pub offset_strength: f32,
 }
 
@@ -106,7 +126,7 @@ impl<I: Add<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
     }
 }
 
-/// A [`NoiseFunction`] that scales its input by some factor from an inner [`NoiseFunction`] `N`.
+/// A [`NoiseFunction`] that scales its input by some factor calculated by an inner [`NoiseFunction`] `N`.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -114,7 +134,7 @@ impl<I: Add<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
 pub struct Scaled<N> {
     /// The inner [`NoiseFunction`].
     pub scaler: N,
-    /// The scale's strength.
+    /// The scale's strength/multiplier.
     pub scale_strength: f32,
 }
 
@@ -155,10 +175,11 @@ impl<I, T: Copy> NoiseFunction<I> for Constant<T> {
     }
 }
 
-/// A [`NoiseFunction`] that multiplies the result of two other [`NoiseFunction`]s at the same input.
+/// A [`NoiseFunction`] that multiplies the result of two [`NoiseFunction`]s evaluated at the same input.
 ///
 /// This is generally commutative, so `N` and `M` can swap without changing what kind of noise it is (though due to rng, the results may differ).
 /// If you need to mask more than two noise functions, you can nest `M` or `N` in another [`Masked`].
+/// If you only need to mask one, see [`SelfMasked`].
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -176,7 +197,7 @@ impl<I: Copy, N: NoiseFunction<I>, M: NoiseFunction<I, Output: Mul<N::Output>>> 
     }
 }
 
-/// A [`NoiseFunction`] that multiplies the two results of an inner [`NoiseFunction`]s at each input.
+/// A [`NoiseFunction`] that multiplies two distinct results of an inner [`NoiseFunction`]s at each input.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -211,6 +232,7 @@ impl<T> NoiseFunction<T> for ExtraRng {
 }
 
 /// A [`NoiseFunction`] that changes the seed of an inner [`NoiseFunction`] `N` based on the output of another [`NoiseFunction`] `P`.
+/// This creates an effect where multiple layers of noise seem to be being peeled back on eachother.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
