@@ -9,7 +9,7 @@ pub use crate::{
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{DoubleSmoothstep, Linear, Smoothstep},
     layering::{
-        FractalOctaves, LayeredNoise, Normed, NormedByDerivative, Octave,
+        FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence,
     },
     lengths::{EuclideanLength, ManhatanLength},
@@ -35,5 +35,5 @@ pub mod common_noise {
     pub type Simplex = BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>;
 
     /// Represents traditional fractal brownian motion.
-    pub type Fbm<T> = LayeredNoise<Normed<f32>, Persistence, FractalOctaves<Octave<T>>>;
+    pub type Fbm<T> = LayeredNoise<Normed<f32>, Persistence, FractalLayers<Octave<T>>>;
 }

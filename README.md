@@ -98,7 +98,7 @@ let perlin_fbm_noise = Noise::<LayeredNoise<
     Persistence,
     // Here's the layers:
     // a layer that repeats the inner layers with ever scaling inputs
-    FractalOctaves<
+    FractalLayers<
         // a layer that contributes to the result directly via a `NoiseFunction`
         Octave<
             // The `NoiseFunction` we used in perlin noise
@@ -109,7 +109,7 @@ let perlin_fbm_noise = Noise::<LayeredNoise<
     Normed::default(),
     // Each octave will contribute 0.6 as much as the last.
     Persistence(0.6),
-    FractalOctaves {
+    FractalLayers {
         octave: Default::default(),
         /// Each octave within this layer will be sampled at 1.8 times the scale of the last.
         lacunarity: 1.8,

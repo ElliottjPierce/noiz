@@ -11,7 +11,7 @@ use noiz::{
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::Smoothstep,
-    layering::{FractalOctaves, LayeredNoise, Normed, Octave, Persistence},
+    layering::{FractalLayers, LayeredNoise, Normed, Octave, Persistence},
     lengths::EuclideanLength,
     rng::{Random, UNorm},
 };
@@ -129,14 +129,14 @@ macro_rules! benches_nD {
                         LayeredNoise<
                             Normed<f32>,
                             Persistence,
-                            FractalOctaves<
+                            FractalLayers<
                                 Octave<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>>,
                             >,
                         >,
                     >::from(LayeredNoise::new(
                         Normed::default(),
                         Persistence(PERSISTENCE),
-                        FractalOctaves {
+                        FractalLayers {
                             octave: Default::default(),
                             lacunarity: LACUNARITY,
                             octaves,
@@ -155,7 +155,7 @@ macro_rules! benches_nD {
                         LayeredNoise<
                             Normed<f32>,
                             Persistence,
-                            FractalOctaves<
+                            FractalLayers<
                                 Octave<
                                     BlendCellGradients<
                                         SimplexGrid,
@@ -168,7 +168,7 @@ macro_rules! benches_nD {
                     >::from(LayeredNoise::new(
                         Normed::default(),
                         Persistence(PERSISTENCE),
-                        FractalOctaves {
+                        FractalLayers {
                             octave: Default::default(),
                             lacunarity: LACUNARITY,
                             octaves,
@@ -187,12 +187,12 @@ macro_rules! benches_nD {
                         LayeredNoise<
                             Normed<f32>,
                             Persistence,
-                            FractalOctaves<Octave<MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>>>,
+                            FractalLayers<Octave<MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>>>,
                         >,
                     >::from(LayeredNoise::new(
                         Normed::default(),
                         Persistence(PERSISTENCE),
-                        FractalOctaves {
+                        FractalLayers {
                             octave: Default::default(),
                             lacunarity: LACUNARITY,
                             octaves,

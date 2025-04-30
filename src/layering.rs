@@ -343,7 +343,7 @@ where
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct FractalOctaves<T> {
+pub struct FractalLayers<T> {
     /// The [`LayerOperation`] to perform.
     pub octave: T,
     /// lacunarity measures how far apart each octave will be.
@@ -357,7 +357,7 @@ pub struct FractalOctaves<T> {
     pub octaves: u32,
 }
 
-impl<T: Default> Default for FractalOctaves<T> {
+impl<T: Default> Default for FractalLayers<T> {
     fn default() -> Self {
         Self {
             octave: T::default(),
@@ -368,7 +368,7 @@ impl<T: Default> Default for FractalOctaves<T> {
 }
 
 impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W>
-    for FractalOctaves<T>
+    for FractalLayers<T>
 {
     #[inline]
     fn prepare(&self, result_context: &mut R, weights: &mut W) {
@@ -379,7 +379,7 @@ impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOpera
 }
 
 impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: LayerWeights>
-    LayerOperationFor<I, R, W> for FractalOctaves<T>
+    LayerOperationFor<I, R, W> for FractalLayers<T>
 {
     #[inline]
     fn do_noise_op(
