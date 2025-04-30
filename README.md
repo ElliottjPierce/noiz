@@ -1,7 +1,7 @@
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 [![CI](https://github.com/ElliottjPierce/noiz/workflows/CI/badge.svg)](https://github.com/ElliottjPierce/noiz/actions)
 
-# noiz
+# Noiz
 
 A simple noise library built for and with [Bevy](https://bevyengine.org/).
 
@@ -20,6 +20,7 @@ Noiz is:
 - Readable
 - Under development (as I have time and features are requested)
 - Free and open source forever (feel free to open issues and prs!)
+- No Std compatible
 
 Noiz is not:
 - Spelled correctly (noise was already taken)
@@ -27,6 +28,16 @@ Noiz is not:
 - Fully optimized yet (algebraic float math is not stable in rust yet)
 - Meant to replace art tools for asset generation
 - Meant to be standalone (you'll want to also depend on either `bevy_math` or `bevy`.)
+
+## What Makes Noiz Unique?
+
+- Noiz is powered by a custom random number generator built on a hash function instead of the traditional permutation table.
+This gives competitive performance while using less memory and reducing tiling artifacts.
+- Noiz seamlessly integrates with Bevy!
+- Noiz changes seed automatically between octaves (which prevents some artifacting common in other libraries).
+- Noiz is endlessly cusomizable. Really, the combinations and settings are limitless!
+- Noiz is `no_std`.
+- Noiz supports all your favorite noise types. If you see one that's missing, please open an issue!
 
 ## Quick Start
 
@@ -65,8 +76,8 @@ let some_value: f32 = perlin_noise.sample(Vec3::new(1.0, 2.3, -100.0));
 
 The `QuickGradients` is just one kind of `GradientGenerator` (and you can build your own).
 The `OrthoGrid` is just one kind of `Partitioner` (something that breaks up a domain into `DomainCell`s).
-There are also `Voronoi` and `SimplexGrid`, and you can add your own!
-The `Smoothstep` is just one kind of `Curve` (a bevy curve) that describes how to interpolate.
+There are also `Voronoi` and `SimplexGrid`, and you can build your own!
+The `Smoothstep` is just one kind of `Curve` (a bevy curve) that describes how to interpolate, and you can build your own.
 
 Here's an example of fractional brownian motion:
 
@@ -104,6 +115,7 @@ let some_value: f32 = perlin_fbm_noise.sample(Vec4::new(1.0, 2.3, -100, 0.0));
 Here, `LayeredNoise` is powered by the `LayerOperation` trait, in this case, the `FractalOctaves`.
 Tuples work here too, ex: `(L1, L2)`.
 For example, maybe you want the more persistent layers to be simplex noise, and, to save on performance, the details to be perlin noise.
+Just put the simplex and perlin noise in an octave!
 An `Octave` is just a `LayerOperation` that contribures a `NoiseFunction`, even including the `NoiseFunction`, `LayeredNoise`!
 Other `LayerOperation`s may effect how each layer is weighed (ex: weight this octave a little extra) or morph the input (ex: domain warping).
 
@@ -119,7 +131,8 @@ So, if a noise type doesn't compile, it's probably because of something like thi
 Also note that not all combinations and settings are visually pleasing.
 Rust's type systetem will prevent you from creating impossible or invalid noise, but it won't help you make the desired noise.
 
-You can get a taste of what's possible by running the example.
+You can get a taste of what's possible by running the [example](examples/show_noise.rs).
+
 `cargo run --example show_noise`
 
 ## Cargo Config
@@ -178,9 +191,13 @@ This is off by default because it increases build times, etc due to the complex 
 | overall performance   | Great       | Poor         | Great          | Good            |
 | overall noise qualaty | Good        | untested     | Ok for small domains | Ok              |
 
+(If you want *great* noise qualaty, use an art application like blendr.)
+
 ## Benchmarks
 
-All benchmarks are on a standard M2 Max.
+All benchmarks are on a standard M2 Max with the same build configuration recommended above.
+
+Each dimension's benchmarks contain roughly the same number of samples.
 
 ### 2D
 
@@ -243,7 +260,7 @@ Both `fastnoise_lite` and `noise` are far behind. `noiz` is close, but not quite
 This is because `libnoise` uses a permutation table for it's rng where `noiz` uses a custom hash function.
 This mean two things:
 First, `libnoise` will invalidate a cache line, which is not reflected in these benches since nothing was competing for the cache.
-Second, `libnoise` will yiled repeating noise from far away.
+Second, `libnoise` will produce repeating noise from far away.
 ![problem](images/value_2d_libnoise.png)
 See the tiling? This is at a frequency of 200.
 By contrast, here's `noiz` at a frequency of 1024:
@@ -257,7 +274,7 @@ This is likely also due to the difference in rng methods, and the same qualaty i
 
 For simplex noise, `noiz` is the clear winner.
 
-For Worly noise, the results vary depending on use-case. See for yourself.
+For Worly noise, the results vary greatly depending on use-case. See for yourself.
 Worly approximate, if you're wondering, is a version of worly noise that is much faster but restricts the voronoi points to be only half as random as normal.
 This works great if you only need an approximation.
 
@@ -267,7 +284,7 @@ Use `fastnoise_lite` if you need consistncy across languages.
 Use `libnoise` if you don't need a ton of configuration, are using relatively small domains, and are primarily doing value and perlin noise.
 If you absolutely need `f64` support, use `libnoise`, but again, the permutation table rng makes the large domain kinda a moot point. Same goes for `noise`.
 If you are integrating with `bevy`, need lots of customization, need general, high performance, need `no_std` support, or need serialization and reflection, use `noiz`.
-I am not aware of a reason to use `noise` (though there may well be).
+I am not aware of a reason to use `noise` (though there may well be one I'm missing).
 
 ## Rough Roadmap
 
