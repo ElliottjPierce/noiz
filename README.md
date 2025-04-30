@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 [![CI](https://github.com/ElliottjPierce/noiz/workflows/CI/badge.svg)](https://github.com/ElliottjPierce/noiz/actions)
 
-A simple noise library built for and with [Bevy](https://bevyengine.org/).
+A simple, configurable, blazingly fast noise library built for and with [Bevy](https://bevyengine.org/).
 
 Here's some fbm simplex noise as a taste:
 ![FbmSimplex](images/FbmSimplex.png)
