@@ -1,12 +1,12 @@
-//! Contains logic for layering different noise ontop of eachother.
+//! Contains logic for layering different [`NoiseFunction`]s ontop of eachother.
 
 use core::{f32, marker::PhantomData, ops::Div};
 
-use crate::{cells::WithGradient, lengths::LengthFunction, *};
+use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction, rng::NoiseRng};
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
-use rng::NoiseRng;
 
 /// This represents the context of some [`LayerResult`].
+/// This may store metadata collected in [`LayerOperation::prepare`].
 pub trait LayerResultContext {
     /// This is the type that actually computes the result based on this context.
     type Result: LayerResult;
@@ -32,7 +32,7 @@ pub trait LayerResult {
 /// Specifies that this [`LayerResult`] can include values of type `V`.
 pub trait LayerResultFor<V>: LayerResult {
     /// Includes `value` in the final result at this `weight`.
-    /// The `value` should be kepy plain, for example, if multiplication is needed, this will do so.
+    /// The `value` should be kept plain, for example, if multiplication is needed, this will do so.
     /// If `weight` was not included in [`LayerResultContext::expect_weight`],
     /// be sure to also call [`add_unexpected_weight_to_total`](LayerResult::add_unexpected_weight_to_total).
     fn include_value(&mut self, value: V, weight: f32);
@@ -43,7 +43,7 @@ pub trait LayerWeightsSettings {
     /// The kind of [`LayerWeights`] produced by these settings.
     type Weights: LayerWeights;
 
-    /// Prepares a new [`LayerWeights`] for another sample.
+    /// Prepares a new [`LayerWeights`] for a sample.
     fn start_weights(&self) -> Self::Weights;
 }
 
@@ -55,17 +55,19 @@ pub trait LayerWeights {
 
 /// An operation that contributes to some noise result.
 /// `R` represents how the result is collected, and `W` represents how each layer is weighted.
+///
+/// Layers can be stacked in tuples: `(Layer1, Layer2, ...)`.
 pub trait LayerOperation<R: LayerResultContext, W: LayerWeights> {
     /// Prepares the result context `R` for this noise. This is like a dry run of the noise to try to precompute anything it needs.
     fn prepare(&self, result_context: &mut R, weights: &mut W);
 }
 
 /// Specifies that this [`LayerOperation`] can be done on type `I`.
-/// If this adds to the `result`, this is called an octave.
+/// If this adds to the `result`, this is called an octave. The most common kind of octave is [`Octave`].
 pub trait LayerOperationFor<I: VectorSpace, R: LayerResultContext, W: LayerWeights>:
     LayerOperation<R, W>
 {
-    /// Performs the noise operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
+    /// Performs the layer operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
     fn do_noise_op(
         &self,
         seeds: &mut NoiseRng,
@@ -125,6 +127,54 @@ impl_all_operation_tuples!(
 );
 
 /// Represents a [`NoiseFunction`] based on layers of [`LayerOperation`]s.
+///
+/// ```
+/// # use bevy_math::prelude::*;
+/// # use noiz::prelude::*;
+/// // Create noise made of layers
+/// let noise = Noise::<LayeredNoise<
+///     // that finishes to a normalized value
+///     // (snorm here since this is perlin noise, which is snorm)
+///     Normed<f32>,
+///     // where each layer persists less and less
+///     Persistence,
+///     // Here's the layers:
+///     (
+///         // a layer that repeats the inner layers with ever scaling inputs
+///         FractalLayers<
+///             // a simplex layer that contributes to the result directly via a `NoiseFunction`
+///             Octave<common_noise::Simplex>
+///         >,
+///         // another layer that repeats the inner layers with ever scaling inputs
+///         FractalLayers<
+///             // a perlin layer that contributes to the result directly via a `NoiseFunction`
+///             Octave<common_noise::Perlin>
+///         >,
+///     ),
+/// >>::from(LayeredNoise::new(
+///     Normed::default(),
+///     // Each octave will contribute 0.6 as much as the last.
+///     Persistence(0.6),
+///     (
+///         FractalLayers {
+///             octave: Default::default(),
+///             /// Each octave within this layer is sampled at 1.8 times the scale of the last.
+///             lacunarity: 1.8,
+///             // Do this 4 times.
+///             octaves: 4,
+///         },
+///         FractalLayers {
+///             octave: Default::default(),
+///             /// Each octave within this layer is sampled at 2.0 times the scale of the last.
+///             lacunarity: 2.0,
+///             // Do this 4 times.
+///             octaves: 4,
+///         },
+///     )
+/// ));
+/// ```
+///
+/// In this example, `noise` is fractal brownian motion where the first 4 octaves are simplex noise to create some defining features, and the last 4 octaves are perlin noise to efficiently add some detail.
 #[derive(PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -149,7 +199,8 @@ impl<
 impl<R: LayerResultContext, W: LayerWeightsSettings, N: LayerOperation<R, W::Weights>>
     LayeredNoise<R, W, N>
 {
-    /// Constructs a [`LayeredNoise`] from these values.
+    /// Constructs a [`LayeredNoise`] from this [`LayerResultContext`], [`LayerWeightsSettings`], and [`LayerOperation`].
+    /// These values can not be directly accessed once set to preserve internal invariants crated in [`LayerOperation::prepare`]/
     pub fn new(result_settings: R, weight_settings: W, noise: N) -> Self {
         // prepare
         let mut result_context = result_settings;
@@ -204,6 +255,7 @@ impl<
 }
 
 /// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
+/// This is the most common kind of [`LayerOperation`]. Without at least one octave layer, a [`LayeredNoise`] will not produce a meaningful result.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -238,7 +290,38 @@ impl<
     }
 }
 
-/// Represents a [`LayerOperationFor`] that warps it's input by some [`NoiseFunction`] `T`.
+/// Represents a [`LayerOperation`] that warps it's input by some [`NoiseFunction`] `T`.
+///
+/// ```
+/// # use bevy_math::prelude::*;
+/// # use noiz::prelude::*;
+/// let noise = Noise::<LayeredNoise<
+///     Normed<f32>,
+///     Persistence,
+///     FractalLayers<(
+///         DomainWarp<RandomElements<common_noise::Perlin>>,
+///         Octave<common_noise::Perlin>,
+///     )>,
+/// >>::default();
+/// ```
+///
+/// This produces domain warped noise. Here's another way:
+///
+/// ```
+/// # use bevy_math::prelude::*;
+/// # use noiz::prelude::*;
+/// let noise = Noise::<LayeredNoise<
+///     Normed<f32>,
+///     Persistence,
+///     FractalLayers<Octave<(
+///         Offset<RandomElements<common_noise::Perlin>>, Octave<common_noise::Perlin>
+///     )>>,
+/// >>::default();
+/// ```
+///
+/// This one isn't context aware; it will warp each octave individually, but [`DomainWarp`] will apply the warp of one octave to the next so they build on eachother.
+///
+/// See also [`MixCellValuesForDomain`] as a faster alternative to [`RandomElements`].
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -282,6 +365,22 @@ impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: 
 
 /// Represents a [`LayerOperation`] that configures an inner layer by changing its weight.
 /// This is currently only implemented for [`Persistence`], but can work for anything by implementing [`LayerOperation`] on this type.
+/// This defaults to doubling the weight of this layer compared to others.
+///
+/// ```
+/// # use bevy_math::prelude::*;
+/// # use noiz::{prelude::*, layering::PersistenceConfig};
+/// let noise = Noise::<LayeredNoise<
+///     Normed<f32>,
+///     Persistence,
+///     FractalLayers<(
+///         Octave<common_noise::Perlin>,
+///         PersistenceConfig<common_noise::Simplex>
+///     )>,
+/// >>::default();
+/// ```
+///
+/// This puts more weight on the simplex noise than on the perlin noise, which can be a useful utility.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -338,7 +437,22 @@ where
     }
 }
 
-/// Represents a [`LayerOperationFor`] that contributes to the result via a [`NoiseFunction`] `T`.
+/// Represents a [`LayerOperation`] that repeats the inner layer at different scales of input.
+/// The most common use for this is fractal brownian motion (fbm).
+/// This is one of the most fundamental building blocks of any noise.
+///
+/// Here's an example:
+///
+/// ```
+/// # use bevy_math::prelude::*;
+/// # use noiz::prelude::*;
+/// let fbm_perlin_noise = Noise::<LayeredNoise<
+///     Normed<f32>,
+///     Persistence,
+///     FractalLayers<Octave<common_noise::Perlin>>,
+/// >>::default();
+/// ```
+///
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -400,6 +514,7 @@ impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: La
 /// A [`LayerWeightsSettings`] for [`PersistenceWeights`].
 /// This is a very common weight system, as it can produce fractal noise easily.
 /// If you're not sure which one to use, use this one.
+/// This is a building block for traditional fractal brownian motion. See also [`FractalLayers`].
 ///
 /// Values greater than 1 make later octaves weigh more, while values less than 1 make earlier octaves weigh more.
 /// A value of 1 makes all octaves equally weighted. Values of 0 or nan have no defined meaning.
@@ -448,10 +563,13 @@ impl LayerWeightsSettings for Persistence {
     }
 }
 
-/// This will normalize the results into a whieghted average.
+/// A [`LayerResultContext`] that will normalize the results into a whieghted average.
 /// This is a good default for most noise functions.
+/// This is a building block for traditional fractal brownian motion. See also [`FractalLayers`].
 ///
 /// `T` is the [`VectorSpace`] you want to collect.
+/// If what you want to collect is more advanced than a single vector space, consider making your own [`LayerResultContext`].
+/// If you want to use derivatives to approximate errosion, etc, see [`NormedByDerivative`].
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -521,10 +639,25 @@ where
     }
 }
 
-/// This will normalize the results into a whieghted average where the derivatives affect the weight.
+/// A [`LayerResultContext`] that will normalize the results into a whieghted average where the derivatives affect the weight.
+/// See also [`Normed`].
 ///
 /// `T` is the [`VectorSpace`] you want to collect.
 /// `L` is the [`LengthFunction`] to calculate the derivative from the gradient.
+///
+/// This is most commonly used to approximate (not simulate) erosion for heightmaps.
+/// For that, see [`PeakDerivativeContribution`] and [`SmnoothDerivativeContribution`] for `L`.
+/// Here's an example:
+///
+/// ```
+/// # use bevy_math::prelude::*;
+/// # use noiz::prelude::*;
+/// let heightmap = Noise::<LayeredNoise<
+///     NormedByDerivative<f32, EuclideanLength, PeakDerivativeContribution>,
+///     Persistence,
+///     FractalLayers<Octave<common_noise::Perlin>>,
+/// >>::default();
+/// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -621,6 +754,8 @@ where
 }
 
 /// This is effectively `Into<Vec4>` where any missing elements are left 0.
+/// This is used by [`NormedByDerivativeResult`] to facilitate a wide variety of gradients and dimensions.
+/// If you create a custom gradient type, consider implementing this.
 pub trait DerivativeConvert {
     /// Converts to 4d, leaving missing dimensions 0.
     fn into_4d(self) -> Vec4;
@@ -724,7 +859,7 @@ impl Curve<f32> for PeakDerivativeContribution {
 }
 
 /// A [`Curve`] designed for [`NormedByDerivative`] that decreases from 1 to 0 for positive values.
-/// This produces more rounded high values.
+/// This produces more rounded high values but is significantly slower than [`PeakDerivativeContribution`].
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -740,6 +875,6 @@ impl Curve<f32> for SmoothDerivativeContribution {
 
     #[inline]
     fn sample_unchecked(&self, t: f32) -> f32 {
-        1.0 / (1.0 + t)
+        (-t).exp()
     }
 }

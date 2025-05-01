@@ -10,11 +10,12 @@ pub use crate::{
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{DoubleSmoothstep, Linear, Smoothstep},
     layering::{
-        FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
+        DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence,
     },
     lengths::{EuclideanLength, ManhatanLength},
     math_noise::{Billow, PingPong, SNormToUNorm, UNormToSNorm},
+    misc_noise::{Masked, Offset, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
 
