@@ -34,7 +34,7 @@ impl SampleDerivative<f32> for Linear {
     }
 }
 
-/// Smoothstep interpolation.
+/// Smoothstep interpolation. This has a smooth derivative.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -80,7 +80,7 @@ impl SampleDerivative<f32> for Smoothstep {
     }
 }
 
-/// Smoothstep interpolation composed on itself.
+/// Smoothstep interpolation composed on itself. This has a smooth second derivative.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -113,7 +113,7 @@ impl SampleDerivative<f32> for DoubleSmoothstep {
     }
 }
 
-/// Smoothstep interpolation composed on itself twice.
+/// Smoothstep interpolation composed on itself twice. This has a smooth third derivative.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -147,10 +147,11 @@ impl SampleDerivative<f32> for TripleSmoothstep {
 }
 
 /// Represents a way to smoothly take the minimum between two numbers.
+/// This is useful for a variety of math, but is intended for use with [`WorleySmoothMin`](crate::cell_noise::WorleySmoothMin).
 pub trait SmoothMin {
     /// Takes a smooth, minimum between `a` and `b`.
     /// The `blend_radius` denotes how close `a` and `b` must be to be smoothed together.
-    /// The output will be  between 0 and 1 scaled to match the scale of `a` and `b` according to some `blend_radius`.
+    /// The output will be between 0 and 1, scaled to match the scale of `a` and `b` according to some `blend_radius`.
     fn smin_norm(&self, a: f32, b: f32, blend_radius: f32) -> f32;
 }
 
