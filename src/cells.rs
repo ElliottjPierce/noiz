@@ -41,7 +41,7 @@ pub trait BlendableDomainCell: DomainCell {
     fn blending_half_radius(&self) -> f32;
 }
 
-/// Represents a [`DomainCell`] that can be soothly interpolated within.
+/// Represents a [`DomainCell`] that can be smoothly interpolated within.
 pub trait InterpolatableCell: DomainCell {
     /// Interpolates between the bounding [`CellPoint`]s of this [`DomainCell`] according to some [`Curve`].
     fn interpolate_within<T: VectorSpace>(
@@ -53,12 +53,12 @@ pub trait InterpolatableCell: DomainCell {
 }
 
 /// Represents a [`InterpolatableCell`] that can be differentiated.
-pub trait DiferentiableCell: InterpolatableCell {
+pub trait DifferentiableCell: InterpolatableCell {
     /// The gradient vector of derivative elements `D`.
     /// This should usually be `[D; N]` where `N` is the number of axies.
     type Gradient<D>;
 
-    /// Calculstes the [`Gradient`](DiferentiableCell::Gradient) vector for the function [`interpolate_within`](InterpolatableCell::interpolate_within).
+    /// Calculates the [`Gradient`](DifferentiableCell::Gradient) vector for the function [`interpolate_within`](InterpolatableCell::interpolate_within).
     fn interpolation_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
@@ -67,7 +67,7 @@ pub trait DiferentiableCell: InterpolatableCell {
         gradient_scale: f32,
     ) -> Self::Gradient<T>;
 
-    /// Combines [`interpolate_within`](InterpolatableCell::interpolate_within) and [`interpolation_gradient`](DiferentiableCell::interpolation_gradient).
+    /// Combines [`interpolate_within`](InterpolatableCell::interpolate_within) and [`interpolation_gradient`](DifferentiableCell::interpolation_gradient).
     fn interpolate_with_gradient<T: VectorSpace>(
         &self,
         rng: NoiseRng,
@@ -389,7 +389,7 @@ impl<W: WrappingAmount<IVec2>> InterpolatableCell for SquareCell<Vec2, IVec2, W>
     }
 }
 
-impl<W: WrappingAmount<IVec2>> DiferentiableCell for SquareCell<Vec2, IVec2, W> {
+impl<W: WrappingAmount<IVec2>> DifferentiableCell for SquareCell<Vec2, IVec2, W> {
     type Gradient<D> = [D; 2];
 
     #[inline]
@@ -481,7 +481,7 @@ impl<W: WrappingAmount<IVec3>> InterpolatableCell for SquareCell<Vec3, IVec3, W>
     }
 }
 
-impl<W: WrappingAmount<IVec3>> DiferentiableCell for SquareCell<Vec3, IVec3, W> {
+impl<W: WrappingAmount<IVec3>> DifferentiableCell for SquareCell<Vec3, IVec3, W> {
     type Gradient<D> = [D; 3];
 
     #[inline]
@@ -601,7 +601,7 @@ impl<W: WrappingAmount<IVec3>> InterpolatableCell for SquareCell<Vec3A, IVec3, W
     }
 }
 
-impl<W: WrappingAmount<IVec3>> DiferentiableCell for SquareCell<Vec3A, IVec3, W> {
+impl<W: WrappingAmount<IVec3>> DifferentiableCell for SquareCell<Vec3A, IVec3, W> {
     type Gradient<D> = [D; 3];
 
     #[inline]
@@ -754,7 +754,7 @@ impl<W: WrappingAmount<IVec4>> InterpolatableCell for SquareCell<Vec4, IVec4, W>
     }
 }
 
-impl<W: WrappingAmount<IVec4>> DiferentiableCell for SquareCell<Vec4, IVec4, W> {
+impl<W: WrappingAmount<IVec4>> DifferentiableCell for SquareCell<Vec4, IVec4, W> {
     type Gradient<D> = [D; 4];
 
     #[inline]
@@ -964,13 +964,13 @@ impl SimplexCell<Vec2, IVec2> {
     #[inline]
     fn corners_map<T>(&self, rng: NoiseRng, mut f: impl FnMut(CellPoint<Vec2>) -> T) -> [T; 3] {
         const SIMPLEX_POINTS: [IVec2; 2] = [IVec2::new(1, 0), IVec2::new(0, 1)];
-        let simpex_traversal =
+        let simplex_traversal =
             // SAFETY: The value is always in bounds
             unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
         // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
         [
             f(self.point_at_offset(rng, IVec2::ZERO, 0.0)),
-            f(self.point_at_offset(rng, simpex_traversal, 1.0)),
+            f(self.point_at_offset(rng, simplex_traversal, 1.0)),
             f(self.point_at_offset(rng, IVec2::ONE, 2.0)),
         ]
     }
@@ -1022,14 +1022,14 @@ impl SimplexCell<Vec3, IVec3> {
             [IVec3::new(0, 0, 0), IVec3::new(0, 0, 0)], // 6: pad
             [IVec3::new(1, 0, 0), IVec3::new(1, 1, 0)], // 7: xyz
         ];
-        let simpex_traversal =
+        let simplex_traversal =
             // SAFETY: The value is always in bounds
             unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
         // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
         [
             f(self.point_at_offset(rng, IVec3::ZERO, 0.0)),
-            f(self.point_at_offset(rng, simpex_traversal[0], 1.0)),
-            f(self.point_at_offset(rng, simpex_traversal[1], 2.0)),
+            f(self.point_at_offset(rng, simplex_traversal[0], 1.0)),
+            f(self.point_at_offset(rng, simplex_traversal[1], 2.0)),
             f(self.point_at_offset(rng, IVec3::ONE, 3.0)),
         ]
     }
@@ -1083,14 +1083,14 @@ impl SimplexCell<Vec3A, IVec3> {
             [IVec3::new(0, 0, 0), IVec3::new(0, 0, 0)], // 6: pad
             [IVec3::new(1, 0, 0), IVec3::new(1, 1, 0)], // 7: xyz
         ];
-        let simpex_traversal =
+        let simplex_traversal =
             // SAFETY: The value is always in bounds
             unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
         // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
         [
             f(self.point_at_offset(rng, IVec3::ZERO, 0.0)),
-            f(self.point_at_offset(rng, simpex_traversal[0], 1.0)),
-            f(self.point_at_offset(rng, simpex_traversal[1], 2.0)),
+            f(self.point_at_offset(rng, simplex_traversal[0], 1.0)),
+            f(self.point_at_offset(rng, simplex_traversal[1], 2.0)),
             f(self.point_at_offset(rng, IVec3::ONE, 3.0)),
         ]
     }
@@ -1202,15 +1202,15 @@ impl SimplexCell<Vec4, IVec4> {
             [IVec4::new(1, 0, 0, 0), IVec4::new(1, 1, 0, 0), IVec4::new(1, 1, 0, 1)], // 62: xywz
             [IVec4::new(1, 0, 0, 0), IVec4::new(1, 1, 0, 0), IVec4::new(1, 1, 1, 0)], // 63: xyzw
         ];
-        let simpex_traversal =
+        let simplex_traversal =
             // SAFETY: The value is always in bounds
             unsafe { *SIMPLEX_POINTS.get_unchecked(self.simplex_id() as usize) };
         // ZERO and ONE are always points since we are slicing the diagonal. We just need 1 other point to form the triangle.
         [
             f(self.point_at_offset(rng, IVec4::ZERO, 0.0)),
-            f(self.point_at_offset(rng, simpex_traversal[0], 1.0)),
-            f(self.point_at_offset(rng, simpex_traversal[1], 2.0)),
-            f(self.point_at_offset(rng, simpex_traversal[2], 3.0)),
+            f(self.point_at_offset(rng, simplex_traversal[0], 1.0)),
+            f(self.point_at_offset(rng, simplex_traversal[1], 2.0)),
+            f(self.point_at_offset(rng, simplex_traversal[2], 3.0)),
             f(self.point_at_offset(rng, IVec4::ONE, 4.0)),
         ]
     }
@@ -1310,16 +1310,16 @@ impl Partitioner<Vec4> for SimplexGrid {
 
 /// A [`Partitioner`] that wraps its inner [`Partitioner`] `P`'s [`CellPoint`]s in [`VoronoiCell`].
 /// The inner [`Partitioner`] defaults to [`OrthoGrid`], but you can make your own too.
-/// This is used to create voronoi graphs which can be used in worly noise and other noise functions.
+/// This is used to create voronoi graphs which can be used in worley noise and other noise functions.
 ///
-/// If `HALF_SCALE` is off, this will be a traditional voronoi graph that includes both positive and negative surrounding cells, where each lattace point is offset by some value in (0, 1).
-/// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 0.5).
-/// Turn `HALF_SCALE` off for high qualaty voronoi and on for high performance voronoi.
+/// If `HALF_SCALE` is off, this will be a traditional voronoi graph that includes both positive and negative surrounding cells, where each lattice point is offset by some value in (0, 1).
+/// If `HALF_SCALE` is on, this will be a approximated voronoi graph that includes only positive surrounding cells, where each lattice point is offset by some value in (0, 0.5).
+/// Turn `HALF_SCALE` off for high quality voronoi and on for high performance voronoi.
 ///
 /// **Artifact Warning:** Depending how you use it, turning on `HALF_SCALE` can produce artifacts.
 /// Typically, this happens when a noise function depends on multiple nearby points instead of just the closest.
 /// If something looks strange, turn it off, and it might help.
-/// This option is included because, where it does't artifact, it can greatly improve performance.
+/// This option is included because, where it doesn't artifact, it can greatly improve performance.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]

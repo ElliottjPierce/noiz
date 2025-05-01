@@ -6,7 +6,7 @@ use bevy_math::{Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 pub trait LengthFunction<T: VectorSpace> {
     /// If the absolute value of no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
     fn max_for_element_max(&self, element_max: f32) -> f32;
-    /// Computes the length or magatude of `vec`.
+    /// Computes the length or magnitude of `vec`.
     /// Must always be non-negative
     #[inline]
     fn length_of(&self, vec: T) -> f32 {
@@ -18,7 +18,7 @@ pub trait LengthFunction<T: VectorSpace> {
     fn length_from_ordering(&self, ordering: f32) -> f32;
 }
 
-/// A [`LengthFunction`] for "as the crow flyies" length
+/// A [`LengthFunction`] for "as the crow flies" length
 /// This is traditional length. If you're not sure which [`LengthFunction`] to use, use this one.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -34,15 +34,15 @@ pub struct EuclideanLength;
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct EuclideanSqrdLength;
 
-/// A [`LengthFunction`] for "manhatan" or diagonal length.
+/// A [`LengthFunction`] for "Manhattan" or diagonal length.
 /// Where [`EuclideanLength`] = 1 traces our a circle, this will trace out a diamond.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct ManhatanLength;
+pub struct ManhattanLength;
 
-/// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`].
+/// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhattanLength`].
 /// This is often useful for creating odd, angular shapes.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -50,7 +50,7 @@ pub struct ManhatanLength;
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct HybridLength;
 
-/// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
+/// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhattanLength`].
 /// Where [`EuclideanLength`] = 1 traces our a circle, this will trace out a square.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -60,7 +60,7 @@ pub struct ChebyshevLength;
 
 /// A configurable [`LengthFunction`] that bends space according to the inner float.
 /// Higher values pass [`EuclideanLength`] and approach [`ChebyshevLength`].
-/// Lower values pass [`ManhatanLength`] and approach a star-like shape.
+/// Lower values pass [`ManhattanLength`] and approach a star-like shape.
 /// The inner value must be greater than 0 to be meaningful.
 ///
 /// **Performance Warning:** This is *very* slow compared to other [`LengthFunction`]s.
@@ -118,7 +118,7 @@ macro_rules! impl_distances {
             }
         }
 
-        impl LengthFunction<$t> for ManhatanLength {
+        impl LengthFunction<$t> for ManhattanLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
                 element_max * $d

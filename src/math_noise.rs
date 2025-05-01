@@ -310,7 +310,7 @@ impl_mapped_vector_spaces!(Vec3);
 impl_mapped_vector_spaces!(Vec3A);
 impl_mapped_vector_spaces!(Vec4);
 
-/// A [`NoiseFunction`] that turns a cartesian cordinate into a polar cordinate.
+/// A [`NoiseFunction`] that turns a cartesian coordinate into a polar coordinate.
 /// Contains a [`LengthFunction`] and a scale for radial cells.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]

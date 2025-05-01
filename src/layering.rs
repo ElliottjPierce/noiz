@@ -1,4 +1,4 @@
-//! Contains logic for layering different [`NoiseFunction`]s ontop of eachother.
+//! Contains logic for layering different [`NoiseFunction`]s on top of each other.
 
 use core::{f32, marker::PhantomData, ops::Div};
 
@@ -563,13 +563,13 @@ impl LayerWeightsSettings for Persistence {
     }
 }
 
-/// A [`LayerResultContext`] that will normalize the results into a whieghted average.
+/// A [`LayerResultContext`] that will normalize the results into a weighted average.
 /// This is a good default for most noise functions.
 /// This is a building block for traditional fractal brownian motion. See also [`FractalLayers`].
 ///
 /// `T` is the [`VectorSpace`] you want to collect.
 /// If what you want to collect is more advanced than a single vector space, consider making your own [`LayerResultContext`].
-/// If you want to use derivatives to approximate errosion, etc, see [`NormedByDerivative`].
+/// If you want to use derivatives to approximate erosion, etc, see [`NormedByDerivative`].
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -639,7 +639,7 @@ where
     }
 }
 
-/// A [`LayerResultContext`] that will normalize the results into a whieghted average where the derivatives affect the weight.
+/// A [`LayerResultContext`] that will normalize the results into a weighted average where the derivatives affect the weight.
 /// See also [`Normed`].
 ///
 /// `T` is the [`VectorSpace`] you want to collect.

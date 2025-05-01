@@ -12,7 +12,7 @@ use bevy_math::{
 use crate::{
     NoiseFunction,
     cells::{
-        BlendableDomainCell, DiferentiableCell, DomainCell, InterpolatableCell, Partitioner,
+        BlendableDomainCell, DifferentiableCell, DomainCell, InterpolatableCell, Partitioner,
         WithGradient, WorleyDomainCell,
     },
     curves::{SmoothMin, Smoothstep},
@@ -123,7 +123,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
 /// **Artifact Warning:** Depending on the [`LengthFunction`] `L`, this will create artifacting.
 /// Some of the math presumes a [`EuclideanLength`]. Other lengths still work, but may artifact.
 /// This is kept generic over `L` to enable custom functions that are
-/// similar enough to euclidiean to not artifact and different enough to require a custom [`EuclideanLength`].
+/// similar enough to euclidean to not artifact and different enough to require a custom [`EuclideanLength`].
 ///
 /// Here's an example:
 ///
@@ -236,9 +236,9 @@ impl_distance_to_edge!(Vec3A);
 impl_distance_to_edge!(Vec4);
 
 /// Represents a way to compute worley noise, noise based on the distances of [`CellPoint`](crate::cells::CellPoint)s to the sample point.
-/// This is desighned for use in [`PerCellPointDistances`].
+/// This is designed for use in [`PerCellPointDistances`].
 pub trait WorleyMode {
-    /// Evaluates the result of this worley mode with the these offsets from the [`CellPoint`](crate::cells::CellPoint)s accorfing to this [`LengthFunction`].
+    /// Evaluates the result of this worley mode with the these offsets from the [`CellPoint`](crate::cells::CellPoint)s according to this [`LengthFunction`].
     fn evaluate_worley<I: VectorSpace>(
         &self,
         points: impl Iterator<Item = I>,
@@ -653,12 +653,12 @@ impl<
 
 impl<
     I: VectorSpace,
-    P: Partitioner<I, Cell: DiferentiableCell>,
+    P: Partitioner<I, Cell: DifferentiableCell>,
     C: SampleDerivative<f32>,
     N: ConcreteAnyValueFromBits<Concrete: VectorSpace>,
 > NoiseFunction<I> for MixCellValues<P, C, N, true>
 {
-    type Output = WithGradient<N::Concrete, <P::Cell as DiferentiableCell>::Gradient<N::Concrete>>;
+    type Output = WithGradient<N::Concrete, <P::Cell as DifferentiableCell>::Gradient<N::Concrete>>;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
@@ -731,12 +731,12 @@ impl<
 
 impl<
     I: VectorSpace,
-    P: Partitioner<I, Cell: DiferentiableCell>,
+    P: Partitioner<I, Cell: DifferentiableCell>,
     C: SampleDerivative<f32>,
     N: AnyValueFromBits<I>,
 > NoiseFunction<I> for MixCellValuesForDomain<P, C, N, true>
 {
-    type Output = WithGradient<I, <P::Cell as DiferentiableCell>::Gradient<I>>;
+    type Output = WithGradient<I, <P::Cell as DifferentiableCell>::Gradient<I>>;
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
@@ -782,7 +782,7 @@ pub trait Blender<I: VectorSpace, V> {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhatanLength>, Random<UNorm, f32>>>::default();
+/// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>>::default();
 /// ```
 ///
 #[derive(Default, Clone, Copy, PartialEq)]
@@ -917,7 +917,7 @@ impl<
 
 impl<
     I: VectorSpace,
-    P: Partitioner<I, Cell: DiferentiableCell<Gradient<f32>: Into<I>>>,
+    P: Partitioner<I, Cell: DifferentiableCell<Gradient<f32>: Into<I>>>,
     C: SampleDerivative<f32>,
     G: GradientGenerator<I>,
 > NoiseFunction<I> for MixCellGradients<P, C, G, true>
@@ -1177,7 +1177,7 @@ impl_random_gradients!(Vec3);
 impl_random_gradients!(Vec3A);
 impl_random_gradients!(Vec4);
 
-/// A high qualaty (but slow) [`GradientGenerator`] that uniformly distributes normalized gradient vectors.
+/// A high quality (but slow) [`GradientGenerator`] that uniformly distributes normalized gradient vectors.
 /// Note that this is not yet implemented for [`Vec4`].
 // TODO: implement for 4d
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -1232,7 +1232,7 @@ impl GradientGenerator<Vec3A> for QualityGradients {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhatanLength>, Random<UNorm, f32>>>::default();
+/// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>>::default();
 /// ```
 ///
 #[derive(Default, Clone, Copy, PartialEq, Eq)]

@@ -62,7 +62,7 @@ impl Curve<f32> for Smoothstep {
         // t * t * (t * (-2.0) + 3.0)
         //
         // Optimized for compiler freedom
-        // Benhmarks are great for perlin but bad for value
+        // Benchmarks are great for perlin but bad for value
         // (3.0 * t * t) - (2.0 * t * t * t)
 
         // TODO: Optimize this in rust 1.88 with fastmath

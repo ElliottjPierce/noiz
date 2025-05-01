@@ -22,7 +22,7 @@ use noiz::{
         DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, PersistenceConfig, SmoothDerivativeContribution,
     },
-    lengths::{ChebyshevLength, EuclideanLength, ManhatanLength},
+    lengths::{ChebyshevLength, EuclideanLength, ManhattanLength},
     math_noise::{Billow, PingPong, SNormToUNorm, Spiral},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
@@ -136,7 +136,7 @@ fn main() -> AppExit {
                                 SNormToUNorm,
                             )>::default()),
                         },
-                        // QuickGradients uses a lookup table to be really fast, but with speed comes lower qualaty (specifically directional artifacts).
+                        // QuickGradients uses a lookup table to be really fast, but with speed comes lower quality (specifically directional artifacts).
                         // QualityGradients generates perfect gradients for 2d and 3d.
                         // Note that this is not normally worth it for real-time generation.
                         NoiseOption {
@@ -157,12 +157,12 @@ fn main() -> AppExit {
                             )>::default()),
                         },
                         // What's better than one noise function? More!
-                        // You can layer noise ontop of itself to create lots of cool effects.
+                        // You can layer noise on top of itself to create lots of cool effects.
                         // The simplest is fractal brownian motion, so let's start there.
                         //
                         // First, we'll need a LayeredNoise. This is a noise function that combines a lot of others in layers.
                         // This doesn't pass the output of one noise function to another; that's what tuples do.
-                        // Inetead, each noise function contributes to the result.
+                        // Instead, each noise function contributes to the result.
                         //
                         // How do they contribute? That's the first part of LayeredNoise. We need to specify a result type.
                         // Normed is the simplest. We also need to specify what it should produce. Since this is perlin noise, lets collect f32.
@@ -178,7 +178,7 @@ fn main() -> AppExit {
                         // What inner layer? Here we use Octave, the simplest layer, which just takes an inner noise function.
                         // Since this is perlin fractal brownian motion, we can reuse that noise function from earlier.
                         //
-                        // By default, this will be the typical 8 octaves (fractal layers), 0.5 peristance, and 2.0 lacunarity (how fractaly the fractal is).
+                        // By default, this will be the typical 8 octaves (fractal layers), 0.5 peristance, and 2.0 lacunarity (how fractal-y the fractal is).
                         NoiseOption {
                             name: "Fractal Perlin noise",
                             noise: Box::new(Noise::<(
@@ -344,7 +344,7 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         // One thing to note is that computing Voronoi can be really expensive.
-                        // If you want to sacrifice qualaty for speed, you can enable the boolean flag on Voronoi.
+                        // If you want to sacrifice quality for speed, you can enable the boolean flag on Voronoi.
                         // For the rest of these examples, I'll leave it off since it can lead to artifacting in more complex noise.
                         NoiseOption {
                             name: "Approximate Cellular noise",
@@ -353,8 +353,8 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         // The most famous voronoi based noised is worly noise.
-                        // It functions by finding the nearest voronoi lattace point, and calculating the distance between them.
-                        // To do that, we do PerCellPointDistances, to get the distances to to the lattace points.
+                        // It functions by finding the nearest voronoi lattice point, and calculating the distance between them.
+                        // To do that, we do PerCellPointDistances, to get the distances to to the lattice points.
                         // We also need to specify how to compute those distances. Let's start with EuclideanLength.
                         // Finally we need to specify what to do with those points. Here we use WorleyLeastDistance.
                         NoiseOption {
@@ -387,7 +387,7 @@ fn main() -> AppExit {
                                 PerCellPointDistances<Voronoi, EuclideanLength, WorleyDifference>,
                             >::default()),
                         },
-                        // Notice how WorleyDifference seems to corrolate to how close a point is to a nearby worly cell?
+                        // Notice how WorleyDifference seems to correlate to how close a point is to a nearby worley cell?
                         // DistanceToEdge will give an exact answer. DistanceToEdge has more to it, but I'll let it speak for itself.
                         NoiseOption {
                             name: "Worley distance to edge",
@@ -407,13 +407,13 @@ fn main() -> AppExit {
                                 BlendCellValues<Voronoi, SimplecticBlend, Random<UNorm, f32>>,
                             >::default()),
                         },
-                        // This can make some interesting star shapres:
+                        // This can make some interesting star shapes:
                         NoiseOption {
                             name: "Blend voronoi value noise",
                             noise: Box::new(Noise::<
                                 BlendCellValues<
                                     Voronoi,
-                                    DistanceBlend<ManhatanLength>,
+                                    DistanceBlend<ManhattanLength>,
                                     Random<UNorm, f32>,
                                 >,
                             >::default()),
@@ -428,7 +428,7 @@ fn main() -> AppExit {
                         },
                         // Let's take a look at some cool effects.
                         //
-                        // Fitst, masking: This is useful to make the noise "flatter".
+                        // First, masking: This is useful to make the noise "flatter".
                         // Often, this is for adding more plains to a heightmap, etc.
                         // See SelfMasked for more details.
                         NoiseOption {
@@ -478,7 +478,7 @@ fn main() -> AppExit {
                                 >,
                             >::from(Peeled {
                                 noise: Default::default(),
-                                pealer: MixCellGradients::default(),
+                                peeler: MixCellGradients::default(),
                                 layers: 5.0,
                             })),
                         },
@@ -503,7 +503,7 @@ fn main() -> AppExit {
                                 SNormToUNorm,
                             )>::default()),
                         },
-                        // Ping pong is sortof like a strange inverse of billowing. See for yourself.
+                        // Ping pong is sort of like a strange inverse of billowing. See for yourself.
                         NoiseOption {
                             name: "Pingpong Fractal Simplex noise",
                             noise: Box::new(Noise::<(
@@ -525,7 +525,7 @@ fn main() -> AppExit {
                             )>::default()),
                         },
                         // You can also approximate erosion by factoring derivatives into LayeredNoise.
-                        // Turn on the DIFFERENTIATE flag for the noise you want to approximate errosion on,
+                        // Turn on the DIFFERENTIATE flag for the noise you want to approximate erosion on,
                         // and use NormedByDerivative.
                         // You'll also need specify a length function to get the derivative from a gradient
                         // and a Curve to determine how much weight to give each derivative.

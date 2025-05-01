@@ -36,7 +36,7 @@ impl NoiseRng {
     /// This lets use use this as a multiplier and xor in the rng.
     const KEY: u32 = 249_222_277;
 
-    /// Determenisticly changes the seed significantly.
+    /// Deterministically changes the seed significantly.
     ///
     /// ```
     /// # use noiz::rng::*;
@@ -194,7 +194,7 @@ pub use float_rng::*;
 
 /// Forces an `f32` to be nonzero.
 /// If it is not zero, **this will still change the value** a little.
-/// Only use this where speed is much higher priorety than precision.
+/// Only use this where speed is much higher priority than precision.
 #[inline(always)]
 pub fn force_float_non_zero(f: f32) -> f32 {
     f32::from_bits(f.to_bits() | 0b1111)
@@ -255,11 +255,11 @@ impl NoiseRngInput for IVec4 {
 }
 
 /// Represents some type that can convert some random bits into an output `T`.
-/// This does not randomize the input bits, it simply constructs an arbetrary value *based* on the bits.
+/// This does not randomize the input bits, it simply constructs an arbitrary value *based* on the bits.
 ///
 /// This is similar to the `Distribution` trait from the `rand` crate, but it provides some additional flexibility.
 pub trait AnyValueFromBits<T> {
-    /// Produces a value `T` from `bits` that can be linearly mapped back to the proper distriburion.
+    /// Produces a value `T` from `bits` that can be linearly mapped back to the proper distribution.
     ///
     /// This is useful if you want to linearly mix these values together, only remapping them at the end.
     /// This will only hold true if the values are always mixed linearly. (The linear interpolator `t` doesn't need to be linear but the end lerp does.)
@@ -268,18 +268,18 @@ pub trait AnyValueFromBits<T> {
     /// # use noiz::rng::*;
     /// let val1: f32 = UNorm.linear_equivalent_value(12345);
     /// let val2: f32 = UNorm.linear_equivalent_value(54321);
-    /// let averabe = UNorm.finish_linear_equivalent_value((val1 + val2) * 0.5);
+    /// let average = UNorm.finish_linear_equivalent_value((val1 + val2) * 0.5);
     /// ```
     fn linear_equivalent_value(&self, bits: u32) -> T;
 
-    /// Liniarly remaps a value from some linear combination of results from [`linear_equivalent_value`](AnyValueFromBits::linear_equivalent_value).
+    /// Linearly remaps a value from some linear combination of results from [`linear_equivalent_value`](AnyValueFromBits::linear_equivalent_value).
     fn finish_linear_equivalent_value(&self, value: T) -> T;
 
     /// Returns the derivative of [`finish_linear_equivalent_value`](AnyValueFromBits::finish_linear_equivalent_value).
     /// This is a single `f32` since the function is always linear.
     fn finishing_derivative(&self) -> f32;
 
-    /// Generates a valid value in this distriburion.
+    /// Generates a valid value in this distribution.
     #[inline]
     fn any_value(&self, bits: u32) -> T {
         self.finish_linear_equivalent_value(self.linear_equivalent_value(bits))

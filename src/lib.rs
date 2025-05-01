@@ -28,7 +28,7 @@ pub trait NoiseFunction<I> {
     type Output;
 
     /// Evaluates the function at some `input` with this [`NoiseRng`].
-    /// This function should be dtermenistic.
+    /// This function should be deterministic.
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output;
 }
 

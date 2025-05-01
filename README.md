@@ -132,7 +132,7 @@ Here, `LayeredNoise` is powered by the `LayerOperation` trait, in this case, the
 Tuples work here too, ex: `(L1, L2)`.
 For example, maybe you want the more persistent layers to be simplex noise, and, to save on performance, the details to be perlin noise.
 Just put the simplex and perlin noise in a tuple!
-An `Octave` is just a `LayerOperation` that contribures a `NoiseFunction`, even including the `NoiseFunction`, `LayeredNoise`!
+An `Octave` is just a `LayerOperation` that contributes a `NoiseFunction`, even including the `NoiseFunction`, `LayeredNoise`!
 Other `LayerOperation`s may effect how each layer is weighed (ex: weight this octave a little extra) or morph the input (ex: domain warping).
 
 As you can guess, this gives way to countless combinations of noise types and settings.
@@ -141,7 +141,7 @@ And, if you need something a little special, just create your own `NoiseFunction
 
 Note that there are some combinations that are not implemented or just don't make much practical sense.
 For example, you cant `MixCellGradients<Voronoi, ..., ...>` because `Voronoi` can't be interpolated.
-There are alternatives, ex: `BlendCellValues<Voronoi, DistanceBlend<ManhatanLength>, Random<UNorm, f32>>` (endlessly configurable).
+There are alternatives, ex: `BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>` (endlessly configurable).
 So, if a noise type doesn't compile, it's probably because of something like this.
 
 Also note that not all combinations and settings are visually pleasing.
@@ -202,12 +202,12 @@ This is off by default because it increases build times, etc due to the complex 
 |-----------------------|-------------|--------------|----------------|-----------------|
 | precision             | `f32`       | `f64`        | `f64`          | `f32`           |
 | dimensions            | 2d, 3d, 4d  | 2d, 3d, 4d   | 1d, 2d, 3d, 4d | 2d, 3d,         |
-| cusomizability        | total       | some         | some           | limited choices |
+| customizability       | total       | some         | some           | limited choices |
 | cross-language        | ❌           | ❌            | ❌              | ✅              |
 | overall performance   | Great       | Poor         | Great          | Good            |
-| overall noise qualaty | Good        | untested     | Ok for small domains | Ok              |
+| overall noise quality | Good        | untested     | Ok for small domains | Ok              |
 
-(If you want *great* noise qualaty, use an art application like blendr.)
+(If you want *great* noise quality, use an art application like blender.)
 
 ## Benchmarks
 
@@ -234,8 +234,8 @@ Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 | simplex               | 6.8      ✅ | 8.6          | 8.1            | 10.6            |
 | simplex fbm 2 octave  | 14.3     ✅ | 22.3         | 17.7           | 21.6            |
 | simplex fbm 8 octave  | 55.9     ✅ | 108.5        | 89.2           | 116.0           |
-| worly                 | 5.2      ✅ | 24.5         | 11.8           | 17.8            |
-| worly approximate     | 2.7      ✅ | ---          | ---            | ---             |
+| worley                | 5.2      ✅ | 24.5         | 11.8           | 17.8            |
+| worley approximate    | 2.7      ✅ | ---          | ---            | ---             |
 
 ### 3D
 
@@ -252,10 +252,10 @@ Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
 | simplex               | 12.5     ✅ | 16.8         | 14.2           | 16.3            | 20.1            |
 | simplex fbm 2 octave  | 26.6     ✅ | 32.7         | 51.8           | 25.9         ✅ | 43.0            |
 | simplex fbm 8 octave  | 105.5    ✅ | 126.0        | 207.8          | 181.7           | 175.1           |
-| worly                 | 50.8        | 51.1         | 78.9           | 52.9            | 42.3         ✅ |
-| worly approximate     | 6.0      ✅ | 13.6         | ---            | ---             | ---             |
+| worley                | 50.8        | 51.1         | 78.9           | 52.9            | 42.3         ✅ |
+| worley approximate    | 6.0      ✅ | 13.6         | ---            | ---             | ---             |
 
-`Vec3A` is an allighed 3d type from `bevy_math` (glam). It enables SIMD instructions, but uses more memory to do so.
+`Vec3A` is an aligned 3d type from `bevy_math` (glam). It enables SIMD instructions, but uses more memory to do so.
 As you can see, it's not worth it here.
 
 ### 4D
@@ -273,8 +273,8 @@ Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 | simplex               | 19.4     ✅ | 35.5         | 29.5           | ---             |
 | simplex fbm 2 octave  | 38.6     ✅ | 108.8        | 41.0           | ---             |
 | simplex fbm 8 octave  | 152.1    ✅ | 421.0        | 234.4          | ---             |
-| worly                 | 169.3       | 156.3     ✅ | 205.8          | ---             |
-| worly approximate     | 26.0     ✅ | ---          | ---            | ---             |
+| worley                | 169.3       | 156.3     ✅ | 205.8          | ---             |
+| worley approximate    | 26.0     ✅ | ---          | ---            | ---             |
 
 ### Summary
 
@@ -297,12 +297,12 @@ Note that some artifacting (not quite tiling) does happen at excessively large s
 But that's not a big deal in practice. (Ever wonder why the far lands exist in minecraft?)
 
 For perlin noise, `noiz` is generally faster for 2d and 4d but `libnoise` just beats it for 3d.
-This is likely also due to the difference in rng methods, and the same qualaty issues, etc apply here too.
+This is likely also due to the difference in rng methods, and the same quality issues, etc apply here too.
 
 For simplex noise, `noiz` is the clear winner.
 
 For Worly noise, the results vary greatly depending on use-case. See for yourself.
-Worly approximate, if you're wondering, is a version of worly noise that is much faster but restricts the voronoi points to be only half as random as normal.
+Worley approximate, if you're wondering, is a version of worley noise that is much faster but restricts the voronoi points to be only half as random as normal.
 This works great if you only need an approximation.
 
 ## What to Choose

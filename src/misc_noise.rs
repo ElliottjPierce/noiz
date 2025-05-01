@@ -1,4 +1,4 @@
-//! A grab bag of miscelenious noise functions that have no better place to be.
+//! A grab bag of miscellaneous noise functions that have no better place to be.
 
 use core::ops::{Add, Mul};
 
@@ -232,14 +232,14 @@ impl<T> NoiseFunction<T> for ExtraRng {
 }
 
 /// A [`NoiseFunction`] that changes the seed of an inner [`NoiseFunction`] `N` based on the output of another [`NoiseFunction`] `P`.
-/// This creates an effect where multiple layers of noise seem to be being peeled back on eachother.
+/// This creates an effect where multiple layers of noise seem to be being peeled back on each other.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Peeled<N, P> {
     /// The [`NoiseFunction`] that determines where to peel the seed.
-    pub pealer: P,
+    pub peeler: P,
     /// The inner [`NoiseFunction`].
     pub noise: N,
     /// How many layers to peel off.
@@ -249,7 +249,7 @@ pub struct Peeled<N, P> {
 impl<N: Default, P: Default> Default for Peeled<N, P> {
     fn default() -> Self {
         Self {
-            pealer: P::default(),
+            peeler: P::default(),
             noise: N::default(),
             layers: 2.0,
         }
@@ -263,13 +263,13 @@ impl<I: Copy, N: NoiseFunction<I>, P: NoiseFunction<I, Output = f32>> NoiseFunct
 
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let layer = (self.pealer.evaluate(input, seeds) * self.layers).floor() as i32;
+        let layer = (self.peeler.evaluate(input, seeds) * self.layers).floor() as i32;
         let mut layered = NoiseRng(seeds.rand_u32(layer as u32));
         self.noise.evaluate(input, &mut layered)
     }
 }
 
-/// A [`NoiseFunction`] changes it's input to an allighned version if one is available.
+/// A [`NoiseFunction`] changes it's input to an aligned version if one is available.
 /// Ex, this will convert [`Vec3`] to [`Vec3A`]. This enables SIMD instructions but consumes more memory.
 /// Justify this with a benchmark. See also [`DisAligned`].
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -314,7 +314,7 @@ impl NoiseFunction<Vec4> for Aligned {
     }
 }
 
-/// A [`NoiseFunction`] changes it's input to an un-allighned version if one is available.
+/// A [`NoiseFunction`] changes it's input to an un-aligned version if one is available.
 /// Ex, this will convert [`Vec3A`] to [`Vec3`]. This disables SIMD instructions but reduces memory.
 /// Justify this with a benchmark. See also [`Aligned`].
 #[derive(Clone, Copy, PartialEq, Eq)]
