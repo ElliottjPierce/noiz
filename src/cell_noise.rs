@@ -21,6 +21,23 @@ use crate::{
 };
 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
+///
+/// This is the simplest kind of spatial [`NoiseFunction`], and it can be used to make white noise.
+///
+/// Here's some white noise with squares/cubes:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
+/// ```
+///
+/// And here's some with triangles/tetrahedrons:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCell<SimplexGrid, Random<UNorm, f32>>>::default();
+/// ```
+///
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -45,6 +62,23 @@ impl<I: VectorSpace, P: Partitioner<I>, N: NoiseFunction<u32>> NoiseFunction<I> 
 /// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoint`](crate::cells::CellPoint)s form a [`Partitioner`] `P`,
 /// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoint`](crate::cells::CellPoint)s.
 /// The [`LengthFunction`] `L` is used to determine which point is nearest.
+///
+/// This is most commonly used for cellular noise:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// use noiz::cell_noise::PerNearestPoint;
+/// let noise = Noise::<PerNearestPoint<Voronoi, EuclideanLength, Random<UNorm, f32>>>::default();
+/// ```
+///
+/// You can also use this to make hexagons:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// use noiz::cell_noise::PerNearestPoint;
+/// let noise = Noise::<PerNearestPoint<SimplexGrid, EuclideanLength, Random<UNorm, f32>>>::default();
+/// ```
+///
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -79,17 +113,25 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
     }
 }
 
-/// A [`NoiseFunction`] partitions space by a [`Partitioner`] `S` into a [`DomainCell`] and
+/// A [`NoiseFunction`] partitions space by a [`Partitioner`] `P` (usually [`Voronoi`](crate::cells::Voronoi)) into a [`DomainCell`] and
 /// finds the distance to the nearest voronoi edge of according to some [`LengthFunction`] `L`.
 /// The result is a unorm f32.
 ///
-/// If `APPROXIMATE` is on, this will be a cheaper, approximate, discontinuous distance to edge.
+/// If `APPROXIMATE` is on (defaults to false), this will be a cheaper, approximate, discontinuous distance to edge.
 /// If you need speed, and don't care about discontinuities or exactness, turn this on.
 ///
 /// **Artifact Warning:** Depending on the [`LengthFunction`] `L`, this will create artifacting.
 /// Some of the math presumes a [`EuclideanLength`]. Other lengths still work, but may artifact.
 /// This is kept generic over `L` to enable custom functions that are
 /// similar enough to euclidiean to not artifact and different enough to require a custom [`EuclideanLength`].
+///
+/// Here's an example:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// use noiz::cell_noise::DistanceToEdge;
+/// let noise = Noise::<DistanceToEdge<Voronoi>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -193,7 +235,8 @@ impl_distance_to_edge!(Vec3);
 impl_distance_to_edge!(Vec3A);
 impl_distance_to_edge!(Vec4);
 
-/// Represents a way to compute worley noise, noise based on the distances of the two nearest [`CellPoint`](crate::cells::CellPoint)s to the sample point.
+/// Represents a way to compute worley noise, noise based on the distances of [`CellPoint`](crate::cells::CellPoint)s to the sample point.
+/// This is desighned for use in [`PerCellPointDistances`].
 pub trait WorleyMode {
     /// Evaluates the result of this worley mode with the these offsets from the [`CellPoint`](crate::cells::CellPoint)s accorfing to this [`LengthFunction`].
     fn evaluate_worley<I: VectorSpace>(
@@ -226,6 +269,13 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint) via a [`SmoothMin`].
 /// This is similar to [`WorleyPointDistance`], but instead of dividing nearby cells, it smooths between them.
 /// Note that when cells are close together, this can merge them into a single value.
+///
+/// ```
+/// # use noiz::prelude::*;
+/// use noiz::cell_noise::DistanceToEdge;
+/// use noiz::curves::CubicSMin;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorlySmoothMin<CubicSMin>>>::default();
+/// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -271,6 +321,13 @@ impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint) via a [`SmoothMin`].
 /// This is similar to [`WorleySmoothMin`], but instead smoothing every cell, it smooths the nearest two points.
 /// Note that when cells are close together, this can merge them into a single value.
+///
+/// ```
+/// # use noiz::prelude::*;
+/// use noiz::cell_noise::DistanceToEdge;
+/// use noiz::curves::CubicSMin;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorlyNearestSmoothMin<CubicSMin>>>::default();
+/// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -312,6 +369,11 @@ impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
 
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint).
 /// This is traditional worley noise.
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyPointDistance>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -337,6 +399,11 @@ impl WorleyMode for WorleyPointDistance {
 
 /// A [`WorleyMode`] that returns the unorm distance to the second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySecondPointDistance>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -359,6 +426,11 @@ impl WorleyMode for WorleySecondPointDistance {
 
 /// A [`WorleyMode`] that returns the unorm difference between the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyDifference>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -382,6 +454,11 @@ impl WorleyMode for WorleyDifference {
 
 /// A [`WorleyMode`] that returns the unorm average of the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyAverage>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -406,6 +483,11 @@ impl WorleyMode for WorleyAverage {
 
 /// A [`WorleyMode`] that returns the unorm product between the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyProduct>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -429,6 +511,11 @@ impl WorleyMode for WorleyProduct {
 
 /// A [`WorleyMode`] that returns the unorm ratio between the first and second nearest [`CellPoint`](crate::cells::CellPoint).
 /// This will have artifacts when using `HALF_SCALE` on [`Voronoi`](crate::cells::Voronoi).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyRatio>>::default();
+/// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -452,6 +539,16 @@ impl WorleyMode for WorleyRatio {
 
 /// A [`NoiseFunction`] that partitions space by some [`Partitioner`] `P` into [`DomainCell`]s,
 /// and then provides the distance to each [`CellPoint`](crate::cells::CellPoint)s to some [`WorleyMode`] `M` by some [`LengthFunction`] `L`.
+///
+/// You can use this to make worley noise:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyPointDistance>>::default();
+/// ```
+///
+/// Lots of noise types are available. See also [`WorleyMode`], [`WorleyPointDistance`], [`WorleyDifference`], etc.
+/// This is not explicitly called `Worley` because it doesn't cover every type of worley noise, for example, [`DistanceToEdge`].
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -490,6 +587,31 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 }
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+///
+/// Usually, the [`ConcreteAnyValueFromBits`] will be a [`Random`](crate::rng::Random), ex `Random<UNorm, f32>`.
+///
+/// Here's an example of linear value noise:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<MixCellValues<OrthoGrid, Linear, Randim<SNorm, f32>>>::default();
+/// ```
+///
+/// Usually linear doesn't look very good, so here's smoothstep:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Randim<SNorm, f32>>>::default();
+/// ```
+///
+/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Randim<SNorm, f32>, true>>::default();
+/// ```
+///
+/// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -550,7 +672,23 @@ impl<
 }
 
 /// A [`NoiseFunction`] that mixes a value sourced from a [`AnyValueFromBits`] `N` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
-/// This is similar to [`MixCellValues`] but more restricted.
+///
+/// This is similar to [`MixCellValues`] but more restricted. Instead of taking a [`ConcreteAnyValueFromBits`], this takes the more general [`AnyValueFromBits`].
+/// That allows the output of the noise to depend on the input's type!
+///
+/// This is most commonly used for very fast domain warping:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<(
+///     Offset<MixCellValuesForDomain<OrthoGrid, Smoothstep, SNorm>>,
+///     common_noise::Perlin,
+/// )>::default();
+/// ```
+///
+/// See also [`DomainWarp`](crate::layering::DomainWarp) and [`RandomElements`](crate::misc_noise::RandomElements) as alternatives.
+///
+/// This also supports `DIFFERENTIATE` (off by default) similar to [`MixCellValues`], but this is not as useful here.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -610,7 +748,7 @@ impl<
     }
 }
 
-/// Allows blending between different [`CellPoint`](crate::cells::CellPoint)s.
+/// Allows blending between different values `V` where each values corresponds to a [`CellPoint<I>`](crate::cells::CellPoint).
 pub trait Blender<I: VectorSpace, V> {
     /// Blends together each value `V` of `to_blend` according to some weight `I`, where weights beyond the range of `blending_half_radius` are ignored.
     /// `blending_half_radius` cuts off the blend before it hits discontinuities.
@@ -618,11 +756,29 @@ pub trait Blender<I: VectorSpace, V> {
 
     /// When the values to blend are computed as the dot product of the `offset`s passed to [`blend`](Blender::blend), the values are already weighted to some extent.
     /// This counteracts that weight by opperating on the already weighted value.
-    /// Assuming the collected value was the dot of some vec `a` with this `offset`, this will map the value into `±|a|`
+    /// Assuming the collected `value` was the dot of some vector `a` with this `offset`, this will map the value into `±|a|`.
     fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V;
 }
 
 /// A [`NoiseFunction`] that blends values sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+///
+/// This results in smooth blending between values. Note that this does *not* mix between values; it only blends them together so there isn't a sharp jump.
+/// To see this clearly, run the "show_noise" example.
+///
+/// Here's a way to hexagonally stacked circular values together:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<BlendCellValues<SimplexGrid, SimplecticBlend, Random<UNorm, f32>>>::default();
+/// ```
+///
+/// You can also use this to make fun stars:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhatanLength>, Random<UNorm, f32>>>::default();
+/// ```
+///
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -685,6 +841,8 @@ impl<
 }
 
 /// This trait facilitates generating gradients and computing their dot products.
+///
+/// If you're not sure which one to use, try [`QuickGradients`], a fast lookup table.
 pub trait GradientGenerator<I: VectorSpace> {
     /// Gets the dot product of `I` with some gradient vector based on this seed.
     /// Each element of `offset` can be assumed to be in -1..=1.
@@ -695,7 +853,26 @@ pub trait GradientGenerator<I: VectorSpace> {
     fn get_gradient(&self, seed: u32) -> I;
 }
 
-/// A [`NoiseFunction`] that integrates gradients sourced from a [`GradientGenerator`] `G` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// A [`NoiseFunction`] that mixes gradients sourced from a [`GradientGenerator`] `G` by a [`Curve`] `C` within some [`DomainCell`] form a [`Partitioner`] `P`.
+///
+/// This is most commonly used for perlin noise:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>>::default();
+/// ```
+///
+/// If you need smoother derivatives (ex: to compute analytical normals), try a smoother [`Curve`] like [`DoubleSmoothstep`](crate::curves::DoubleSmoothstep).
+/// Note that [`Linear`](crate::curves::Linear) is not appealing here.
+///
+/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>>::default();
+/// ```
+///
+/// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -766,6 +943,22 @@ impl<
 }
 
 /// A [`NoiseFunction`] that blends gradients sourced from a [`GradientGenerator`] `G` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+///
+/// This is typically used for simplex noise:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>>::default();
+/// ```
+///
+/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>::default();
+/// ```
+///
+/// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -830,8 +1023,13 @@ impl<
     }
 }
 
-/// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors.
+/// A simple [`GradientGenerator`] that maps seeds directly to gradient vectors via a lookup table.
 /// This is the fastest provided [`GradientGenerator`].
+///
+/// The lookup table is shared for all dimensions to reduce memory.
+/// Instead of an expensive `%` to index the array, the bits are shifted within range `>>`.
+/// This has the unfortunate (but worth it) effect of making some values more likely than others in 3d.
+/// There are 12 vectors for 3d, but 16 possible indices, so 4 are weighted double the others.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -898,7 +1096,7 @@ impl GradientGenerator<Vec4> for QuickGradients {
 ///
 /// The first 4 are usable in 2d; the first 16 are usable in 3d (first 4 are repeated in the last 4, so only 12 are unique)
 ///
-/// Inspired by a similar table in libnoise.
+/// Inspired by similar tables in libnoise.
 const GRADIENT_TABLE: [Vec4; 32] = [
     // 2d combinations (4)
     Vec4::new(0.0, -1.0, -1.0, -1.0),
@@ -916,10 +1114,10 @@ const GRADIENT_TABLE: [Vec4; 32] = [
     Vec4::new(1.0, -1.0, 0.0, -1.0),
     Vec4::new(-1.0, -1.0, 0.0, -1.0),
     // 4d combinations (32, 20 more)
-    Vec4::new(0.0, -1.0, -1.0, 1.0),
-    Vec4::new(0.0, 1.0, -1.0, 1.0),
-    Vec4::new(-1.0, 0.0, -1.0, 1.0),
-    Vec4::new(1.0, 0.0, -1.0, 1.0), // These first 4 need 0 in x, y, or so we can use binary & to get the index.
+    Vec4::new(0.0, -1.0, -1.0, 1.0), //
+    Vec4::new(0.0, 1.0, -1.0, 1.0),  //
+    Vec4::new(-1.0, 0.0, -1.0, 1.0), //
+    Vec4::new(1.0, 0.0, -1.0, 1.0), // These first 4 need 0 in x or y, so we can use binary ops to get the index for 3d.
     Vec4::new(0.0, -1.0, 1.0, 1.0),
     Vec4::new(0.0, 1.0, 1.0, 1.0),
     Vec4::new(-1.0, 0.0, 1.0, 1.0),
@@ -940,7 +1138,11 @@ const GRADIENT_TABLE: [Vec4; 32] = [
 ];
 
 /// A medium qualaty [`GradientGenerator`] that distributes normalized gradient vectors.
-/// This is not uniform because it normalizes vectors *in* a square *onto* a circle (and so on for higher dimensions).
+/// This results in totally random gradient vectors (not from a lookup table).
+///
+/// However, this is not uniform because it normalizes vectors *in* a square *onto* a circle (and so on for higher dimensions).
+/// That creates undesirable bunching of gradients.
+/// If you want to fix this (with a performance hit) see [`QualityGradients`].
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -1019,6 +1221,14 @@ impl GradientGenerator<Vec3A> for QualityGradients {
 }
 
 /// A [`Blender`] that weighs each values by it's distance, as computed by a [`LengthFunction`].
+///
+/// This is mainly used for fun worly noise:
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhatanLength>, Random<UNorm, f32>>>::default();
+/// ```
+///
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -1050,7 +1260,7 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
     }
 }
 
-/// A [`Blender`] defers to another [`Blender`] `T` and scales its blending radius by some value.
+/// A [`Blender`] that defers to another [`Blender`] `T` and scales its blending radius by some value.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -1079,7 +1289,10 @@ impl<V, I: VectorSpace, B: Blender<I, V>> Blender<I, V> for LocalBlend<B> {
     }
 }
 
-/// A [`Blender`] built for [`SimplexGrid`](crate::cells::SimplexGrid) that smoothly blends values in a pleasant way.
+/// A [`Blender`] built for the [`SimplexGrid`](crate::cells::SimplexGrid) for simplex noise that smoothly blends values in a pleasant way.
+///
+/// This can also be used to make "even" blending in [`BlendCellValues`].
+/// If you're not sure which [`Blender`] to use, start with this one.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
