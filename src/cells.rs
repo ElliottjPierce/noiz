@@ -10,13 +10,19 @@ use bevy_math::{
 use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm, UNormHalf};
 
 /// Represents a portion or cell of some larger domain and a position within that cell.
+///
+/// For example, on a cartesian grid, this could be a grid square.
 pub trait DomainCell {
     /// The larger/full domain this is a portion of.
     type Full: VectorSpace;
 
-    /// Identifies this cell roughly from others per `rng`, roughly meaning the ids are not necessarily unique.
+    /// Identifies this cell roughly from others per `rng`,
+    /// roughly meaning the ids are not necessarily unique.
+    ///
+    /// You can think of this as a seed for noise within the cell.
     fn rough_id(&self, rng: NoiseRng) -> u32;
     /// Iterates all the points relevant to this cell.
+    /// This could include bounding points, internal points, nearby points, or any other point relevant to the domain cell.
     fn iter_points(&self, rng: NoiseRng) -> impl Iterator<Item = CellPoint<Self::Full>>;
 }
 
@@ -30,7 +36,7 @@ pub trait WorleyDomainCell: DomainCell {
 
 /// Represents a [`DomainCell`] that upholds some guarantees about distance smoothing per point.
 pub trait BlendableDomainCell: DomainCell {
-    /// Returns half how far our to consider blending points.
+    /// Returns half how far out to consider blending points.
     /// Too high a value can produce discontinuities.
     fn blending_half_radius(&self) -> f32;
 }
@@ -49,7 +55,7 @@ pub trait InterpolatableCell: DomainCell {
 /// Represents a [`InterpolatableCell`] that can be differentiated.
 pub trait DiferentiableCell: InterpolatableCell {
     /// The gradient vector of derivative elements `D`.
-    /// This should usuallt be `[D; N]` where `N` is the number of elements.
+    /// This should usually be `[D; N]` where `N` is the number of axies.
     type Gradient<D>;
 
     /// Calculstes the [`Gradient`](DiferentiableCell::Gradient) vector for the function [`interpolate_within`](InterpolatableCell::interpolate_within).
@@ -153,34 +159,49 @@ impl<T: MulAssign<T>, G: MulAssign<G>> MulAssign<Self> for WithGradient<T, G> {
 }
 
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainCell`].
+/// For example, this could be lattace points on a grid.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct CellPoint<T> {
     /// Identifies this point roughly from others, roughly meaning the ids are not necessarily unique.
     /// The ids must be determenistaic per point. Ids for the same point must match, even if they are from different [`DomainCell`]s.
+    /// You can think of this as a seed per point.
     pub rough_id: u32,
     /// Defines the offset of the sample point from this one.
+    /// Ex: "The location we care about is at this offset from this point".
     pub offset: T,
 }
 
-/// Represents a type that can partition some domain `T` into cells.
+/// Represents a type that can partition some domain `T` into [`DomainCell`]s.
 pub trait Partitioner<T: VectorSpace> {
-    /// The [`DomainCell`] this segmenter produces.
+    /// The [`DomainCell`] this partitioner produces.
     type Cell: DomainCell<Full = T>;
 
-    /// Partitions the vector space `T` into [`DomainCell`]s, providing the cell that `full` is in.
+    /// Partitions the vector space `T` into [`DomainCell`]s, providing the cell that `full` is in and its position within that cell.
     fn partition(&self, full: T) -> Self::Cell;
 }
 
-/// A [`Partitioner`] that produces various [`SquareCell`]s.
+/// A [`Partitioner`] that produces various [`SquareCell`]s. This is an orthoginal/cartesian grid.
+/// If you're not sure which [`Partitioner`] to use, use this one.
 ///
 /// Also holds a [`WrappingAmount`] if desired but defaults to `()` (no wrapping).
+///
+/// Here's an example that creates perlin noise that wraps after 32 units.
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<MixCellGradients<OrthoGrid<i32>, Smoothstep, QuickGradients>>::from(MixCellGradients { cells: OrthoGrid(32), ..Default::default() });
+/// ```
+///
+/// There are other [`WrappingAmount`]s too.
+/// In general, if the wrapping amount is of a higher dimension than the input (ex: wraps over `Vec3` but sampled at `Vec2`), only the dimensions of the input will be wrapped.
+/// If the wrapping amount is of a lower dimension than the input, only the dimensions of the input that match the wrapping amount are wrapped. (ex: Wrapping over `Vec2` and sampling at `Vec3` will leave the z axis unwrapped.)
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct OrthoGrid<W = ()>(pub W);
 
-/// Represents a hyper cube of some N dimensions.
+/// Represents a hyper cube of some N dimensions. See also [`OrthoGrid`].
 #[derive(Clone, Copy, PartialEq)]
 pub struct SquareCell<F, I, W> {
     /// The least corner of this grid square.
@@ -908,6 +929,7 @@ impl<W: WrappingAmount<IVec4> + Copy> Partitioner<Vec4> for OrthoGrid<W> {
 }
 
 /// Represents a simplex grid cell as its skewed base grid square.
+/// See also [`SimplexGrid`].
 #[derive(Clone, Copy, PartialEq)]
 pub struct SimplexCell<F, I>(pub SquareCell<F, I, ()>);
 
@@ -1209,6 +1231,9 @@ impl DomainCell for SimplexCell<Vec4, IVec4> {
 }
 
 /// A [`Partitioner`] that produces various [`SimplexCell`]s.
+/// This produces a triagular or tetrahedral grid.
+/// This is most useful for [`Simplex`](crate::prelude::common_noise::Simplex) noise,
+/// but it can also be used for hexagonal or triangular noise.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -1284,13 +1309,16 @@ impl Partitioner<Vec4> for SimplexGrid {
 }
 
 /// A [`Partitioner`] that wraps its inner [`Partitioner`] `P`'s [`CellPoint`]s in [`VoronoiCell`].
+/// The inner [`Partitioner`] defaults to [`OrthoGrid`], but you can make your own too.
+/// This is used to create voronoi graphs which can be used in worly noise and other noise functions.
 ///
 /// If `HALF_SCALE` is off, this will be a traditional voronoi graph that includes both positive and negative surrounding cells, where each lattace point is offset by some value in (0, 1).
-/// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 5).
-/// Turn `HALF_SCALE` off for high qualaty voronoi and one for high performance voronoi.
+/// If `HALF_SCALE` is on, this will be a aproximated voronoi graph that includes only positive surrounding cells, where each lattace point is offset by some value in (0, 0.5).
+/// Turn `HALF_SCALE` off for high qualaty voronoi and on for high performance voronoi.
 ///
-/// **Artifact Warning:** Depending how you use this, turning on `HALF_SCALE` can produce artifacts.
-/// If something looks fishy, turn it off, and it might help.
+/// **Artifact Warning:** Depending how you use it, turning on `HALF_SCALE` can produce artifacts.
+/// Typically, this happens when a noise function depends on multiple nearby points instead of just the closest.
+/// If something looks strange, turn it off, and it might help.
 /// This option is included because, where it does't artifact, it can greatly improve performance.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
