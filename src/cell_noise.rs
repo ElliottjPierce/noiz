@@ -272,9 +272,9 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// use noiz::cell_noise::DistanceToEdge;
+/// use noiz::cell_noise::WorleySmoothMin;
 /// use noiz::curves::CubicSMin;
-/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorlySmoothMin<CubicSMin>>>::default();
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySmoothMin<CubicSMin>>>::default();
 /// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -324,9 +324,9 @@ impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// use noiz::cell_noise::DistanceToEdge;
+/// use noiz::cell_noise::WorleyNearestSmoothMin;
 /// use noiz::curves::CubicSMin;
-/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorlyNearestSmoothMin<CubicSMin>>>::default();
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyNearestSmoothMin<CubicSMin>>>::default();
 /// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -402,6 +402,7 @@ impl WorleyMode for WorleyLeastDistance {
 ///
 /// ```
 /// # use noiz::prelude::*;
+/// use noiz::cell_noise::WorleySecondLeastDistance;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySecondLeastDistance>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -429,6 +430,7 @@ impl WorleyMode for WorleySecondLeastDistance {
 ///
 /// ```
 /// # use noiz::prelude::*;
+/// use noiz::cell_noise::WorleyDifference;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyDifference>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -457,6 +459,7 @@ impl WorleyMode for WorleyDifference {
 ///
 /// ```
 /// # use noiz::prelude::*;
+/// use noiz::cell_noise::WorleyAverage;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyAverage>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -486,6 +489,7 @@ impl WorleyMode for WorleyAverage {
 ///
 /// ```
 /// # use noiz::prelude::*;
+/// use noiz::cell_noise::WorleyProduct;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyProduct>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -514,6 +518,7 @@ impl WorleyMode for WorleyProduct {
 ///
 /// ```
 /// # use noiz::prelude::*;
+/// use noiz::cell_noise::WorleyRatio;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyRatio>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -544,7 +549,7 @@ impl WorleyMode for WorleyRatio {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyPointDistance>>::default();
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>>::default();
 /// ```
 ///
 /// Lots of noise types are available. See also [`WorleyMode`], [`WorleyPointDistance`], [`WorleyDifference`], etc.
@@ -594,21 +599,21 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<MixCellValues<OrthoGrid, Linear, Randim<SNorm, f32>>>::default();
+/// let noise = Noise::<MixCellValues<OrthoGrid, Linear, Random<SNorm, f32>>>::default();
 /// ```
 ///
 /// Usually linear doesn't look very good, so here's smoothstep:
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Randim<SNorm, f32>>>::default();
+/// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>>>::default();
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Randim<SNorm, f32>, true>>::default();
+/// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>, true>>::default();
 /// ```
 ///
 /// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
@@ -680,6 +685,7 @@ impl<
 ///
 /// ```
 /// # use noiz::prelude::*;
+/// use noiz::cell_noise::MixCellValuesForDomain;
 /// let noise = Noise::<(
 ///     Offset<MixCellValuesForDomain<OrthoGrid, Smoothstep, SNorm>>,
 ///     common_noise::Perlin,

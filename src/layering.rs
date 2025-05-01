@@ -157,18 +157,18 @@ impl_all_operation_tuples!(
 ///     Persistence(0.6),
 ///     (
 ///         FractalLayers {
-///             octave: Default::default(),
+///             layer: Default::default(),
 ///             /// Each octave within this layer is sampled at 1.8 times the scale of the last.
 ///             lacunarity: 1.8,
 ///             // Do this 4 times.
-///             octaves: 4,
+///             amount: 4,
 ///         },
 ///         FractalLayers {
-///             octave: Default::default(),
+///             layer: Default::default(),
 ///             /// Each octave within this layer is sampled at 2.0 times the scale of the last.
 ///             lacunarity: 2.0,
 ///             // Do this 4 times.
-///             octaves: 4,
+///             amount: 4,
 ///         },
 ///     )
 /// ));
@@ -459,7 +459,7 @@ where
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct FractalLayers<T> {
     /// The [`LayerOperation`] to perform.
-    pub octave: T,
+    pub layer: T,
     /// Lacunarity measures how far apart each pass of the inner layer will be.
     /// Effectively, this is a frequency multiplier.
     /// Ex: if this is 3, each octave will operate on 1/3 the scale.
@@ -474,7 +474,7 @@ pub struct FractalLayers<T> {
 impl<T: Default> Default for FractalLayers<T> {
     fn default() -> Self {
         Self {
-            octave: T::default(),
+            layer: T::default(),
             lacunarity: 2.0,
             amount: 8,
         }
@@ -487,7 +487,7 @@ impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOpera
     #[inline]
     fn prepare(&self, result_context: &mut R, weights: &mut W) {
         for _ in 0..self.amount {
-            self.octave.prepare(result_context, weights);
+            self.layer.prepare(result_context, weights);
         }
     }
 }
@@ -503,10 +503,10 @@ impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: La
         result: &mut <R as LayerResultContext>::Result,
         weights: &mut W,
     ) {
-        self.octave.do_noise_op(seeds, working_loc, result, weights);
+        self.layer.do_noise_op(seeds, working_loc, result, weights);
         for _ in 1..self.amount {
             *working_loc = *working_loc * self.lacunarity;
-            self.octave.do_noise_op(seeds, working_loc, result, weights);
+            self.layer.do_noise_op(seeds, working_loc, result, weights);
         }
     }
 }

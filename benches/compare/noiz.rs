@@ -137,7 +137,7 @@ macro_rules! benches_nD {
                         Normed::default(),
                         Persistence(PERSISTENCE),
                         FractalLayers {
-                            octave: Default::default(),
+                            layer: Default::default(),
                             lacunarity: LACUNARITY,
                             amount: octaves,
                         },
@@ -169,7 +169,7 @@ macro_rules! benches_nD {
                         Normed::default(),
                         Persistence(PERSISTENCE),
                         FractalLayers {
-                            octave: Default::default(),
+                            layer: Default::default(),
                             lacunarity: LACUNARITY,
                             amount: octaves,
                         },
@@ -193,7 +193,7 @@ macro_rules! benches_nD {
                         Normed::default(),
                         Persistence(PERSISTENCE),
                         FractalLayers {
-                            octave: Default::default(),
+                            layer: Default::default(),
                             lacunarity: LACUNARITY,
                             amount: octaves,
                         },

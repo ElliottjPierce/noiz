@@ -118,11 +118,11 @@ let perlin_fbm_noise = Noise::<LayeredNoise<
     // Each octave will contribute 0.6 as much as the last.
     Persistence(0.6),
     FractalLayers {
-        octave: Default::default(),
-        /// Each octave within this layer will be sampled at 1.8 times the scale of the last.
+        layer: Default::default(),
+        // Each octave within this layer will be sampled at 1.8 times the scale of the last.
         lacunarity: 1.8,
         // Do this 8 times.
-        octaves: 8,
+        amount: 8,
     },
 ));
 let some_value: f32 = perlin_fbm_noise.sample(Vec4::new(1.0, 2.3, -100.0, 0.0));

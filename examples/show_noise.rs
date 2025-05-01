@@ -252,7 +252,7 @@ fn main() -> AppExit {
                                     // I glossed over these settings earlier. Take a sec to read the docs if you're curious.
                                     Persistence(0.6),
                                     FractalLayers {
-                                        octave: (
+                                        layer: (
                                             DomainWarp {
                                                 warper: Default::default(),
                                                 strength: 2.0, // Warp by double the strength. This should be fun...
@@ -292,7 +292,7 @@ fn main() -> AppExit {
                                     Normed::default(),
                                     Persistence(0.6),
                                     FractalLayers {
-                                        octave: (
+                                        layer: (
                                             DomainWarp {
                                                 warper: Default::default(),
                                                 strength: 4.0,
@@ -557,7 +557,7 @@ fn main() -> AppExit {
                                     NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
                                     FractalLayers {
-                                        octave: Default::default(),
+                                        layer: Default::default(),
                                         lacunarity: 1.8,
                                         amount: 8,
                                     },
@@ -593,7 +593,7 @@ fn main() -> AppExit {
                                     NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
                                     FractalLayers {
-                                        octave: Default::default(),
+                                        layer: Default::default(),
                                         lacunarity: 1.8,
                                         amount: 8,
                                     },
@@ -629,7 +629,7 @@ fn main() -> AppExit {
                                     NormedByDerivative::default().with_falloff(0.5),
                                     Persistence(0.6),
                                     FractalLayers {
-                                        octave: Default::default(),
+                                        layer: Default::default(),
                                         lacunarity: 1.8,
                                         amount: 8,
                                     },
@@ -725,7 +725,7 @@ fn main() -> AppExit {
                                     Persistence(0.6),
                                     (
                                         FractalLayers {
-                                            octave: (
+                                            layer: (
                                                 Octave((
                                                     Default::default(),
                                                     SelfMasked(MixCellGradients {
@@ -751,7 +751,7 @@ fn main() -> AppExit {
                                             amount: 6,
                                         },
                                         FractalLayers {
-                                            octave: Octave(MixCellValues {
+                                            layer: Octave(MixCellValues {
                                                 // The size of the tile
                                                 cells: OrthoGrid(256),
                                                 noise: Default::default(),
