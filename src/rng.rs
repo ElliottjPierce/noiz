@@ -39,6 +39,7 @@ impl NoiseRng {
     /// Determenisticly changes the seed significantly.
     ///
     /// ```
+    /// # use noiz::rng::*;
     /// let mut rng = NoiseRng(1234);
     /// // do some noise
     /// rng.re_seed() // give the next noise a fresh seed.
@@ -264,6 +265,7 @@ pub trait AnyValueFromBits<T> {
     /// This will only hold true if the values are always mixed linearly. (The linear interpolator `t` doesn't need to be linear but the end lerp does.)
     ///
     /// ```
+    /// # use noiz::rng::*;
     /// let val1: f32 = UNorm.linear_equivalent_value(12345);
     /// let val2: f32 = UNorm.linear_equivalent_value(54321);
     /// let averabe = UNorm.finish_linear_equivalent_value((val1 + val2) * 0.5);
@@ -296,6 +298,7 @@ pub trait ConcreteAnyValueFromBits: AnyValueFromBits<Self::Concrete> {
 /// - [`NoiseFunction`] that takes any [`NoiseRngInput`] and uses `R` to produce a value `T`.
 ///
 /// ```
+/// # use noiz::rng::*;
 /// let unorm = Random::<UNorm, f32>::default().any_value(12345);
 /// ```
 ///

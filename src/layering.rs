@@ -375,7 +375,7 @@ impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: 
 ///     Persistence,
 ///     FractalLayers<(
 ///         Octave<common_noise::Perlin>,
-///         PersistenceConfig<common_noise::Simplex>
+///         PersistenceConfig<Octave<common_noise::Simplex>>
 ///     )>,
 /// >>::default();
 /// ```
