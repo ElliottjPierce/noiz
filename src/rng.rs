@@ -55,14 +55,27 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
+        // Ok
+        // let a = i ^ Self::KEY;
+        // let b = i.rotate_left(16) ^ self.0;
+        // let c = a.wrapping_mul(b).wrapping_add(a);
+        // let d = c.rotate_right(16).wrapping_mul(b).wrapping_add(c);
+        // d.rotate_right(16).wrapping_mul(c).wrapping_add(d)
+
+        // Great hash
+        let a = i ^ Self::KEY;
+        let b = i.rotate_left(16) ^ self.0;
+        let c = a.wrapping_mul(b) ^ Self::KEY;
+        c.rotate_right(16).wrapping_mul(c)
+
         // This is the best and fastest hash I've created.
-        let mut r1 = i ^ Self::KEY;
-        let mut r2 = i ^ self.0;
-        r2 = r2.rotate_left(11);
-        r2 ^= r1;
-        r1 = r1.wrapping_mul(r2);
-        r2 = r2.rotate_left(27);
-        r1.wrapping_mul(r2)
+        // let mut r1 = i ^ Self::KEY;
+        // let mut r2 = i ^ self.0;
+        // r2 = r2.rotate_left(11);
+        // r2 ^= r1;
+        // r1 = r1.wrapping_mul(r2);
+        // r2 = r2.rotate_left(27);
+        // r1.wrapping_mul(r2)
 
         // This can be faster but has rotational symmetry
         // let a = i.rotate_left(11) ^ i ^ self.0;
