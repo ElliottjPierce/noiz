@@ -144,7 +144,7 @@ impl NoiseOptions {
                 noise.display_image(
                     images.get_mut(self.image.id()).unwrap(),
                     time.elapsed_secs() * self.time_scale,
-                    time.elapsed_secs() * -self.time_scale,
+                    time.elapsed_secs() * core::f32::consts::E * -self.time_scale,
                 );
                 changed.then_some(noise.name)
             }
