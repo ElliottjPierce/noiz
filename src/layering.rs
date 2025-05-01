@@ -460,15 +460,15 @@ where
 pub struct FractalLayers<T> {
     /// The [`LayerOperation`] to perform.
     pub octave: T,
-    /// lacunarity measures how far apart each octave will be.
+    /// Lacunarity measures how far apart each pass of the inner layer will be.
     /// Effectively, this is a frequency multiplier.
     /// Ex: if this is 3, each octave will operate on 1/3 the scale.
     ///
     /// A good default is 2.
     pub lacunarity: f32,
-    /// The number of times to do this octave.
+    /// The number of times to do the inner layer.
     /// Defaults to 8.
-    pub octaves: u32,
+    pub amount: u32,
 }
 
 impl<T: Default> Default for FractalLayers<T> {
@@ -476,7 +476,7 @@ impl<T: Default> Default for FractalLayers<T> {
         Self {
             octave: T::default(),
             lacunarity: 2.0,
-            octaves: 8,
+            amount: 8,
         }
     }
 }
@@ -486,7 +486,7 @@ impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOpera
 {
     #[inline]
     fn prepare(&self, result_context: &mut R, weights: &mut W) {
-        for _ in 0..self.octaves {
+        for _ in 0..self.amount {
             self.octave.prepare(result_context, weights);
         }
     }
@@ -504,7 +504,7 @@ impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: La
         weights: &mut W,
     ) {
         self.octave.do_noise_op(seeds, working_loc, result, weights);
-        for _ in 1..self.octaves {
+        for _ in 1..self.amount {
             *working_loc = *working_loc * self.lacunarity;
             self.octave.do_noise_op(seeds, working_loc, result, weights);
         }

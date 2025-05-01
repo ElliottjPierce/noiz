@@ -139,7 +139,7 @@ macro_rules! benches_nD {
                         FractalLayers {
                             octave: Default::default(),
                             lacunarity: LACUNARITY,
-                            octaves,
+                            amount: octaves,
                         },
                     ));
                     $bencher(noise)
@@ -171,7 +171,7 @@ macro_rules! benches_nD {
                         FractalLayers {
                             octave: Default::default(),
                             lacunarity: LACUNARITY,
-                            octaves,
+                            amount: octaves,
                         },
                     ));
                     $bencher(noise)
@@ -195,7 +195,7 @@ macro_rules! benches_nD {
                         FractalLayers {
                             octave: Default::default(),
                             lacunarity: LACUNARITY,
-                            octaves,
+                            amount: octaves,
                         },
                     ));
                     $bencher(noise)

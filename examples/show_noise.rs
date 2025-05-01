@@ -260,7 +260,7 @@ fn main() -> AppExit {
                                             Default::default(),
                                         ),
                                         lacunarity: 1.8,
-                                        octaves: 8,
+                                        amount: 8,
                                     },
                                 ),
                                 Default::default(),
@@ -300,7 +300,7 @@ fn main() -> AppExit {
                                             Default::default(),
                                         ),
                                         lacunarity: 1.8,
-                                        octaves: 8,
+                                        amount: 8,
                                     },
                                 ),
                                 Default::default(),
@@ -559,7 +559,7 @@ fn main() -> AppExit {
                                     FractalLayers {
                                         octave: Default::default(),
                                         lacunarity: 1.8,
-                                        octaves: 8,
+                                        amount: 8,
                                     },
                                 ),
                                 Default::default(),
@@ -595,7 +595,7 @@ fn main() -> AppExit {
                                     FractalLayers {
                                         octave: Default::default(),
                                         lacunarity: 1.8,
-                                        octaves: 8,
+                                        amount: 8,
                                     },
                                 ),
                                 Default::default(),
@@ -631,7 +631,7 @@ fn main() -> AppExit {
                                     FractalLayers {
                                         octave: Default::default(),
                                         lacunarity: 1.8,
-                                        octaves: 8,
+                                        amount: 8,
                                     },
                                 ),
                                 Default::default(),
@@ -748,7 +748,7 @@ fn main() -> AppExit {
                                                 },
                                             ),
                                             lacunarity: 1.8,
-                                            octaves: 6,
+                                            amount: 6,
                                         },
                                         FractalLayers {
                                             octave: Octave(MixCellValues {
@@ -758,7 +758,7 @@ fn main() -> AppExit {
                                                 curve: Smoothstep,
                                             }),
                                             lacunarity: 1.8,
-                                            octaves: 4,
+                                            amount: 4,
                                         },
                                     ),
                                 ),
