@@ -321,7 +321,7 @@ impl<
 ///
 /// This one isn't context aware; it will warp each octave individually, but [`DomainWarp`] will apply the warp of one octave to the next so they build on eachother.
 ///
-/// See also [`MixCellValuesForDomain`] as a faster alternative to [`RandomElements`].
+/// See also [`MixCellValuesForDomain`](crate::cell_noise::MixCellValuesForDomain) as a faster alternative to [`RandomElements`](crate::misc_noise::RandomElements).
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -647,7 +647,7 @@ where
 /// `C` is the [`Curve`] that determines how much a derivative's value should contribute to the result.
 ///
 /// This is most commonly used to approximate (not simulate) erosion for heightmaps.
-/// For that, see [`PeakDerivativeContribution`] and [`SmnoothDerivativeContribution`] for `L`.
+/// For that, see [`PeakDerivativeContribution`] and [`SmoothDerivativeContribution`] for `L`.
 /// Here's an example:
 ///
 /// ```

@@ -267,7 +267,7 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
 }
 
 /// A [`WorleyMode`] that returns the unorm distance to the nearest [`CellPoint`](crate::cells::CellPoint) via a [`SmoothMin`].
-/// This is similar to [`WorleyPointDistance`], but instead of dividing nearby cells, it smooths between them.
+/// This is similar to [`WorleyLeastDistance`], but instead of dividing nearby cells, it smooths between them.
 /// Note that when cells are close together, this can merge them into a single value.
 ///
 /// ```
@@ -552,7 +552,7 @@ impl WorleyMode for WorleyRatio {
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>>::default();
 /// ```
 ///
-/// Lots of noise types are available. See also [`WorleyMode`], [`WorleyPointDistance`], [`WorleyDifference`], etc.
+/// Lots of noise types are available. See also [`WorleyMode`], [`WorleyLeastDistance`], [`WorleyDifference`], etc.
 /// This is not explicitly called `Worley` because it doesn't cover every type of worley noise, for example, [`DistanceToEdge`].
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
