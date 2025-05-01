@@ -1,13 +1,14 @@
-//! Contains definitions for length/distance functions
+//! Contains definitions for length/distance functions.
 
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 
-/// Represents some function on a vector `T` that computest some version of it's length.
+/// Represents some function on a vector `T` that computes some version of it's length.
 pub trait LengthFunction<T: VectorSpace> {
     /// If the absolute value of no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
     fn max_for_element_max(&self, element_max: f32) -> f32;
     /// Computes the length or magatude of `vec`.
     /// Must always be non-negative
+    #[inline]
     fn length_of(&self, vec: T) -> f32 {
         self.length_from_ordering(self.length_ordering(vec))
     }
@@ -17,28 +18,32 @@ pub trait LengthFunction<T: VectorSpace> {
     fn length_from_ordering(&self, ordering: f32) -> f32;
 }
 
-/// A [`LengthFunction`] and for "as the crow flyies" length
+/// A [`LengthFunction`] for "as the crow flyies" length
+/// This is traditional length. If you're not sure which [`LengthFunction`] to use, use this one.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct EuclideanLength;
 
-/// A [`LengthFunction`] and for squared [`EuclideanLength`] length
+/// A [`LengthFunction`] for squared [`EuclideanLength`] length.
+/// This is in some ways, a faster approximation of [`EuclideanLength`].
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct EuclideanSqrdLength;
 
-/// A [`LengthFunction`] and for "manhatan" or diagonal length
+/// A [`LengthFunction`] for "manhatan" or diagonal length.
+/// Where [`EuclideanLength`] = 1 traces our a circle, this will trace out a diamond.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct ManhatanLength;
 
-/// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`]
+/// A [`LengthFunction`] that evenly combines [`EuclideanLength`] and [`ManhatanLength`].
+/// This is often useful for creating odd, angular shapes.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -46,6 +51,7 @@ pub struct ManhatanLength;
 pub struct HybridLength;
 
 /// A [`LengthFunction`] that evenly uses Chebyshev length, which is similar to [`ManhatanLength`].
+/// Where [`EuclideanLength`] = 1 traces our a circle, this will trace out a square.
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
