@@ -644,6 +644,7 @@ where
 ///
 /// `T` is the [`VectorSpace`] you want to collect.
 /// `L` is the [`LengthFunction`] to calculate the derivative from the gradient.
+/// `C` is the [`Curve`] that determines how much a derivative's value should contribute to the result.
 ///
 /// This is most commonly used to approximate (not simulate) erosion for heightmaps.
 /// For that, see [`PeakDerivativeContribution`] and [`SmnoothDerivativeContribution`] for `L`.

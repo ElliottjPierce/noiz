@@ -5,7 +5,7 @@ pub use crate::{
     Sampleable, SampleableFor,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, MixCellGradients, MixCellValues,
-        PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyPointDistance,
+        PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyLeastDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{DoubleSmoothstep, Linear, Smoothstep},
@@ -37,7 +37,7 @@ pub mod common_noise {
     pub type Simplex = BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>;
 
     /// A [`NoiseFunction`] that produces traditional worly noise `f32`s between 0 and 1.
-    pub type Worly = PerCellPointDistances<Voronoi, EuclideanLength, WorleyPointDistance>;
+    pub type Worly = PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>;
 
     /// Represents traditional fractal brownian motion.
     pub type Fbm<T> = LayeredNoise<Normed<f32>, Persistence, FractalLayers<Octave<T>>>;

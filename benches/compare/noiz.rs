@@ -7,7 +7,7 @@ use noiz::{
     ConfigurableNoise, Noise, Sampleable, SampleableFor,
     cell_noise::{
         BlendCellGradients, MixCellGradients, MixCellValues, PerCellPointDistances, QuickGradients,
-        SimplecticBlend, WorleyPointDistance,
+        SimplecticBlend, WorleyLeastDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::Smoothstep,
@@ -110,13 +110,13 @@ macro_rules! benches_nD {
 
         group.bench_function("worley", |bencher| {
             bencher.iter(|| {
-                let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyPointDistance>>::default();
+                let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>>::default();
                 $bencher(noise)
             });
         });
         group.bench_function("worley-fast", |bencher| {
             bencher.iter(|| {
-                let noise = Noise::<PerCellPointDistances<Voronoi<true>, EuclideanLength, WorleyPointDistance>>::default();
+                let noise = Noise::<PerCellPointDistances<Voronoi<true>, EuclideanLength, WorleyLeastDistance>>::default();
                 $bencher(noise)
             });
         });

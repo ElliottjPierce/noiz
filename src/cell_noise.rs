@@ -372,15 +372,15 @@ impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyPointDistance>>::default();
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct WorleyPointDistance;
+pub struct WorleyLeastDistance;
 
-impl WorleyMode for WorleyPointDistance {
+impl WorleyMode for WorleyLeastDistance {
     #[inline]
     fn evaluate_worley<I: VectorSpace>(
         &self,
@@ -402,15 +402,15 @@ impl WorleyMode for WorleyPointDistance {
 ///
 /// ```
 /// # use noiz::prelude::*;
-/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySecondPointDistance>>::default();
+/// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySecondLeastDistance>>::default();
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct WorleySecondPointDistance;
+pub struct WorleySecondLeastDistance;
 
-impl WorleyMode for WorleySecondPointDistance {
+impl WorleyMode for WorleySecondLeastDistance {
     #[inline]
     fn evaluate_worley<I: VectorSpace>(
         &self,
