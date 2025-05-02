@@ -55,13 +55,22 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
-        // Inspired by <https://nullprogram.com/blog/2018/07/31/>, under the unlisence
+        // Inspired by https://nullprogram.com/blog/2018/07/31/
         let mut x = i;
         x ^= x.rotate_right(17);
         x = x.wrapping_mul(Self::KEY);
         x ^= x.rotate_right(11) ^ self.0;
         x = x.wrapping_mul(!Self::KEY);
         x
+
+        // There are *lots* of ways to do this.
+        // I have spent multiple days tweaking different hashes and experimenting.
+        // All of these options have trade offs.
+        // They all differ in performance and quality.
+        // Many of them perform vastly differently for different noise functions in practice.
+        // I ultimately went with the one above, but feel free to play around with it yourself.
+        // I'm certain these can be improved; I just don't think it's worth the effort yet. It's good enough.
+        // I can't imagine users would want to also configure their hash function of all things.
 
         // WIP
         // let m = i ^ Self::KEY;
