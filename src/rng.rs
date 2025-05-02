@@ -55,6 +55,7 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
+        // Inspired by <https://nullprogram.com/blog/2018/07/31/>, under the unlisence
         let mut x = i;
         x ^= x.rotate_right(17);
         x = x.wrapping_mul(Self::KEY);
@@ -62,6 +63,7 @@ impl NoiseRng {
         x = x.wrapping_mul(!Self::KEY);
         x
 
+        // WIP
         // let m = i ^ Self::KEY;
         // let a = i ^ self.0;
         // let b = a.wrapping_mul(m);
@@ -70,6 +72,7 @@ impl NoiseRng {
         // let e = b.rotate_right(8);
         // e.wrapping_mul(d)
 
+        // WIP
         // let a = i ^ self.0;
         // let m = i ^ Self::KEY;
         // let b = i.rotate_left(16) ^ m;
@@ -77,6 +80,7 @@ impl NoiseRng {
         // let y = a.rotate_right(8) ^ m;
         // x.wrapping_mul(y)
 
+        // WIP
         // let mut x = i;
         // let mut m = i ^ Self::KEY;
         // // x = x.rotate_left(12) ^ m;
@@ -86,7 +90,7 @@ impl NoiseRng {
         // x ^= x.rotate_left(8);
         // x
 
-        // Great hash
+        // WIP
         // let a = i ^ Self::KEY;
         // let b = i.rotate_left(7) ^ self.0;
         // let c = a.wrapping_mul(b).rotate_left(16);

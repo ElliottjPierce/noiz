@@ -225,17 +225,17 @@ Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 
 | Noise Type            | noiz        | noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
-| value                 | 1.6      ✅ | 3.1          | 1.8831         | 14.8            |
-| value fbm 2 octave    | 6.8         | 8.6          | 5.8         ✅ | 31.4            |
-| value fbm 8 octave    | 27.9        | 33.4         | 22.0        ✅ | 112.0           |
-| perlin                | 3.0      ✅ | 8.8          | 3.0         ✅ | 8.1             |
-| perlin fbm 2 octave   | 7.7      ✅ | 18.4         | 8.1            | 17.2            |
-| perlin fbm 8 octave   | 32.8     ✅ | 71.8         | 31.1        ✅ | 58.0            |
+| value                 | 1.7365   ✅ | 3.1          | 1.8831      ✅ | 14.8            |
+| value fbm 2 octave    | 6.9         | 8.6          | 5.8         ✅ | 31.4            |
+| value fbm 8 octave    | 28.2        | 33.4         | 22.0        ✅ | 112.0           |
+| perlin                | 3.1      ✅ | 8.8          | 3.0         ✅ | 8.1             |
+| perlin fbm 2 octave   | 8.0      ✅ | 18.4         | 8.1         ✅ | 17.2            |
+| perlin fbm 8 octave   | 32.6        | 71.8         | 31.1        ✅ | 58.0            |
 | simplex               | 6.8      ✅ | 8.6          | 8.1            | 10.6            |
-| simplex fbm 2 octave  | 14.3     ✅ | 22.3         | 17.7           | 21.6            |
-| simplex fbm 8 octave  | 55.9     ✅ | 108.5        | 89.2           | 116.0           |
-| worley                | 5.2      ✅ | 24.5         | 11.8           | 17.8            |
-| worley approximate    | 2.7      ✅ | ---          | ---            | ---             |
+| simplex fbm 2 octave  | 14.5     ✅ | 22.3         | 17.7           | 21.6            |
+| simplex fbm 8 octave  | 56.6     ✅ | 108.5        | 89.2           | 116.0           |
+| worley                | 5.5      ✅ | 24.5         | 11.8           | 17.8            |
+| worley approximate    | 2.9      ✅ | ---          | ---            | ---             |
 
 ### 3D
 
@@ -243,17 +243,17 @@ Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
 
 | Noise Type            | noiz        | noiz `Vec3A` | noise          | libnoise        | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|-----------------|
-| value                 | 2.8         | 7.9          | 11.4           | 2.7          ✅ | 39.6            |
-| value fbm 2 octave    | 12.7        | 16.3         | 22.5           | 8.2          ✅ | 85.7            |
-| value fbm 8 octave    | 56.2        | 64.6         | 89.3           | 33.5         ✅ | 336.6           |
-| perlin                | 7.2         | 9.9          | 76.9           | 6.4          ✅ | 13.8            |
-| perlin fbm 2 octave   | 19.1        | 19.6         | 28.5           | 15.8         ✅ | 29.7            |
-| perlin fbm 8 octave   | 80.3        | 74.5         | 368.9          | 69.7         ✅ | 132.0           |
-| simplex               | 12.5     ✅ | 16.8         | 14.2           | 16.3            | 20.1            |
-| simplex fbm 2 octave  | 26.6     ✅ | 32.7         | 51.8           | 25.9         ✅ | 43.0            |
-| simplex fbm 8 octave  | 105.5    ✅ | 126.0        | 207.8          | 181.7           | 175.1           |
-| worley                | 50.8        | 51.1         | 78.9           | 52.9            | 42.3         ✅ |
-| worley approximate    | 6.0      ✅ | 13.6         | ---            | ---             | ---             |
+| value                 | 3.0         | 7.4          | 11.4           | 2.7          ✅ | 39.6            |
+| value fbm 2 octave    | 11.6        | 16.8         | 22.5           | 8.2          ✅ | 85.7            |
+| value fbm 8 octave    | 53.0        | 67.7         | 89.3           | 33.5         ✅ | 336.6           |
+| perlin                | 7.2         | 10.1         | 76.9           | 6.4          ✅ | 13.8            |
+| perlin fbm 2 octave   | 19.8        | 20.2         | 28.5           | 15.8         ✅ | 29.7            |
+| perlin fbm 8 octave   | 80.8        | 76.4         | 368.9          | 69.7         ✅ | 132.0           |
+| simplex               | 12.7     ✅ | 16.9         | 14.2           | 16.3            | 20.1            |
+| simplex fbm 2 octave  | 26.8     ✅ | 32.9         | 51.8           | 25.9         ✅ | 43.0            |
+| simplex fbm 8 octave  | 106.9    ✅ | 126.2        | 207.8          | 181.7           | 175.1           |
+| worley                | 51.8        | 51.7         | 78.9           | 52.9            | 42.3         ✅ |
+| worley approximate    | 6.1      ✅ | 13.6         | ---            | ---             | ---             |
 
 `Vec3A` is an aligned 3d type from `bevy_math` (glam). It enables SIMD instructions, but uses more memory to do so.
 As you can see, it's not worth it here.
@@ -264,17 +264,17 @@ Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 
 | Noise Type            | noiz        | noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
-| value                 | 15.9        | 21.2         | 3.9         ✅ | ---             |
-| value fbm 2 octave    | 31.7        | 46.0         | 14.3        ✅ | ---             |
-| value fbm 8 octave    | 122.7       | 167.3        | 57.3        ✅ | ---             |
-| perlin                | 18.6        | 177.6        | 17.6        ✅ | ---             |
-| perlin fbm 2 octave   | 38.5     ✅ | 53.5         | 38.4        ✅ | ---             |
-| perlin fbm 8 octave   | 144.5    ✅ | 824.2        | 203.1          | ---             |
-| simplex               | 19.4     ✅ | 35.5         | 29.5           | ---             |
-| simplex fbm 2 octave  | 38.6     ✅ | 108.8        | 41.0           | ---             |
-| simplex fbm 8 octave  | 152.1    ✅ | 421.0        | 234.4          | ---             |
-| worley                | 169.3       | 156.3     ✅ | 205.8          | ---             |
-| worley approximate    | 26.0     ✅ | ---          | ---            | ---             |
+| value                 | 13.2        | 21.2         | 3.9         ✅ | ---             |
+| value fbm 2 octave    | 27.0        | 46.0         | 14.3        ✅ | ---             |
+| value fbm 8 octave    | 104.8       | 167.3        | 57.3        ✅ | ---             |
+| perlin                | 16.7     ✅ | 177.6        | 17.6           | ---             |
+| perlin fbm 2 octave   | 36.9     ✅ | 53.5         | 38.4           | ---             |
+| perlin fbm 8 octave   | 143.0    ✅ | 824.2        | 203.1          | ---             |
+| simplex               | 20.0     ✅ | 35.5         | 29.5           | ---             |
+| simplex fbm 2 octave  | 36.9     ✅ | 108.8        | 41.0           | ---             |
+| simplex fbm 8 octave  | 133.4    ✅ | 421.0        | 234.4          | ---             |
+| worley                | 174.6       | 156.3     ✅ | 205.8          | ---             |
+| worley approximate    | 25.8     ✅ | ---          | ---            | ---             |
 
 ### Summary
 
@@ -301,7 +301,7 @@ This is likely also due to the difference in rng methods, and the same quality i
 
 For simplex noise, `noiz` is the clear winner.
 
-For Worly noise, the results vary greatly depending on use-case. See for yourself.
+For Worley noise, the results vary greatly depending on use-case. See for yourself.
 Worley approximate, if you're wondering, is a version of worley noise that is much faster but restricts the voronoi points to be only half as random as normal.
 This works great if you only need an approximation.
 
