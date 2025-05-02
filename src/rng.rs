@@ -56,13 +56,35 @@ impl NoiseRng {
         let i = input.collapse_for_rng();
 
         let mut x = i;
-        let mut m = i ^ Self::KEY;
-        // x = x.rotate_right(8);
-        x = x.wrapping_mul(m).wrapping_add(self.0);
-        m = m.rotate_right(16) ^ Self::KEY;
-        let y = x.wrapping_mul(m);
-        x = x.rotate_left(8);
-        x ^ y
+        x ^= x.rotate_right(17);
+        x = x.wrapping_mul(Self::KEY);
+        x ^= x.rotate_right(11) ^ self.0;
+        x = x.wrapping_mul(!Self::KEY);
+        x
+
+        // let m = i ^ Self::KEY;
+        // let a = i ^ self.0;
+        // let b = a.wrapping_mul(m);
+        // let c = a.rotate_right(16);
+        // let d = c.wrapping_mul(m);
+        // let e = b.rotate_right(8);
+        // e.wrapping_mul(d)
+
+        // let a = i ^ self.0;
+        // let m = i ^ Self::KEY;
+        // let b = i.rotate_left(16) ^ m;
+        // let x = b.wrapping_mul(m).wrapping_add(a);
+        // let y = a.rotate_right(8) ^ m;
+        // x.wrapping_mul(y)
+
+        // let mut x = i;
+        // let mut m = i ^ Self::KEY;
+        // // x = x.rotate_left(12) ^ m;
+        // x = x.wrapping_mul(m).wrapping_add(self.0);
+        // m = !m;
+        // x = x.rotate_right(16).wrapping_mul(m);
+        // x ^= x.rotate_left(8);
+        // x
 
         // Great hash
         // let a = i ^ Self::KEY;
@@ -226,7 +248,7 @@ impl NoiseRngInput for u32 {
 impl NoiseRngInput for UVec2 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x.wrapping_add(self.y.rotate_left(8))
+        self.x.wrapping_add(self.y.rotate_left(8) ^ NoiseRng::KEY)
     }
 }
 
