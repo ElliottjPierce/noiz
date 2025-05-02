@@ -296,10 +296,10 @@ No tiling. Yay!
 Note that some artifacting (not quite tiling) does happen at excessively large scales.
 But that's not a big deal in practice. (Ever wonder why the far lands exist in minecraft?)
 
-For perlin noise, `noiz` is generally faster for 2d and 4d but `libnoise` just beats it for 3d.
-This is likely also due to the difference in rng methods, and the same quality issues, etc apply here too.
+For perlin noise, `noiz` and `libnoise` tie for 2d; `noiz` is faster for 4d but `libnoise` just beats it for 3d.
+This is likely also due to the difference in rng methods, and the same quality issues and benchmark blind spots apply here too.
 
-For simplex noise, `noiz` is the clear winner.
+For simplex noise, `noiz` is the clear winner. Simplex is about half as fast as perlin for 2d, but it gets bette for higher dimensions, beating perlin in 4d.
 
 For Worley noise, the results vary greatly depending on use-case. See for yourself.
 Worley approximate, if you're wondering, is a version of worley noise that is much faster but restricts the voronoi points to be only half as random as normal.
