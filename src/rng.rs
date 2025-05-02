@@ -55,18 +55,21 @@ impl NoiseRng {
     pub fn rand_u32(&self, input: impl NoiseRngInput) -> u32 {
         let i = input.collapse_for_rng();
 
-        // Ok
-        // let a = i ^ Self::KEY;
-        // let b = i.rotate_left(16) ^ self.0;
-        // let c = a.wrapping_mul(b).wrapping_add(a);
-        // let d = c.rotate_right(16).wrapping_mul(b).wrapping_add(c);
-        // d.rotate_right(16).wrapping_mul(c).wrapping_add(d)
+        let mut x = i;
+        let mut m = i ^ Self::KEY;
+        // x = x.rotate_right(8);
+        x = x.wrapping_mul(m).wrapping_add(self.0);
+        m = m.rotate_right(16) ^ Self::KEY;
+        let y = x.wrapping_mul(m);
+        x = x.rotate_left(8);
+        x ^ y
 
         // Great hash
-        let a = i ^ Self::KEY;
-        let b = i.rotate_left(16) ^ self.0;
-        let c = a.wrapping_mul(b) ^ Self::KEY;
-        c.rotate_right(16).wrapping_mul(c)
+        // let a = i ^ Self::KEY;
+        // let b = i.rotate_left(7) ^ self.0;
+        // let c = a.wrapping_mul(b).rotate_left(16);
+        // let d = b.rotate_right(14) ^ Self::KEY;
+        // c.wrapping_mul(d)
 
         // This is the best and fastest hash I've created.
         // let mut r1 = i ^ Self::KEY;
@@ -223,7 +226,7 @@ impl NoiseRngInput for u32 {
 impl NoiseRngInput for UVec2 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x.wrapping_add(self.y.rotate_right(8))
+        self.x.wrapping_add(self.y.rotate_left(8))
     }
 }
 
@@ -231,8 +234,8 @@ impl NoiseRngInput for UVec3 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
         self.x
-            .wrapping_add(self.y.rotate_right(8))
-            .wrapping_add(self.z.rotate_right(16))
+            .wrapping_add(self.y.rotate_left(8))
+            .wrapping_add(self.z.rotate_left(16))
     }
 }
 
@@ -240,9 +243,9 @@ impl NoiseRngInput for UVec4 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
         self.x
-            .wrapping_add(self.y.rotate_right(8))
-            .wrapping_add(self.z.rotate_right(16))
-            .wrapping_add(self.w.rotate_right(24))
+            .wrapping_add(self.y.rotate_left(8))
+            .wrapping_add(self.z.rotate_left(16))
+            .wrapping_add(self.w.rotate_left(24))
     }
 }
 
