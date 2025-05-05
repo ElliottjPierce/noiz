@@ -1023,11 +1023,12 @@ impl<
         let cell = self.cells.partition(input);
 
         let to_blend = cell.iter_points(*seeds).map(|p| {
+            let grad = self.gradients.get_gradient(p.rough_id);
             let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
             (
                 WithGradient {
                     value: dot,
-                    gradient: p.offset * dot,
+                    gradient: p.offset * dot + grad,
                 },
                 p.offset,
             )
