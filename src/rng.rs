@@ -261,26 +261,26 @@ impl NoiseRngInput for u32 {
 impl NoiseRngInput for UVec2 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x.wrapping_add(self.y.rotate_left(8) ^ NoiseRng::KEY)
+        (self.x ^ 983742189).wrapping_add((self.y ^ 102983473).rotate_left(8))
     }
 }
 
 impl NoiseRngInput for UVec3 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x
-            .wrapping_add(self.y.rotate_left(8))
-            .wrapping_add(self.z.rotate_left(16))
+        (self.x ^ 983742189)
+            .wrapping_add((self.y ^ 102983473).rotate_left(8))
+            .wrapping_add((self.z ^ 189203473).rotate_left(16))
     }
 }
 
 impl NoiseRngInput for UVec4 {
     #[inline(always)]
     fn collapse_for_rng(self) -> u32 {
-        self.x
-            .wrapping_add(self.y.rotate_left(8))
-            .wrapping_add(self.z.rotate_left(16))
-            .wrapping_add(self.w.rotate_left(24))
+        (self.x ^ 983742189)
+            .wrapping_add((self.y ^ 102983473).rotate_left(8))
+            .wrapping_add((self.z ^ 189203473).rotate_left(16))
+            .wrapping_add((self.w ^ 137920743).rotate_left(24))
     }
 }
 
