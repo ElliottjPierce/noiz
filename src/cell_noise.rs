@@ -785,6 +785,15 @@ pub trait Blender<I: VectorSpace, V> {
 /// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>>::default();
 /// ```
 ///
+/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+/// Note that these gradients are not perfectly precise, in favor of speed. They still work fine in practice, but their scale may not always be mathematically precise.
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let noise = Noise::<BlendCellValues<SimplexGrid, SimplecticBlend, Random<UNorm, f32>, true>>::default();
+/// ```
+///
+/// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -833,7 +842,6 @@ impl<
         let cell = self.cells.partition(input);
         let to_blend = cell.iter_points(*seeds).map(|p| {
             let value = self.noise.any_value(p.rough_id);
-            // TODO: Verify that this gradient is correct. Does the blender naturally do this correctly?
             (
                 WithGradient {
                     value,
@@ -958,6 +966,7 @@ impl<
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+/// Note that these gradients are not perfectly precise, in favor of speed. They still work fine in practice, but their scale may not always be mathematically precise.
 ///
 /// ```
 /// # use noiz::prelude::*;
