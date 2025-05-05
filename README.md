@@ -29,6 +29,10 @@ Noiz is not:
 - Meant to replace art tools for asset generation
 - Meant to be standalone (you'll want to also depend on either `bevy_math` or `bevy`.)
 
+| Bevy version | noiz version |
+|--------------|--------------|
+| 0.16         | 0.1          |
+
 ## What Makes Noiz Unique?
 
 - Noiz is powered by a custom random number generator built on a hash function instead of the traditional permutation table.
