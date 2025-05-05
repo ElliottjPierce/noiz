@@ -89,15 +89,14 @@ mod function_impls {
     impl_noise_function_tuple!(T0-T1-1, T1-T2-2, T2-T3-3, T3-T4-4, T4-T5-5, T5-T6-6, T6-T7-7, T7-T8-8, T8-T9-9, T9-T10-10, T10-T11-11, T11-T12-12, T12-T13-13, T13-T14-14, T14-T15-15);
 }
 
-/// Specifies that this noise is configurable.
+/// Specifies that this noise is seedable.
 ///
 /// ```
 /// # use noiz::prelude::*;
 /// let mut noise = Noise::<common_noise::Perlin>::default();
 /// noise.set_seed(1234);
-/// noise.set_period(30.0);
 /// ```
-pub trait ConfigurableNoise {
+pub trait SeedableNoise {
     /// Sets the seed of the noise.
     /// This seed can be absolutely any value.
     /// Even 0 is fine!
@@ -105,7 +104,16 @@ pub trait ConfigurableNoise {
 
     /// Gets the seed of the noise.
     fn get_seed(&mut self) -> u32;
+}
 
+/// Specifies that this noise is scalable.
+///
+/// ```
+/// # use noiz::prelude::*;
+/// let mut noise = Noise::<common_noise::Perlin>::default();
+/// noise.set_period(30.0);
+/// ```
+pub trait ScalableNoise {
     /// Sets the scale of the noise via its frequency.
     /// The frequency scales noise directly.
     /// At a frequency of `5`, an input of `2.0` will really sample at `10.0`.
@@ -247,10 +255,13 @@ pub trait DynamicSampleable<I, T>: SampleableFor<I, T> {
 /// noise.set_seed(1234);
 /// let value = noise.sample_dyn(Vec2::new(1.0, -1.0));
 /// ```
-pub trait DynamicConfigurableSampleable<I, T>: ConfigurableNoise + DynamicSampleable<I, T> {}
+pub trait DynamicConfigurableSampleable<I, T>:
+    SeedableNoise + ScalableNoise + DynamicSampleable<I, T>
+{
+}
 
-impl<I, T, N: ConfigurableNoise + DynamicSampleable<I, T>> DynamicConfigurableSampleable<I, T>
-    for N
+impl<I, T, N: SeedableNoise + ScalableNoise + DynamicSampleable<I, T>>
+    DynamicConfigurableSampleable<I, T> for N
 {
 }
 
@@ -312,21 +323,23 @@ impl<I: VectorSpace, N: NoiseFunction<I>> NoiseFunction<I> for Noise<N> {
     }
 }
 
-impl<N> ConfigurableNoise for Noise<N> {
-    fn set_seed(&mut self, seed: u32) {
-        self.seed = NoiseRng(seed);
-    }
-
-    fn get_seed(&mut self) -> u32 {
-        self.seed.0
-    }
-
+impl<N> ScalableNoise for Noise<N> {
     fn set_frequency(&mut self, frequency: f32) {
         self.frequency = frequency;
     }
 
     fn get_frequency(&mut self) -> f32 {
         self.frequency
+    }
+}
+
+impl<N> SeedableNoise for Noise<N> {
+    fn set_seed(&mut self, seed: u32) {
+        self.seed = NoiseRng(seed);
+    }
+
+    fn get_seed(&mut self) -> u32 {
+        self.seed.0
     }
 }
 

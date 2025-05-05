@@ -4,7 +4,7 @@ use super::SIZE_2D;
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 use criterion::{measurement::WallTime, *};
 use noiz::{
-    ConfigurableNoise, Noise, Sampleable, SampleableFor,
+    Noise, Sampleable, SampleableFor, ScalableNoise,
     cell_noise::{
         BlendCellGradients, MixCellGradients, MixCellValues, PerCellPointDistances, QuickGradients,
         SimplecticBlend, WorleyLeastDistance,
@@ -17,7 +17,7 @@ use noiz::{
 };
 
 #[inline]
-fn bench_2d(mut noise: impl SampleableFor<Vec2, f32> + ConfigurableNoise) -> f32 {
+fn bench_2d(mut noise: impl SampleableFor<Vec2, f32> + ScalableNoise) -> f32 {
     noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_2D {
@@ -29,7 +29,7 @@ fn bench_2d(mut noise: impl SampleableFor<Vec2, f32> + ConfigurableNoise) -> f32
 }
 
 #[inline]
-fn bench_3d(mut noise: impl SampleableFor<Vec3, f32> + ConfigurableNoise) -> f32 {
+fn bench_3d(mut noise: impl SampleableFor<Vec3, f32> + ScalableNoise) -> f32 {
     noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_3D {
@@ -43,7 +43,7 @@ fn bench_3d(mut noise: impl SampleableFor<Vec3, f32> + ConfigurableNoise) -> f32
 }
 
 #[inline]
-fn bench_3da(mut noise: impl SampleableFor<Vec3A, f32> + ConfigurableNoise) -> f32 {
+fn bench_3da(mut noise: impl SampleableFor<Vec3A, f32> + ScalableNoise) -> f32 {
     noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_3D {
@@ -57,7 +57,7 @@ fn bench_3da(mut noise: impl SampleableFor<Vec3A, f32> + ConfigurableNoise) -> f
 }
 
 #[inline]
-fn bench_4d(mut noise: impl SampleableFor<Vec4, f32> + ConfigurableNoise) -> f32 {
+fn bench_4d(mut noise: impl SampleableFor<Vec4, f32> + ScalableNoise) -> f32 {
     noise.set_frequency(FREQUENCY);
     let mut res = 0.0;
     for x in 0..SIZE_4D {
