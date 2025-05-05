@@ -239,73 +239,73 @@ impl WrappingAmount<IVec4> for () {
 impl WrappingAmount<IVec2> for i32 {
     #[inline(always)]
     fn wrap(&self, corner: IVec2) -> IVec2 {
-        corner % *self
+        corner.rem_euclid(IVec2::splat(*self))
     }
 }
 impl WrappingAmount<IVec3> for i32 {
     #[inline(always)]
     fn wrap(&self, corner: IVec3) -> IVec3 {
-        corner % *self
+        corner.rem_euclid(IVec3::splat(*self))
     }
 }
 impl WrappingAmount<IVec4> for i32 {
     #[inline(always)]
     fn wrap(&self, corner: IVec4) -> IVec4 {
-        corner % *self
+        corner.rem_euclid(IVec4::splat(*self))
     }
 }
 impl WrappingAmount<IVec2> for IVec4 {
     #[inline(always)]
     fn wrap(&self, corner: IVec2) -> IVec2 {
-        corner % self.truncate().truncate()
+        corner.rem_euclid(self.truncate().truncate())
     }
 }
 impl WrappingAmount<IVec3> for IVec4 {
     #[inline(always)]
     fn wrap(&self, corner: IVec3) -> IVec3 {
-        corner % self.truncate()
+        corner.rem_euclid(self.truncate())
     }
 }
 impl WrappingAmount<IVec4> for IVec4 {
     #[inline(always)]
     fn wrap(&self, corner: IVec4) -> IVec4 {
-        corner % *self
+        corner.rem_euclid(*self)
     }
 }
 impl WrappingAmount<IVec2> for IVec3 {
     #[inline(always)]
     fn wrap(&self, corner: IVec2) -> IVec2 {
-        corner % self.truncate()
+        corner.rem_euclid(self.truncate())
     }
 }
 impl WrappingAmount<IVec3> for IVec3 {
     #[inline(always)]
     fn wrap(&self, corner: IVec3) -> IVec3 {
-        corner % *self
+        corner.rem_euclid(*self)
     }
 }
 impl WrappingAmount<IVec4> for IVec3 {
     #[inline(always)]
     fn wrap(&self, corner: IVec4) -> IVec4 {
-        (corner.truncate() % *self).extend(corner.w)
+        (corner.truncate().rem_euclid(*self)).extend(corner.w)
     }
 }
 impl WrappingAmount<IVec2> for IVec2 {
     #[inline(always)]
     fn wrap(&self, corner: IVec2) -> IVec2 {
-        corner % *self
+        corner.rem_euclid(*self)
     }
 }
 impl WrappingAmount<IVec3> for IVec2 {
     #[inline(always)]
     fn wrap(&self, corner: IVec3) -> IVec3 {
-        (corner.truncate() % *self).extend(corner.z)
+        (corner.truncate().rem_euclid(*self)).extend(corner.z)
     }
 }
 impl WrappingAmount<IVec4> for IVec2 {
     #[inline(always)]
     fn wrap(&self, corner: IVec4) -> IVec4 {
-        (corner.truncate().truncate() % *self)
+        (corner.truncate().truncate().rem_euclid(*self))
             .extend(corner.z)
             .extend(corner.w)
     }
