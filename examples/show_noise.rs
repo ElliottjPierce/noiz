@@ -9,14 +9,14 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
-    DynamicConfigurableSampleable, Noise,
+    DynamicConfigurableSampleable, Noise, Sampleable,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, DistanceToEdge, MixCellGradients,
         MixCellValues, MixCellValuesForDomain, PerCell, PerCellPointDistances, PerNearestPoint,
         QualityGradients, QuickGradients, SimplecticBlend, WorleyAverage, WorleyDifference,
         WorleyLeastDistance, WorleySmoothMin,
     },
-    cells::{OrthoGrid, SimplexGrid, Voronoi},
+    cells::{OrthoGrid, SimplexGrid, Voronoi, WithGradient},
     curves::{CubicSMin, DoubleSmoothstep, Linear, Smoothstep},
     layering::{
         DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
@@ -29,6 +29,18 @@ use noiz::{
 };
 
 fn main() -> AppExit {
+    let noise =
+        Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>::default();
+    let start = Vec3::new(-0.39884222, -0.119888484, 0.909041);
+    let sample = noise.sample_for::<WithGradient<f32, _>>(start);
+    println!("Sample value: {}", sample.value);
+    let mut delta = 1e-6;
+    for _ in 0..5 {
+        let sample = noise.sample_for::<WithGradient<f32, _>>(start + delta * sample.gradient);
+        println!("New sample value: {}", sample.value);
+        delta *= 10.0;
+    }
+
     println!(
         r#"
         ---SHOW NOISE EXAMPLE---

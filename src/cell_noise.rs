@@ -820,10 +820,10 @@ impl<
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace + Mul<N::Concrete, Output = I>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
     B: Blender<I, WithGradient<N::Concrete, I>>,
-    N: ConcreteAnyValueFromBits,
+    N: ConcreteAnyValueFromBits<Concrete: Copy>,
 > NoiseFunction<I> for BlendCellValues<P, B, N, true>
 {
     type Output = WithGradient<N::Concrete, I>;
@@ -837,7 +837,7 @@ impl<
             (
                 WithGradient {
                     value,
-                    gradient: -p.offset,
+                    gradient: -p.offset * value,
                 },
                 p.offset,
             )
@@ -1018,7 +1018,7 @@ impl<
             (
                 WithGradient {
                     value: dot,
-                    gradient: -p.offset,
+                    gradient: p.offset * dot,
                 },
                 p.offset,
             )
