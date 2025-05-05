@@ -366,3 +366,78 @@ impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for Noise<N> where
     Self: SampleableFor<I, T> + Sampleable<I>
 {
 }
+
+/// This is an alternative to [`Noise`] for when scaling an sample location is not desired or is impossible.
+/// In general, [`Noise`] is easier to use, but this offers more control if desired.
+#[derive(PartialEq, Clone, Copy)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct RawNoise<N> {
+    /// The [`NoiseFunction`] powering this noise.
+    pub noise: N,
+    /// The seed of the [`Noise`].
+    pub seed: NoiseRng,
+}
+
+impl<N: Default> Default for RawNoise<N> {
+    fn default() -> Self {
+        Self {
+            noise: N::default(),
+            seed: NoiseRng(0),
+        }
+    }
+}
+
+impl<N> From<N> for RawNoise<N> {
+    fn from(value: N) -> Self {
+        Self {
+            noise: value,
+            seed: NoiseRng(0),
+        }
+    }
+}
+
+impl<I: VectorSpace, N: NoiseFunction<I>> NoiseFunction<I> for RawNoise<N> {
+    type Output = N::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
+        seeds.0 ^= self.seed.0;
+        self.noise.evaluate(input, seeds)
+    }
+}
+
+impl<N> SeedableNoise for RawNoise<N> {
+    fn set_seed(&mut self, seed: u32) {
+        self.seed = NoiseRng(seed);
+    }
+
+    fn get_seed(&mut self) -> u32 {
+        self.seed.0
+    }
+}
+
+impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for RawNoise<N> {
+    type Result = N::Output;
+
+    #[inline]
+    fn sample_raw(&self, loc: I) -> (Self::Result, NoiseRng) {
+        let mut seeds = self.seed;
+        let result = self.noise.evaluate(loc, &mut seeds);
+        (result, seeds)
+    }
+}
+
+impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T> for RawNoise<N> {
+    #[inline]
+    fn sample(&self, loc: I) -> T {
+        let (result, _rng) = self.sample_raw(loc);
+        result.into()
+    }
+}
+
+impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for RawNoise<N> where
+    Self: SampleableFor<I, T> + Sampleable<I>
+{
+}
