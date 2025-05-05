@@ -767,13 +767,14 @@ pub trait Blender<I: VectorSpace, V> {
 }
 
 /// Allows derivatives to be calculated from blending. See also [`Blender`].
-pub trait DiferentiableGradientBlender<I: VectorSpace, V>: Blender<I, V> {
+pub trait DiferentiableGradientBlender<I: VectorSpace>: Blender<I, f32> {
     /// Identical to [`Blender::blend`] but with a gradient.
+    /// This presumes the blending values are coming from a gradient dot product like simplex noise.
     fn blend_with_gradient(
         &self,
-        to_blend: impl Iterator<Item = (WithGradient<V, I>, I)>,
+        to_blend: impl Iterator<Item = (WithGradient<f32, I>, I)>,
         blending_half_radius: f32,
-    ) -> WithGradient<V, I>;
+    ) -> WithGradient<f32, I>;
 }
 
 /// A [`NoiseFunction`] that blends values sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
@@ -1020,7 +1021,7 @@ impl<
 impl<
     I: VectorSpace,
     P: Partitioner<I, Cell: BlendableDomainCell>,
-    B: DiferentiableGradientBlender<I, f32>,
+    B: DiferentiableGradientBlender<I>,
     G: GradientGenerator<I>,
 > NoiseFunction<I> for BlendCellGradients<P, B, G, true>
 {
@@ -1323,6 +1324,7 @@ impl<V, I: VectorSpace, B: Blender<I, V>> Blender<I, V> for LocalBlend<B> {
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SimplecticBlend;
 
+#[inline]
 fn general_simplex_weight(length_sqrd: f32, blending_half_radius: f32) -> f32 {
     // We do the unorm mapping here instead of later to prevent precision issues.
     let weight_unorm = (blending_half_radius - length_sqrd) / blending_half_radius;
@@ -1334,6 +1336,7 @@ fn general_simplex_weight(length_sqrd: f32, blending_half_radius: f32) -> f32 {
     }
 }
 
+#[inline]
 fn general_simplex_weight_derivative(length_sqrd: f32, blending_half_radius: f32) -> f32 {
     // We do the unorm mapping here instead of later to prevent precision issues.
     let weight_unorm = (blending_half_radius - length_sqrd) / blending_half_radius;
@@ -1344,162 +1347,57 @@ fn general_simplex_weight_derivative(length_sqrd: f32, blending_half_radius: f32
     }
 }
 
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec2, V> for SimplecticBlend {
-    #[inline]
-    fn blend(&self, to_blend: impl Iterator<Item = (V, Vec2)>, blending_half_radius: f32) -> V {
-        let mut sum = V::default();
-        for (val, weight) in to_blend {
-            sum += val * general_simplex_weight(weight.length_squared(), blending_half_radius);
-        }
-        sum
-    }
+macro_rules! impl_simplectic_blend {
+    ($i:ty, $c:literal) => {
+        impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<$i, V> for SimplecticBlend {
+            #[inline]
+            fn blend(
+                &self,
+                to_blend: impl Iterator<Item = (V, $i)>,
+                blending_half_radius: f32,
+            ) -> V {
+                let mut sum = V::default();
+                for (val, weight) in to_blend {
+                    sum +=
+                        val * general_simplex_weight(weight.length_squared(), blending_half_radius);
+                }
+                sum
+            }
 
-    #[inline]
-    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
-        let sqr = blending_half_radius * blending_half_radius;
-        value * (99.836_85 * sqr * sqr) // adapted from libnoise
-    }
+            #[inline]
+            fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
+                let sqr = blending_half_radius * blending_half_radius;
+                value * ($c * sqr * sqr)
+            }
+        }
+
+        impl DiferentiableGradientBlender<$i> for SimplecticBlend {
+            #[inline]
+            fn blend_with_gradient(
+                &self,
+                to_blend: impl Iterator<Item = (WithGradient<f32, $i>, $i)>,
+                blending_half_radius: f32,
+            ) -> WithGradient<f32, $i> {
+                let mut sum = WithGradient::<f32, $i>::default();
+                for (val, weight) in to_blend {
+                    let len_sqr = weight.length_squared();
+                    let falloff = general_simplex_weight(len_sqr, blending_half_radius);
+                    let d_falloff =
+                        general_simplex_weight_derivative(len_sqr, blending_half_radius);
+                    sum += WithGradient {
+                        value: val.value * falloff,
+                        gradient: val.gradient * falloff
+                            + weight.normalize_or_zero() * d_falloff * val.value,
+                    };
+                }
+                sum
+            }
+        }
+    };
 }
 
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> DiferentiableGradientBlender<Vec2, V>
-    for SimplecticBlend
-{
-    #[inline]
-    fn blend_with_gradient(
-        &self,
-        to_blend: impl Iterator<Item = (WithGradient<V, Vec2>, Vec2)>,
-        blending_half_radius: f32,
-    ) -> WithGradient<V, Vec2> {
-        let mut sum = WithGradient::<V, Vec2>::default();
-        for (val, weight) in to_blend {
-            let len_sqr = weight.length_squared();
-            let falloff = general_simplex_weight(len_sqr, blending_half_radius);
-            let d_falloff = general_simplex_weight_derivative(len_sqr, blending_half_radius);
-            sum += WithGradient {
-                value: val.value * falloff,
-                gradient: val.gradient * falloff + weight.normalize_or_zero() * d_falloff,
-            };
-        }
-        sum
-    }
-}
-
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3, V> for SimplecticBlend {
-    #[inline]
-    fn blend(&self, to_blend: impl Iterator<Item = (V, Vec3)>, blending_half_radius: f32) -> V {
-        let mut sum = V::default();
-        for (val, weight) in to_blend {
-            sum += val * general_simplex_weight(weight.length_squared(), blending_half_radius);
-        }
-        sum
-    }
-
-    #[inline]
-    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
-        let sqr = blending_half_radius * blending_half_radius;
-        value * (76.883_76 * sqr * sqr) // adapted from libnoise
-    }
-}
-
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> DiferentiableGradientBlender<Vec3, V>
-    for SimplecticBlend
-{
-    #[inline]
-    fn blend_with_gradient(
-        &self,
-        to_blend: impl Iterator<Item = (WithGradient<V, Vec3>, Vec3)>,
-        blending_half_radius: f32,
-    ) -> WithGradient<V, Vec3> {
-        let mut sum = WithGradient::<V, Vec3>::default();
-        for (val, weight) in to_blend {
-            let len_sqr = weight.length_squared();
-            let falloff = general_simplex_weight(len_sqr, blending_half_radius);
-            let d_falloff = general_simplex_weight_derivative(len_sqr, blending_half_radius);
-            sum += WithGradient {
-                value: val.value * falloff,
-                gradient: val.gradient * falloff + weight.normalize_or_zero() * d_falloff,
-            };
-        }
-        sum
-    }
-}
-
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec3A, V> for SimplecticBlend {
-    #[inline]
-    fn blend(&self, to_blend: impl Iterator<Item = (V, Vec3A)>, blending_half_radius: f32) -> V {
-        let mut sum = V::default();
-        for (val, weight) in to_blend {
-            sum += val * general_simplex_weight(weight.length_squared(), blending_half_radius);
-        }
-        sum
-    }
-
-    #[inline]
-    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
-        let sqr = blending_half_radius * blending_half_radius;
-        value * (76.883_76 * sqr * sqr) // adapted from libnoise
-    }
-}
-
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> DiferentiableGradientBlender<Vec3A, V>
-    for SimplecticBlend
-{
-    #[inline]
-    fn blend_with_gradient(
-        &self,
-        to_blend: impl Iterator<Item = (WithGradient<V, Vec3A>, Vec3A)>,
-        blending_half_radius: f32,
-    ) -> WithGradient<V, Vec3A> {
-        let mut sum = WithGradient::<V, Vec3A>::default();
-        for (val, weight) in to_blend {
-            let len_sqr = weight.length_squared();
-            let falloff = general_simplex_weight(len_sqr, blending_half_radius);
-            let d_falloff = general_simplex_weight_derivative(len_sqr, blending_half_radius);
-            sum += WithGradient {
-                value: val.value * falloff,
-                gradient: val.gradient * falloff + weight.normalize_or_zero() * d_falloff,
-            };
-        }
-        sum
-    }
-}
-
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> Blender<Vec4, V> for SimplecticBlend {
-    #[inline]
-    fn blend(&self, to_blend: impl Iterator<Item = (V, Vec4)>, blending_half_radius: f32) -> V {
-        let mut sum = V::default();
-        for (val, weight) in to_blend {
-            sum += val * general_simplex_weight(weight.length_squared(), blending_half_radius);
-        }
-        sum
-    }
-
-    #[inline]
-    fn counter_dot_product(&self, value: V, blending_half_radius: f32) -> V {
-        let sqr = blending_half_radius * blending_half_radius;
-        value * (62.795_597 * sqr * sqr) // adapted from libnoise
-    }
-}
-
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> DiferentiableGradientBlender<Vec4, V>
-    for SimplecticBlend
-{
-    #[inline]
-    fn blend_with_gradient(
-        &self,
-        to_blend: impl Iterator<Item = (WithGradient<V, Vec4>, Vec4)>,
-        blending_half_radius: f32,
-    ) -> WithGradient<V, Vec4> {
-        let mut sum = WithGradient::<V, Vec4>::default();
-        for (val, weight) in to_blend {
-            let len_sqr = weight.length_squared();
-            let falloff = general_simplex_weight(len_sqr, blending_half_radius);
-            let d_falloff = general_simplex_weight_derivative(len_sqr, blending_half_radius);
-            sum += WithGradient {
-                value: val.value * falloff,
-                gradient: val.gradient * falloff + weight.normalize_or_zero() * d_falloff,
-            };
-        }
-        sum
-    }
-}
+// constants adapted from libnoise
+impl_simplectic_blend!(Vec2, 99.836_85);
+impl_simplectic_blend!(Vec3, 76.883_76);
+impl_simplectic_blend!(Vec3A, 76.883_76);
+impl_simplectic_blend!(Vec4, 62.795_597);
