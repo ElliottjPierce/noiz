@@ -226,16 +226,16 @@ Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 | Noise Type            | noiz        | noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
 | value                 | 1.7365   ✅ | 3.1          | 1.8831      ✅ | 14.8            |
-| value fbm 2 octave    | 6.9         | 8.6          | 5.8         ✅ | 31.4            |
-| value fbm 8 octave    | 28.2        | 33.4         | 22.0        ✅ | 112.0           |
+| value fbm 2 octave    | 7.0         | 8.6          | 5.8         ✅ | 31.4            |
+| value fbm 8 octave    | 28.6        | 33.4         | 22.0        ✅ | 112.0           |
 | perlin                | 3.1      ✅ | 8.8          | 3.0         ✅ | 8.1             |
 | perlin fbm 2 octave   | 8.0      ✅ | 18.4         | 8.1         ✅ | 17.2            |
-| perlin fbm 8 octave   | 32.6        | 71.8         | 31.1        ✅ | 58.0            |
+| perlin fbm 8 octave   | 33.5        | 71.8         | 31.1        ✅ | 58.0            |
 | simplex               | 6.8      ✅ | 8.6          | 8.1            | 10.6            |
 | simplex fbm 2 octave  | 14.5     ✅ | 22.3         | 17.7           | 21.6            |
-| simplex fbm 8 octave  | 56.6     ✅ | 108.5        | 89.2           | 116.0           |
-| worley                | 5.5      ✅ | 24.5         | 11.8           | 17.8            |
-| worley approximate    | 2.9      ✅ | ---          | ---            | ---             |
+| simplex fbm 8 octave  | 56.3     ✅ | 108.5        | 89.2           | 116.0           |
+| worley                | 5.6      ✅ | 24.5         | 11.8           | 17.8            |
+| worley approximate    | 2.8      ✅ | ---          | ---            | ---             |
 
 ### 3D
 
@@ -244,16 +244,16 @@ Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
 | Noise Type            | noiz        | noiz `Vec3A` | noise          | libnoise        | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|-----------------|
 | value                 | 3.0         | 7.4          | 11.4           | 2.7          ✅ | 39.6            |
-| value fbm 2 octave    | 11.6        | 16.8         | 22.5           | 8.2          ✅ | 85.7            |
-| value fbm 8 octave    | 53.0        | 67.7         | 89.3           | 33.5         ✅ | 336.6           |
-| perlin                | 7.2         | 10.1         | 76.9           | 6.4          ✅ | 13.8            |
-| perlin fbm 2 octave   | 19.8        | 20.2         | 28.5           | 15.8         ✅ | 29.7            |
-| perlin fbm 8 octave   | 80.8        | 76.4         | 368.9          | 69.7         ✅ | 132.0           |
-| simplex               | 12.7     ✅ | 16.9         | 14.2           | 16.3            | 20.1            |
-| simplex fbm 2 octave  | 26.8     ✅ | 32.9         | 51.8           | 25.9         ✅ | 43.0            |
+| value fbm 2 octave    | 11.8        | 15.8         | 22.5           | 8.2          ✅ | 85.7            |
+| value fbm 8 octave    | 55.3        | 61.4         | 89.3           | 33.5         ✅ | 336.6           |
+| perlin                | 7.1         | 9.9          | 76.9           | 6.4          ✅ | 13.8            |
+| perlin fbm 2 octave   | 19.6        | 20.1         | 28.5           | 15.8         ✅ | 29.7            |
+| perlin fbm 8 octave   | 80.3        | 75.4         | 368.9          | 69.7         ✅ | 132.0           |
+| simplex               | 12.6     ✅ | 17.0         | 14.2           | 16.3            | 20.1            |
+| simplex fbm 2 octave  | 26.7     ✅ | 32.9         | 51.8           | 25.9         ✅ | 43.0            |
 | simplex fbm 8 octave  | 106.9    ✅ | 126.2        | 207.8          | 181.7           | 175.1           |
-| worley                | 51.8        | 51.7         | 78.9           | 52.9            | 42.3         ✅ |
-| worley approximate    | 6.1      ✅ | 13.6         | ---            | ---             | ---             |
+| worley                | 53.3        | 53.6         | 78.9           | 52.9            | 42.3         ✅ |
+| worley approximate    | 6.2      ✅ | 13.6         | ---            | ---             | ---             |
 
 `Vec3A` is an aligned 3d type from `bevy_math` (glam). It enables SIMD instructions, but uses more memory to do so.
 As you can see, it's not worth it here.
@@ -264,17 +264,17 @@ Time (milliseconds) per 32 ^ 4 = 1048576 samples. Lower is better.
 
 | Noise Type            | noiz        | noise        | libnoise       | fastnoise_lite  |
 |-----------------------|-------------|--------------|----------------|-----------------|
-| value                 | 13.2        | 21.2         | 3.9         ✅ | ---             |
-| value fbm 2 octave    | 27.0        | 46.0         | 14.3        ✅ | ---             |
-| value fbm 8 octave    | 104.8       | 167.3        | 57.3        ✅ | ---             |
-| perlin                | 16.7     ✅ | 177.6        | 17.6           | ---             |
-| perlin fbm 2 octave   | 36.9     ✅ | 53.5         | 38.4           | ---             |
-| perlin fbm 8 octave   | 143.0    ✅ | 824.2        | 203.1          | ---             |
-| simplex               | 20.0     ✅ | 35.5         | 29.5           | ---             |
-| simplex fbm 2 octave  | 36.9     ✅ | 108.8        | 41.0           | ---             |
-| simplex fbm 8 octave  | 133.4    ✅ | 421.0        | 234.4          | ---             |
-| worley                | 174.6       | 156.3     ✅ | 205.8          | ---             |
-| worley approximate    | 25.8     ✅ | ---          | ---            | ---             |
+| value                 | 13.5        | 21.2         | 3.9         ✅ | ---             |
+| value fbm 2 octave    | 27.5        | 46.0         | 14.3        ✅ | ---             |
+| value fbm 8 octave    | 106.7       | 167.3        | 57.3        ✅ | ---             |
+| perlin                | 16.9     ✅ | 177.6        | 17.6           | ---             |
+| perlin fbm 2 octave   | 37.3     ✅ | 53.5         | 38.4           | ---             |
+| perlin fbm 8 octave   | 141.5    ✅ | 824.2        | 203.1          | ---             |
+| simplex               | 18.2     ✅ | 35.5         | 29.5           | ---             |
+| simplex fbm 2 octave  | 35.7     ✅ | 108.8        | 41.0           | ---             |
+| simplex fbm 8 octave  | 137.1    ✅ | 421.0        | 234.4          | ---             |
+| worley                | 185.3       | 156.3     ✅ | 205.8          | ---             |
+| worley approximate    | 26.6     ✅ | ---          | ---            | ---             |
 
 ### Summary
 
