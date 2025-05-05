@@ -247,6 +247,9 @@ pub trait DynamicSampleable<I, T>: SampleableFor<I, T> {
     }
 }
 
+impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for N where N: SampleableFor<I, T> + Sampleable<I>
+{}
+
 /// This is a convenience trait that merges [`DynamicSampleable`] and [`ConfigurableNoise`].
 /// ```
 /// # use noiz::prelude::*;
@@ -362,11 +365,6 @@ impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T
     }
 }
 
-impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for Noise<N> where
-    Self: SampleableFor<I, T> + Sampleable<I>
-{
-}
-
 /// This is an alternative to [`Noise`] for when scaling an sample location is not desired or is impossible.
 /// In general, [`Noise`] is easier to use, but this offers more control if desired.
 #[derive(PartialEq, Clone, Copy)]
@@ -435,9 +433,4 @@ impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T
         let (result, _rng) = self.sample_raw(loc);
         result.into()
     }
-}
-
-impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for RawNoise<N> where
-    Self: SampleableFor<I, T> + Sampleable<I>
-{
 }
