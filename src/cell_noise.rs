@@ -1012,7 +1012,7 @@ impl<
 impl<
     I: VectorSpace,
     P: Partitioner<I, Cell: BlendableDomainCell>,
-    B: Blender<I, WithGradient<f32, I>>,
+    B: Blender<I, WithGradient<f32, I>> + Blender<I, I>,
     G: GradientGenerator<I>,
 > NoiseFunction<I> for BlendCellGradients<P, B, G, true>
 {
@@ -1023,19 +1023,25 @@ impl<
         let cell = self.cells.partition(input);
 
         let to_blend = cell.iter_points(*seeds).map(|p| {
-            let grad = self.gradients.get_gradient(p.rough_id);
             let dot = self.gradients.get_gradient_dot(p.rough_id, p.offset);
             (
                 WithGradient {
                     value: dot,
-                    gradient: p.offset * dot + grad,
+                    gradient: p.offset * dot,
                 },
                 p.offset,
             )
         });
         let radius = cell.blending_half_radius();
-        self.blender
-            .counter_dot_product(self.blender.blend(to_blend, radius), radius)
+        let mut raw = self
+            .blender
+            .counter_dot_product(self.blender.blend(to_blend, radius), radius);
+        let grads = cell.iter_points(*seeds).map(|p| {
+            let grad = self.gradients.get_gradient(p.rough_id);
+            (grad, p.offset)
+        });
+        raw.gradient = raw.gradient + self.blender.blend(grads, radius);
+        raw
     }
 }
 
