@@ -128,11 +128,11 @@ pub trait ScalableNoise {
     fn set_frequency(&mut self, frequency: f32);
 
     /// Gets the scale of the noise via its frequency.
-    /// See also [`get_frequency`](ConfigurableNoise::get_frequency).
+    /// See also [`get_frequency`](ScalableNoise::get_frequency).
     fn get_frequency(&mut self) -> f32;
 
     /// Sets the scale of the noise via its period.
-    /// The `period` is the inverse of the [`frequency`](ConfigurableNoise::set_frequency).
+    /// The `period` is the inverse of the [`frequency`](ScalableNoise::set_frequency).
     /// A period of `5` means an input will need to progress by `5` beffore it's inner sample can progress by `1.0`.
     /// A period of `0.0`, infinity, or any other unusual value is not recommended.
     ///
@@ -147,7 +147,7 @@ pub trait ScalableNoise {
     }
 
     /// Gets the scale of the noise via its period.
-    /// See also [`set_period`](ConfigurableNoise::set_period).
+    /// See also [`set_period`](ScalableNoise::set_period).
     fn get_period(&mut self) -> f32 {
         1.0 / self.get_frequency()
     }
@@ -250,7 +250,7 @@ pub trait DynamicSampleable<I, T>: SampleableFor<I, T> {
 impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for N where N: SampleableFor<I, T> + Sampleable<I>
 {}
 
-/// This is a convenience trait that merges [`DynamicSampleable`] and [`ConfigurableNoise`].
+/// This is a convenience trait that merges [`DynamicSampleable`], [`ScalableNoise`] and [`SeedableNoise`].
 /// ```
 /// # use noiz::prelude::*;
 /// # use bevy_math::prelude::*;
@@ -280,7 +280,7 @@ impl<I, T, N: SeedableNoise + ScalableNoise + DynamicSampleable<I, T>>
 /// let value = noise.sample_for::<f32>(Vec2::new(1.0, -1.0));
 /// ```
 ///
-/// See also [`Sampleable`], [`DynamicSampleable`], [`SampleableFor`], [`ConfigurableNoise`], and [`DynamicConfigurableSampleable`].
+/// See also [`Sampleable`], [`DynamicSampleable`], [`SampleableFor`], [`SeedableNoise`], [`ScalableNoise`], and [`DynamicConfigurableSampleable`].
 ///
 /// See the "show_noise" example to see a few ways you can use this.
 #[derive(PartialEq, Clone, Copy)]
