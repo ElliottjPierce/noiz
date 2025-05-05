@@ -796,7 +796,6 @@ pub trait DiferentiableGradientBlender<I: VectorSpace, V>: Blender<I, V> {
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
-/// Note that these gradients are not perfectly precise, in favor of speed. They still work fine in practice, but their scale may not always be mathematically precise.
 ///
 /// ```
 /// # use noiz::prelude::*;
@@ -976,7 +975,6 @@ impl<
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
-/// Note that these gradients are not perfectly precise, in favor of speed. They still work fine in practice, but their scale may not always be mathematically precise.
 ///
 /// ```
 /// # use noiz::prelude::*;
