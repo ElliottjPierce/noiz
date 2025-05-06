@@ -138,14 +138,16 @@ impl<T: MulAssign<f32>, G: MulAssign<f32>> MulAssign<f32> for WithGradient<T, G>
     }
 }
 
-impl<T: Mul<T, Output = T>, G: Mul<G, Output = G>> Mul<Self> for WithGradient<T, G> {
+impl<T: Mul<T, Output = T> + Copy, G: Mul<T, Output = G> + Add<G, Output = G>> Mul<Self>
+    for WithGradient<T, G>
+{
     type Output = Self;
 
     #[inline(always)]
     fn mul(self, rhs: Self) -> Self::Output {
         Self {
             value: self.value * rhs.value,
-            gradient: self.gradient * rhs.gradient,
+            gradient: self.gradient * rhs.value + rhs.gradient * self.value,
         }
     }
 }

@@ -17,7 +17,7 @@ use noiz::{
     cell_noise::{BlendCellGradients, QuickGradients, SimplecticBlend},
     cells::{OrthoGrid, SimplexGrid, Voronoi, WithGradient},
     curves::Smoothstep,
-    prelude::{BlendCellValues, MixCellGradients, MixCellValues},
+    prelude::{BlendCellValues, Masked, MixCellGradients, MixCellValues},
     rng::{Random, SNorm},
 };
 
@@ -92,6 +92,15 @@ fn setup(
                 name: "Voronoi Value",
                 noise: Box::new(Noise::<
                     BlendCellValues<Voronoi, SimplecticBlend, Random<SNorm, f32>, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Perlin mask simplex",
+                noise: Box::new(Noise::<
+                    Masked<
+                        MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>,
+                        BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+                    >,
                 >::default()),
             },
         ],
