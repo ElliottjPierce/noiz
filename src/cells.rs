@@ -455,7 +455,7 @@ impl<W: WrappingAmount<IVec2>> DifferentiableCell for SquareCell<Vec2, IVec2, W>
         // lerp
         let dx = ld_rd.lerp(lu_ru, mix_y.value) * mix_x.derivative;
         let dy = ld_lu.lerp(rd_ru, mix_x.value) * mix_y.derivative;
-        [dx * gradient_scale, dy * gradient_scale]
+        [-dx * gradient_scale, -dy * gradient_scale]
     }
 }
 
@@ -572,9 +572,9 @@ impl<W: WrappingAmount<IVec3>> DifferentiableCell for SquareCell<Vec3, IVec3, W>
         } * mix_z.derivative;
 
         [
-            dx * gradient_scale,
-            dy * gradient_scale,
-            dz * gradient_scale,
+            -dx * gradient_scale,
+            -dy * gradient_scale,
+            -dz * gradient_scale,
         ]
     }
 }
@@ -692,9 +692,9 @@ impl<W: WrappingAmount<IVec3>> DifferentiableCell for SquareCell<Vec3A, IVec3, W
         } * mix_z.derivative;
 
         [
-            dx * gradient_scale,
-            dy * gradient_scale,
-            dz * gradient_scale,
+            -dx * gradient_scale,
+            -dy * gradient_scale,
+            -dz * gradient_scale,
         ]
     }
 }
@@ -903,10 +903,10 @@ impl<W: WrappingAmount<IVec4>> DifferentiableCell for SquareCell<Vec4, IVec4, W>
             d.lerp(u, mix_y.value)
         } * mix_w.derivative;
         [
-            dx * gradient_scale,
-            dy * gradient_scale,
-            dz * gradient_scale,
-            dw * gradient_scale,
+            -dx * gradient_scale,
+            -dy * gradient_scale,
+            -dz * gradient_scale,
+            -dw * gradient_scale,
         ]
     }
 }
