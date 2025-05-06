@@ -51,7 +51,7 @@ fn setup(
         noise: default(),
         image: handle.clone(),
     };
-    noise.noise.frequency = 0.001;
+    noise.noise.frequency = 0.005;
     noise.update(&mut images, true);
     commands
         .spawn((
