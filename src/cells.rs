@@ -157,6 +157,46 @@ impl<G> From<WithGradient<f32, G>> for f32 {
     }
 }
 
+impl From<WithGradient<f32, [f32; 2]>> for WithGradient<f32, Vec2> {
+    #[inline(always)]
+    fn from(val: WithGradient<f32, [f32; 2]>) -> Self {
+        Self {
+            value: val.value,
+            gradient: val.gradient.into(),
+        }
+    }
+}
+
+impl From<WithGradient<f32, [f32; 3]>> for WithGradient<f32, Vec3> {
+    #[inline(always)]
+    fn from(val: WithGradient<f32, [f32; 3]>) -> Self {
+        Self {
+            value: val.value,
+            gradient: val.gradient.into(),
+        }
+    }
+}
+
+impl From<WithGradient<f32, [f32; 3]>> for WithGradient<f32, Vec3A> {
+    #[inline(always)]
+    fn from(val: WithGradient<f32, [f32; 3]>) -> Self {
+        Self {
+            value: val.value,
+            gradient: val.gradient.into(),
+        }
+    }
+}
+
+impl From<WithGradient<f32, [f32; 4]>> for WithGradient<f32, Vec4> {
+    #[inline(always)]
+    fn from(val: WithGradient<f32, [f32; 4]>) -> Self {
+        Self {
+            value: val.value,
+            gradient: val.gradient.into(),
+        }
+    }
+}
+
 /// Represents a point in some domain `T` that is relevant to a particular [`DomainCell`].
 /// For example, this could be lattace points on a grid.
 #[derive(Clone, Copy, PartialEq, Eq)]

@@ -15,7 +15,10 @@ use bevy::{
 use noiz::{
     DynamicConfigurableSampleable, Noise,
     cell_noise::{BlendCellGradients, QuickGradients, SimplecticBlend},
-    cells::{SimplexGrid, WithGradient},
+    cells::{OrthoGrid, SimplexGrid, WithGradient},
+    curves::Smoothstep,
+    prelude::{BlendCellValues, MixCellGradients, MixCellValues},
+    rng::{Random, SNorm},
 };
 
 const WIDTH: f32 = 1920.0;
@@ -48,12 +51,44 @@ fn setup(
     );
     let handle = images.add(image);
     let mut noise = NoiseOptions {
-        options: vec![NoiseOption {
-            noise: Box::new(Noise::<
-                BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
-            >::default()),
-            name: "Simplex",
-        }],
+        options: vec![
+            NoiseOption {
+                name: "Simplex",
+                noise: Box::new(Noise::<
+                    BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Simplex Value",
+                noise: Box::new(Noise::<
+                    BlendCellValues<SimplexGrid, SimplecticBlend, Random<SNorm, f32>, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Blend Value",
+                noise: Box::new(Noise::<
+                    BlendCellValues<OrthoGrid, SimplecticBlend, Random<SNorm, f32>, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Blend Perlin",
+                noise: Box::new(Noise::<
+                    BlendCellGradients<OrthoGrid, SimplecticBlend, QuickGradients, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Perlin",
+                noise: Box::new(Noise::<
+                    MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Value",
+                noise: Box::new(Noise::<
+                    MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>, true>,
+                >::default()),
+            },
+        ],
         image: handle.clone(),
         selected: 0,
         seed: 0,
