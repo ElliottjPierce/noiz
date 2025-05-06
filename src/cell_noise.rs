@@ -1387,7 +1387,7 @@ macro_rules! impl_simplectic_blend {
                     sum += WithGradient {
                         value: val.value * falloff,
                         gradient: val.gradient * falloff
-                            + weight.normalize_or_zero() * d_falloff * val.value,
+                            + weight.normalize_or_zero() * d_falloff * -val.value,
                     };
                 }
                 sum
@@ -1450,4 +1450,3 @@ mod tests {
         }
     }
 }
-
