@@ -24,10 +24,7 @@ const HEIGHT: f32 = 1080.0;
 fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, MeshPickingPlugin))
-        .add_systems(
-            Update,
-            (draw_hit.run_if(resource_exists::<Hit>), update_system),
-        )
+        .add_systems(Update, (draw_hit, update_system))
         .add_systems(Startup, setup)
         .run()
 }
@@ -63,6 +60,10 @@ fn setup(
         period: 256.0,
     };
     noise.update(&mut images);
+    commands.insert_resource(Hit {
+        position: Vec2::ZERO,
+        gradient: noise.grad_at(Vec2::ZERO),
+    });
     commands
         .spawn((
             Mesh3d(meshes.add(Plane3d::new(Vec3::Z, vec2(WIDTH, HEIGHT) / 2.0))),
@@ -73,7 +74,7 @@ fn setup(
             })),
         ))
         .observe(
-            |ev: Trigger<Pointer<Move>>, noise: Res<NoiseOptions>, mut commands: Commands| {
+            |ev: Trigger<Pointer<Move>>, noise: Res<NoiseOptions>, mut hit: ResMut<Hit>| {
                 let sample =
                     ev.hit.position.unwrap().xy() * vec2(1.0, -1.0) + vec2(WIDTH, HEIGHT) / 2.0;
                 let loc = Vec2::new(
@@ -81,10 +82,8 @@ fn setup(
                     -(sample.y as f32 - (HEIGHT / 2.0)),
                 );
                 let out = noise.grad_at(loc);
-                commands.insert_resource(Hit {
-                    position: loc,
-                    gradient: out,
-                });
+                hit.gradient = out;
+                hit.position = loc;
             },
         );
     commands.spawn((
@@ -176,6 +175,7 @@ fn update_system(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: Query<&mut MeshMaterial3d<StandardMaterial>>,
     input: Res<ButtonInput<KeyCode>>,
+    mut hit: ResMut<Hit>,
 ) -> Result {
     let mut changed = false;
     // A big number to more quickly change the seed of the rng.
@@ -217,6 +217,7 @@ fn update_system(
             unlit: true,
             ..default()
         });
+        hit.gradient = noise.grad_at(hit.position);
     }
 
     Ok(())
