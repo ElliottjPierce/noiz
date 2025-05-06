@@ -24,7 +24,10 @@ const HEIGHT: f32 = 1080.0;
 fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, MeshPickingPlugin))
-        .add_systems(Update, draw_hit.run_if(resource_exists::<Hit>))
+        .add_systems(
+            Update,
+            (draw_hit.run_if(resource_exists::<Hit>), update_system),
+        )
         .add_systems(Startup, setup)
         .run()
 }
@@ -59,7 +62,7 @@ fn setup(
         seed: 0,
         period: 256.0,
     };
-    noise.update(&mut images, true);
+    noise.update(&mut images);
     commands
         .spawn((
             Mesh3d(meshes.add(Plane3d::new(Vec3::Z, vec2(WIDTH, HEIGHT) / 2.0))),
@@ -148,18 +151,16 @@ pub struct NoiseOptions {
 }
 
 impl NoiseOptions {
-    fn update(&mut self, images: &mut Assets<Image>, changed: bool) {
-        if changed {
-            let selected = self.selected % self.options.len();
-            let noise = &mut self.options[selected];
-            noise.noise.set_seed(self.seed);
-            noise.noise.set_period(self.period);
-            noise.display_image(images.get_mut(self.image.id()).unwrap());
-            println!(
-                "Updated {}, period: {} seed: {}.",
-                noise.name, self.period, self.seed
-            );
-        }
+    fn update(&mut self, images: &mut Assets<Image>) {
+        let selected = self.selected % self.options.len();
+        let noise = &mut self.options[selected];
+        noise.noise.set_seed(self.seed);
+        noise.noise.set_period(self.period);
+        noise.display_image(images.get_mut(self.image.id()).unwrap());
+        println!(
+            "Updated {}, period: {} seed: {}.",
+            noise.name, self.period, self.seed
+        );
     }
 
     fn grad_at(&self, loc: Vec2) -> Vec2 {
@@ -167,4 +168,56 @@ impl NoiseOptions {
         let noise = &self.options[selected];
         noise.noise.sample(loc).gradient
     }
+}
+
+fn update_system(
+    mut noise: ResMut<NoiseOptions>,
+    mut images: ResMut<Assets<Image>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut meshes: Query<&mut MeshMaterial3d<StandardMaterial>>,
+    input: Res<ButtonInput<KeyCode>>,
+) -> Result {
+    let mut changed = false;
+    // A big number to more quickly change the seed of the rng.
+    // If we used 1, this would only produce a visual change for multi-octave noise.
+    let seed_jump = 83745238u32;
+
+    if input.just_pressed(KeyCode::ArrowRight) {
+        noise.selected = noise.selected.wrapping_add(1);
+        changed = true;
+    }
+    if input.just_pressed(KeyCode::ArrowLeft) {
+        noise.selected = noise.selected.wrapping_sub(1);
+        changed = true;
+    }
+
+    if input.just_pressed(KeyCode::KeyW) {
+        noise.seed = noise.seed.wrapping_add(seed_jump);
+        changed = true;
+    }
+    if input.just_pressed(KeyCode::KeyS) {
+        noise.seed = noise.seed.wrapping_sub(seed_jump);
+        changed = true;
+    }
+
+    if input.just_pressed(KeyCode::KeyD) {
+        noise.period *= 2.0;
+        changed = true;
+    }
+    if input.just_pressed(KeyCode::KeyA) {
+        noise.period *= 0.5;
+        changed = true;
+    }
+
+    if changed {
+        noise.update(&mut images);
+        let mut mesh = meshes.single_mut()?;
+        mesh.0 = materials.add(StandardMaterial {
+            base_color_texture: Some(noise.image.clone()),
+            unlit: true,
+            ..default()
+        });
+    }
+
+    Ok(())
 }
