@@ -29,6 +29,10 @@ Noiz is not:
 - Meant to replace art tools for asset generation
 - Meant to be standalone (you'll want to also depend on either `bevy_math` or `bevy`.)
 
+| Bevy version | noiz version |
+|--------------|--------------|
+| 0.16         | 0.1          |
+
 ## What Makes Noiz Unique?
 
 - Noiz is powered by a custom random number generator built on a hash function instead of the traditional permutation table.
@@ -204,6 +208,7 @@ This is off by default because it increases build times, etc due to the complex 
 | dimensions            | 2d, 3d, 4d  | 2d, 3d, 4d   | 1d, 2d, 3d, 4d | 2d, 3d,         |
 | customizability       | total       | some         | some           | limited choices |
 | cross-language        | ❌           | ❌            | ❌              | ✅              |
+| no-std                | ✅          | ✅          | ❌              | ✅              |
 | overall performance   | Great       | Poor         | Great          | Good            |
 | overall noise quality | Good        | untested     | Ok for small domains | Ok              |
 
@@ -296,10 +301,10 @@ No tiling. Yay!
 Note that some artifacting (not quite tiling) does happen at excessively large scales.
 But that's not a big deal in practice. (Ever wonder why the far lands exist in minecraft?)
 
-For perlin noise, `noiz` and `libnoise` tie for 2d; `noiz` is faster for 4d but `libnoise` just beats it for 3d.
+For perlin noise, `noiz` and `libnoise` roughly tie for 2d; `noiz` is faster for 4d but `libnoise` just beats it for 3d.
 This is likely also due to the difference in rng methods, and the same quality issues and benchmark blind spots apply here too.
 
-For simplex noise, `noiz` is the clear winner. Simplex is about half as fast as perlin for 2d, but it gets bette for higher dimensions, beating perlin in 4d.
+For simplex noise, `noiz` is the clear winner. Simplex is about half as fast as perlin for 2d, but it gets better for higher dimensions, beating perlin in 4d.
 
 For Worley noise, the results vary greatly depending on use-case. See for yourself.
 Worley approximate, if you're wondering, is a version of worley noise that is much faster but restricts the voronoi points to be only half as random as normal.
@@ -310,7 +315,7 @@ This works great if you only need an approximation.
 Use `fastnoise_lite` if you need consistncy across languages.
 Use `libnoise` if you don't need a ton of configuration, are using relatively small domains, and are primarily doing value and perlin noise.
 If you absolutely need `f64` support, use `libnoise`, but again, the permutation table rng makes the large domain kinda a moot point. Same goes for `noise`.
-If you are integrating with `bevy`, need lots of customization, need general, high performance, need `no_std` support, or need serialization and reflection, use `noiz`.
+If you are integrating with `bevy`, need lots of customization, need general, high performance, or need serialization and reflection, use `noiz`.
 I am not aware of a reason to use `noise` (though there may well be one I'm missing).
 
 ## Rough Roadmap

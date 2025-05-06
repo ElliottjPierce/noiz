@@ -1401,3 +1401,53 @@ impl_simplectic_blend!(Vec2, 99.836_85);
 impl_simplectic_blend!(Vec3, 76.883_76);
 impl_simplectic_blend!(Vec3A, 76.883_76);
 impl_simplectic_blend!(Vec4, 62.795_597);
+
+#[cfg(test)]
+mod tests {
+    use bevy_math::vec2;
+
+    use crate::prelude::*;
+
+    use super::*;
+
+    #[test]
+    fn test_simplex_gradients() {
+        /// Amount we step to approximate gradient. This must be significantly smaller than the
+        /// noise features to be any sort of accurate.
+        const STEP: f32 = 1e-5;
+        /// Epsilon for gradient approximation comparison.
+        const EPSILON: f32 = 1e-3;
+        let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>::default();
+        let sample_points = [
+            vec2(0.0, 0.0),
+            vec2(0.0, 0.5),
+            vec2(0.0, 1.0),
+            vec2(0.5, 0.0),
+            vec2(0.5, 0.5),
+            vec2(0.5, 1.0),
+            vec2(1.0, 0.0),
+            vec2(1.0, 0.5),
+            vec2(1.0, 1.0),
+        ];
+        for point in sample_points {
+            let result = noise.sample_for::<WithGradient<f32, Vec2>>(point);
+            let approximate_gradient = (Vec2::new(
+                noise
+                    .sample_for::<WithGradient<f32, Vec2>>(point + STEP * Vec2::X)
+                    .value,
+                noise
+                    .sample_for::<WithGradient<f32, Vec2>>(point + STEP * Vec2::Y)
+                    .value,
+            ) - result.value)
+                / STEP;
+            assert!(
+                approximate_gradient.distance(result.gradient) < EPSILON,
+                "Gradient mismatch at point {:?}: expected {:?}, got {:?}",
+                point,
+                result.gradient,
+                approximate_gradient
+            );
+        }
+    }
+}
+
