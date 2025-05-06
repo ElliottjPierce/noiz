@@ -1429,6 +1429,7 @@ mod tests {
             vec2(1.0, 0.5),
             vec2(1.0, 1.0),
         ];
+        let mut failure = false;
         for point in sample_points {
             let result = noise.sample_for::<WithGradient<f32, Vec2>>(point);
             let positive_grad = Vec2::new(
@@ -1441,10 +1442,15 @@ mod tests {
             ) / STEP;
             let approximate_gradient = positive_grad + negative_grad;
             let analytical_gradient = result.gradient;
-            assert!(
-                approximate_gradient.distance(result.gradient) < EPSILON,
-                "Gradient mismatch at point {point:?}: expected {approximate_gradient:?}, got {analytical_gradient:?}",
-            );
+            if approximate_gradient.distance(result.gradient) > EPSILON {
+                println!(
+                    "Gradient mismatch at point {point:?}: expected {approximate_gradient:?}, got {analytical_gradient:?}"
+                );
+                failure = true;
+            }
+        }
+        if failure {
+            panic!("Simplex gradients failed at the above points.");
         }
     }
 }
