@@ -15,7 +15,7 @@ use bevy::{
 use noiz::{
     DynamicConfigurableSampleable, Noise,
     cell_noise::{BlendCellGradients, QuickGradients, SimplecticBlend},
-    cells::{OrthoGrid, SimplexGrid, WithGradient},
+    cells::{OrthoGrid, SimplexGrid, Voronoi, WithGradient},
     curves::Smoothstep,
     prelude::{BlendCellValues, MixCellGradients, MixCellValues},
     rng::{Random, SNorm},
@@ -86,6 +86,12 @@ fn setup(
                 name: "Value",
                 noise: Box::new(Noise::<
                     MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Voronoi Value",
+                noise: Box::new(Noise::<
+                    BlendCellValues<Voronoi, SimplecticBlend, Random<SNorm, f32>, true>,
                 >::default()),
             },
         ],
