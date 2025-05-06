@@ -25,6 +25,18 @@ const WIDTH: f32 = 1920.0;
 const HEIGHT: f32 = 1080.0;
 
 fn main() -> AppExit {
+    println!(
+        r#"
+        ---SHOW NOISE EXAMPLE---
+
+        Controls:
+        - Right arrow and left arrow change noise types.
+        - W and S change seeds.
+        - A and D change noise scale. Image resolution doesn't change so there are limits.
+        - Move the mouse around to see different gradients.
+
+        "#
+    );
     App::new()
         .add_plugins((DefaultPlugins, MeshPickingPlugin))
         .add_systems(Update, (draw_hit, update_system))
