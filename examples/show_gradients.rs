@@ -13,7 +13,7 @@ use bevy::{
     },
 };
 use noiz::{
-    Noise, Sampleable,
+    DynamicConfigurableSampleable, Noise,
     cell_noise::{BlendCellGradients, QuickGradients, SimplecticBlend},
     cells::{SimplexGrid, WithGradient},
 };
@@ -47,11 +47,18 @@ fn setup(
         RenderAssetUsages::all(),
     );
     let handle = images.add(image);
-    let mut noise = SimplexNoise {
-        noise: default(),
+    let mut noise = NoiseOptions {
+        options: vec![NoiseOption {
+            noise: Box::new(Noise::<
+                BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+            >::default()),
+            name: "Simplex",
+        }],
         image: handle.clone(),
+        selected: 0,
+        seed: 0,
+        period: 256.0,
     };
-    noise.noise.frequency = 0.005;
     noise.update(&mut images, true);
     commands
         .spawn((
@@ -63,17 +70,17 @@ fn setup(
             })),
         ))
         .observe(
-            |ev: Trigger<Pointer<Move>>, noise: Res<SimplexNoise>, mut commands: Commands| {
+            |ev: Trigger<Pointer<Move>>, noise: Res<NoiseOptions>, mut commands: Commands| {
                 let sample =
                     ev.hit.position.unwrap().xy() * vec2(1.0, -1.0) + vec2(WIDTH, HEIGHT) / 2.0;
                 let loc = Vec2::new(
                     sample.x - (WIDTH / 2.0),
                     -(sample.y as f32 - (HEIGHT / 2.0)),
                 );
-                let out = noise.noise.sample_for::<WithGradient<f32, Vec2>>(loc);
+                let out = noise.grad_at(loc);
                 commands.insert_resource(Hit {
                     position: loc,
-                    gradient: out.gradient,
+                    gradient: out,
                 });
             },
         );
@@ -90,39 +97,6 @@ fn setup(
     commands.insert_resource(noise);
 }
 
-/// Stores the noise object and the image handle for updating the texture.
-#[derive(Resource)]
-pub struct SimplexNoise {
-    noise: Noise<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>,
-    image: Handle<Image>,
-}
-
-impl SimplexNoise {
-    fn update(&mut self, images: &mut Assets<Image>, changed: bool) {
-        if changed {
-            let image = images.get_mut(self.image.id()).unwrap();
-            let width = image.width();
-            let height = image.height();
-
-            for x in 0..width {
-                for y in 0..height {
-                    let loc = Vec2::new(
-                        x as f32 - (width / 2) as f32,
-                        -(y as f32 - (height / 2) as f32),
-                    );
-                    let out =
-                        self.noise.sample_for::<WithGradient<f32, Vec2>>(loc).value / 2.0 + 0.5;
-
-                    let color = Color::srgb(out, out, out);
-                    if let Err(err) = image.set_color_at(x, y, color) {
-                        warn!("Failed to set image color with error: {err:?}");
-                    }
-                }
-            }
-        }
-    }
-}
-
 #[derive(Resource)]
 struct Hit {
     position: Vec2,
@@ -133,4 +107,64 @@ fn draw_hit(mut gizmos: Gizmos, hit: Res<Hit>) {
     let pos = hit.position.extend(1.0);
     let dir = hit.gradient.extend(0.0) * 100.0;
     gizmos.arrow(pos, pos + dir, palettes::basic::RED);
+}
+
+/// Holds a version of the noise
+pub struct NoiseOption {
+    name: &'static str,
+    noise: Box<dyn DynamicConfigurableSampleable<Vec2, WithGradient<f32, Vec2>> + Send + Sync>,
+}
+
+impl NoiseOption {
+    fn display_image(&self, image: &mut Image) {
+        let width = image.width();
+        let height = image.height();
+
+        for x in 0..width {
+            for y in 0..height {
+                let loc = Vec2::new(
+                    x as f32 - (width / 2) as f32,
+                    -(y as f32 - (height / 2) as f32),
+                );
+                let out = self.noise.sample_dyn(loc).value * 0.5 + 0.5;
+
+                let color = Color::linear_rgb(out, out, out);
+                if let Err(err) = image.set_color_at(x, y, color) {
+                    warn!("Failed to set image color with error: {err:?}");
+                }
+            }
+        }
+    }
+}
+
+/// Holds the current noise
+#[derive(Resource)]
+pub struct NoiseOptions {
+    options: Vec<NoiseOption>,
+    selected: usize,
+    image: Handle<Image>,
+    seed: u32,
+    period: f32,
+}
+
+impl NoiseOptions {
+    fn update(&mut self, images: &mut Assets<Image>, changed: bool) {
+        if changed {
+            let selected = self.selected % self.options.len();
+            let noise = &mut self.options[selected];
+            noise.noise.set_seed(self.seed);
+            noise.noise.set_period(self.period);
+            noise.display_image(images.get_mut(self.image.id()).unwrap());
+            println!(
+                "Updated {}, period: {} seed: {}.",
+                noise.name, self.period, self.seed
+            );
+        }
+    }
+
+    fn grad_at(&self, loc: Vec2) -> Vec2 {
+        let selected = self.selected % self.options.len();
+        let noise = &self.options[selected];
+        noise.noise.sample(loc).gradient
+    }
 }
