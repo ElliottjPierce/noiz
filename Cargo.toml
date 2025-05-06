@@ -103,6 +103,10 @@ unused_qualifications = "warn"
 name = "show_noise"
 path = "examples/show_noise.rs"
 
+[[example]]
+name = "show_gradients"
+path = "examples/show_gradients.rs"
+
 [[bench]]
 name = "compare"
 path = "benches/compare/main.rs"
