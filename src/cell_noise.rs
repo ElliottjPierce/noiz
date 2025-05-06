@@ -1431,18 +1431,19 @@ mod tests {
         ];
         for point in sample_points {
             let result = noise.sample_for::<WithGradient<f32, Vec2>>(point);
-            let approximate_gradient = Vec2::new(
-                noise.sample_for::<f32>(point + STEP * Vec2::X)
-                    - noise.sample_for::<f32>(point - STEP * Vec2::X),
-                noise.sample_for::<f32>(point + STEP * Vec2::Y)
-                    - noise.sample_for::<f32>(point - STEP * Vec2::Y),
+            let positive_grad = Vec2::new(
+                noise.sample_for::<f32>(point + STEP * Vec2::X) - result.value,
+                noise.sample_for::<f32>(point + STEP * Vec2::Y) - result.value,
             ) / STEP;
+            let negative_grad = Vec2::new(
+                result.value - noise.sample_for::<f32>(point - STEP * Vec2::X),
+                result.value - noise.sample_for::<f32>(point - STEP * Vec2::Y),
+            ) / STEP;
+            let approximate_gradient = positive_grad + negative_grad;
+            let analytical_gradient = result.gradient;
             assert!(
                 approximate_gradient.distance(result.gradient) < EPSILON,
-                "Gradient mismatch at point {:?}: expected {:?}, got {:?}",
-                point,
-                result.gradient,
-                approximate_gradient
+                "Gradient mismatch at point {point:?}: expected {approximate_gradient:?}, got {analytical_gradient:?}",
             );
         }
     }
