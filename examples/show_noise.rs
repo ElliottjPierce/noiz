@@ -667,6 +667,26 @@ fn main() -> AppExit {
                                 Default::default(),
                             ))),
                         },
+                        // But this is supported for voronoi:
+                        NoiseOption {
+                            name: "Tileing worly",
+                            noise: Box::new(Noise::<
+                                PerCellPointDistances<
+                                    Voronoi<false, OrthoGrid<i32>>,
+                                    EuclideanLength,
+                                    WorleyLeastDistance,
+                                >,
+                            >::from(
+                                PerCellPointDistances {
+                                    // Wrap after 16 units.
+                                    cells: Voronoi {
+                                        partitoner: OrthoGrid(16),
+                                        ..default()
+                                    },
+                                    ..default()
+                                },
+                            )),
+                        },
                         // Let's put it all together in a (contrived) example:
                         NoiseOption {
                             name: "Usecase: Tileable Heightmap",
