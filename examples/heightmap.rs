@@ -29,7 +29,8 @@ const SENSITIVITY: f32 = 0.01;
 fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + SeedableNoise {
     Noise {
         noise: LayeredNoise::new(
-            NormedByDerivative::<f32, EuclideanLength, PeakDerivativeContribution>::default(),
+            NormedByDerivative::<f32, EuclideanLength, PeakDerivativeContribution>::default()
+                .with_falloff(50.0),
             Persistence(0.6),
             FractalLayers {
                 layer: Octave(BlendCellGradients::<
