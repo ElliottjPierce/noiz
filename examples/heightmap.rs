@@ -6,7 +6,7 @@ use bevy::{
     prelude::*,
     render::mesh::{Indices, Mesh},
 };
-use bevy_math::{Vec2, VectorSpace};
+use bevy_math::Vec2;
 use noiz::{
     Noise, SampleableFor, ScalableNoise, SeedableNoise,
     cells::SimplexGrid,
@@ -16,11 +16,14 @@ use noiz::{
     },
 };
 
+// Feel free to play around with this and the example noise!
 const SEED: u32 = 0;
 const RESOLUTION: f32 = 2.0;
-const EXTENT: f32 = 128.0;
-const PERIOD: f32 = 32.0;
-const SPEED: f32 = 5.0;
+const EXTENT: f32 = 512.0;
+const PERIOD: f32 = 512.0;
+const AMPLITUDE: f32 = 96.0;
+
+const SPEED: f32 = 25.0;
 const SENSITIVITY: f32 = 0.01;
 
 fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + SeedableNoise {
@@ -42,6 +45,8 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
     }
 }
 
+// NOTE That if you want to do this for real, you can do a lot better than this.
+// It's just an example.
 fn build_mesh(noise: impl SampleableFor<Vec2, f32>, extent: f32, resolution: f32) -> Mesh {
     let mut mesh = Mesh::new(
         bevy::render::mesh::PrimitiveTopology::TriangleList,
@@ -53,7 +58,7 @@ fn build_mesh(noise: impl SampleableFor<Vec2, f32>, extent: f32, resolution: f32
     for x in -points..points {
         for y in -points..points {
             let horizontal = Vec2::new(x as f32, y as f32);
-            let sample = noise.sample(horizontal / resolution);
+            let sample = noise.sample(horizontal / resolution) * AMPLITUDE;
             let vertex = horizontal.extend(sample).xzy();
             positions.push(vertex.to_array());
         }
@@ -70,6 +75,8 @@ fn build_mesh(noise: impl SampleableFor<Vec2, f32>, extent: f32, resolution: f32
             indices.push(c0);
             indices.push(c1);
             indices.push(c2);
+            indices.push(c2);
+            indices.push(c1);
             indices.push(c3);
         }
     }
@@ -117,7 +124,7 @@ fn setup(
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(-2.5, AMPLITUDE, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
 
