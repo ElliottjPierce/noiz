@@ -1,4 +1,4 @@
-//! Showcases sampling gradients from simplex noise. Hover over the plane to see the gradient drawn
+//! Showcases sampling gradients from various noise. Hover over the plane to see the gradient drawn
 //! as a red arrow, which will point generally from black areas to white. The gradient can be
 //! thought of as the "uphill direction", where white areas can be thought of as peaks and black
 //! areas as valleys.

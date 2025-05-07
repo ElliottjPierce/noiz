@@ -1,5 +1,6 @@
 //! An example for displaying noise as an image.
-//!
+//! This is an example of what different kinds of noise may look like.
+//! The goal is to build some intuition for what the different noise types do.
 //!
 //! NOTE that this will make much more sense after reading the readme quick start!
 
@@ -107,6 +108,9 @@ fn main() -> AppExit {
                         },
                         // Not all grids can be mixed (or are practical to mix). When that happens, we can blend instead of mix.
                         // This will fade between each value instead of mix them.
+                        // It's an imperfect analogy, but think of mixing as a movie fading between scenes and blending as fading to black before opening on a new scene.
+                        //
+                        //
                         // Since we aren't mixing, we don't need to specify a curve; instead we need a Blender.
                         // SimplecticBlend is the simplest there, but there are others too, and you can even make your own!
                         NoiseOption {
