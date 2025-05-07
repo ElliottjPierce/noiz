@@ -1,6 +1,8 @@
 # Noiz
 
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
+[![Crates.io](https://img.shields.io/crates/v/noiz.svg)](https://crates.io/crates/noiz)
+[![Docs.io](https://docs.rs/noiz/badge.svg)](https://docs.rs/noiz/latest/noiz/)
 [![CI](https://github.com/ElliottjPierce/noiz/workflows/CI/badge.svg)](https://github.com/ElliottjPierce/noiz/actions)
 
 A simple, configurable, blazingly fast noise library built for and with [Bevy](https://bevyengine.org/).
