@@ -1,4 +1,4 @@
-//! Contains a variety of curves of domain and range [0, 1].
+//! Contains a variety of curves built to work well with noise.
 
 use bevy_math::{
     Curve, WithDerivative,

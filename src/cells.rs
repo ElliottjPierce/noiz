@@ -1,4 +1,4 @@
-//! This contains logic for dividing a domain into segments.
+//! This contains logic for partitioning a domain into cells.
 
 use core::ops::{Add, AddAssign, Mul, MulAssign};
 

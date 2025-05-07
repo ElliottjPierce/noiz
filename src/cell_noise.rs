@@ -1,4 +1,4 @@
-//! Contains logic for interpolating within a [`DomainCell`].
+//! Contains logic for creating noise based on [`DomainCell`]s.
 
 use core::{
     f32,
