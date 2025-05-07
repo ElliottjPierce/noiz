@@ -108,7 +108,12 @@ fn setup(
     // circular base
     commands.spawn((
         Mesh3d(meshes.add(mesh)),
-        MeshMaterial3d(materials.add(Color::LinearRgba(LinearRgba::GREEN))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::linear_rgb(0.05, 0.8, 0.1),
+            perceptual_roughness: 1.0,
+            reflectance: 0.1,
+            ..default()
+        })),
     ));
     // cube
     commands.spawn((
@@ -164,7 +169,7 @@ fn move_cam(
     let look = accumulated_mouse_motion.delta * -SENSITIVITY;
     yaw += look.x;
     pitch += look.y;
-    pitch = pitch.clamp(-1.54, 1.54);
+    pitch = pitch.clamp(-core::f32::consts::FRAC_PI_2, core::f32::consts::FRAC_PI_2);
     player.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
 
     Ok(())
