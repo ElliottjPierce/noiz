@@ -2,10 +2,11 @@
 
 use bevy::{
     asset::RenderAssetUsages,
+    input::mouse::AccumulatedMouseMotion,
     prelude::*,
     render::mesh::{Indices, Mesh},
 };
-use bevy_math::Vec2;
+use bevy_math::{Vec2, VectorSpace};
 use noiz::{
     Noise, SampleableFor, ScalableNoise, SeedableNoise,
     cells::SimplexGrid,
@@ -19,6 +20,8 @@ const SEED: u32 = 0;
 const RESOLUTION: f32 = 2.0;
 const EXTENT: f32 = 128.0;
 const PERIOD: f32 = 32.0;
+const SPEED: f32 = 5.0;
+const SENSITIVITY: f32 = 0.01;
 
 fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + SeedableNoise {
     Noise {
@@ -81,6 +84,7 @@ fn main() -> AppExit {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
+        .add_systems(Update, move_cam)
         .run()
 }
 
@@ -115,4 +119,46 @@ fn setup(
         Camera3d::default(),
         Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+fn move_cam(
+    mut player: Query<&mut Transform, With<Camera3d>>,
+    accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
+    keys: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
+) -> Result {
+    let mut motion = Vec3::ZERO;
+    if keys.pressed(KeyCode::KeyW) {
+        motion.z -= 1.0;
+    }
+    if keys.pressed(KeyCode::KeyS) {
+        motion.z += 1.0;
+    }
+    if keys.pressed(KeyCode::KeyA) {
+        motion.x -= 1.0;
+    }
+    if keys.pressed(KeyCode::KeyD) {
+        motion.x += 1.0;
+    }
+    if keys.pressed(KeyCode::ShiftLeft) {
+        motion.y -= 1.0;
+    }
+    if keys.pressed(KeyCode::Space) {
+        motion.y += 1.0;
+    }
+
+    let mut player = player.single_mut()?;
+    motion = motion.normalize_or_zero() * SPEED * time.delta_secs();
+    let global_motion =
+        player.local_x() * motion.x + player.local_z() * motion.z + Vec3::Y * motion.y;
+    player.translation += global_motion;
+
+    let (mut yaw, mut pitch, _) = player.rotation.to_euler(EulerRot::YXZ);
+    let look = accumulated_mouse_motion.delta * -SENSITIVITY;
+    yaw += look.x;
+    pitch += look.y;
+    pitch = pitch.clamp(-1.54, 1.54);
+    player.rotation = Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
+
+    Ok(())
 }
