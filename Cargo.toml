@@ -107,6 +107,10 @@ path = "examples/show_noise.rs"
 name = "show_gradients"
 path = "examples/show_gradients.rs"
 
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
 [[bench]]
 name = "compare"
 path = "benches/compare/main.rs"

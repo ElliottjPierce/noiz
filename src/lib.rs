@@ -247,8 +247,7 @@ pub trait DynamicSampleable<I, T>: SampleableFor<I, T> {
     }
 }
 
-impl<T, I: VectorSpace, N> DynamicSampleable<I, T> for N where N: SampleableFor<I, T> + Sampleable<I>
-{}
+impl<T, I, N> DynamicSampleable<I, T> for N where N: SampleableFor<I, T> + Sampleable<I> {}
 
 /// This is a convenience trait that merges [`DynamicSampleable`], [`ScalableNoise`] and [`SeedableNoise`].
 /// ```
