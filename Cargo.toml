@@ -111,6 +111,10 @@ path = "examples/show_gradients.rs"
 name = "basic"
 path = "examples/basic.rs"
 
+[[example]]
+name = "heightmap"
+path = "examples/heightmap.rs"
+
 [[bench]]
 name = "compare"
 path = "benches/compare/main.rs"
