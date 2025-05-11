@@ -1044,9 +1044,7 @@ impl<
             )
         });
         let radius = cell.blending_half_radius();
-        let mut raw = self.blender.blend_with_gradient(to_blend, radius);
-        raw.value = self.blender.counter_dot_product(raw.value, radius);
-        raw
+        self.blender.blend_with_gradient(to_blend, radius)
     }
 }
 
@@ -1385,11 +1383,18 @@ macro_rules! impl_simplectic_blend {
                     let len_sqr = weight.length_squared();
                     let falloff = general_simplex_weight(len_sqr, blending_half_radius);
                     let d_falloff =
-                        general_simplex_weight_derivative(len_sqr, blending_half_radius);
+                        general_simplex_weight_derivative(len_sqr, blending_half_radius)
+                            * 2.0
+                            * weight;
+                    let value = Blender::<$i, f32>::counter_dot_product(
+                        self,
+                        val.value * falloff,
+                        blending_half_radius,
+                    );
                     sum += WithGradient {
-                        value: val.value * falloff,
+                        value,
                         gradient: val.gradient * falloff
-                            + weight.normalize_or_zero() * d_falloff * -val.value,
+                            + weight.normalize_or_zero() * value * d_falloff * val.gradient,
                     };
                 }
                 sum
