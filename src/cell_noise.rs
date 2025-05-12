@@ -812,7 +812,6 @@ pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
-/// Note that these gradients are mean to be visually pleasing and roughly meaningful, but they are not yet mathematically precise.
 ///
 /// ```
 /// # use noiz::prelude::*;
@@ -989,7 +988,6 @@ impl<
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
-/// Note that these gradients are mean to be visually pleasing and roughly meaningful, but they are not yet mathematically precise.
 ///
 /// ```
 /// # use noiz::prelude::*;
