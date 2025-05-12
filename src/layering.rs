@@ -3,7 +3,7 @@
 use core::{f32, marker::PhantomData, ops::Div};
 
 use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction, rng::NoiseRng};
-use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
+use bevy_math::{Curve, VectorSpace};
 
 /// This represents the context of some [`LayerResult`].
 /// This may store metadata collected in [`LayerOperation::prepare`].
@@ -715,14 +715,14 @@ impl<T: VectorSpace, I: VectorSpace, L: Copy, C: Copy> LayerResultContextFor<I>
 where
     NormedResult<T>: LayerResult,
 {
-    type Result = NormedByDerivativeResult<T, L, C>;
+    type Result = NormedByDerivativeResult<T, I, L, C>;
 
     #[inline]
     fn start_result(&self) -> Self::Result {
         NormedByDerivativeResult {
             total_weights: self.total_weights,
             running_total: T::ZERO,
-            running_derivative: Vec4::ZERO,
+            running_derivative: I::ZERO,
             derivative_calculator: self.derivative_calculator,
             derivative_contribution: self.derivative_contribution,
             derivative_falloff: self.derivative_falloff,
@@ -732,16 +732,16 @@ where
 
 /// The in-progress result of a [`NormedByDerivative`].
 #[derive(Clone, Copy, PartialEq)]
-pub struct NormedByDerivativeResult<T, L, C> {
+pub struct NormedByDerivativeResult<T, G, L, C> {
     total_weights: f32,
     running_total: T,
-    running_derivative: Vec4,
+    running_derivative: G,
     derivative_calculator: L,
     derivative_contribution: C,
     derivative_falloff: f32,
 }
 
-impl<T: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, L, C> {
+impl<T: Div<f32>, G, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> {
     type Output = T::Output;
 
     #[inline]
@@ -755,7 +755,7 @@ impl<T: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, L, C> {
     }
 }
 
-impl<T: VectorSpace, L, C> LayerResultFor<T> for NormedByDerivativeResult<T, L, C>
+impl<T: VectorSpace, G, L, C> LayerResultFor<T> for NormedByDerivativeResult<T, G, L, C>
 where
     Self: LayerResult,
 {
@@ -765,78 +765,14 @@ where
     }
 }
 
-/// This is effectively `Into<Vec4>` where any missing elements are left 0.
-/// This is used by [`NormedByDerivativeResult`] to facilitate a wide variety of gradients and dimensions.
-/// If you create a custom gradient type, consider implementing this.
-pub trait DerivativeConvert {
-    /// Converts to 4d, leaving missing dimensions 0.
-    fn into_4d(self) -> Vec4;
-}
-
-impl DerivativeConvert for Vec2 {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        self.extend(0.0).extend(0.0)
-    }
-}
-
-impl DerivativeConvert for Vec3 {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        self.extend(0.0)
-    }
-}
-
-impl DerivativeConvert for Vec3A {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        self.extend(0.0)
-    }
-}
-
-impl DerivativeConvert for Vec4 {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        self
-    }
-}
-
-impl DerivativeConvert for f32 {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        Vec4::new(self, 0.0, 0.0, 0.0)
-    }
-}
-
-impl DerivativeConvert for [f32; 2] {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        Vec4::new(self[0], self[1], 0.0, 0.0)
-    }
-}
-
-impl DerivativeConvert for [f32; 3] {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        Vec4::new(self[0], self[1], self[2], 0.0)
-    }
-}
-
-impl DerivativeConvert for [f32; 4] {
-    #[inline]
-    fn into_4d(self) -> Vec4 {
-        self.into()
-    }
-}
-
-impl<T: VectorSpace, I: Into<T>, G: DerivativeConvert, L: LengthFunction<Vec4>, C: Curve<f32>>
-    LayerResultFor<WithGradient<I, G>> for NormedByDerivativeResult<T, L, C>
+impl<T: VectorSpace, I: Into<T>, IG: Into<G>, G: VectorSpace, L: LengthFunction<G>, C: Curve<f32>>
+    LayerResultFor<WithGradient<I, IG>> for NormedByDerivativeResult<T, G, L, C>
 where
     Self: LayerResult,
 {
     #[inline]
-    fn include_value(&mut self, value: WithGradient<I, G>, weight: f32) {
-        self.running_derivative += value.gradient.into_4d();
+    fn include_value(&mut self, value: WithGradient<I, IG>, weight: f32) {
+        self.running_derivative = self.running_derivative + value.gradient.into();
         let total_derivative = self
             .derivative_calculator
             .length_of(self.running_derivative);
