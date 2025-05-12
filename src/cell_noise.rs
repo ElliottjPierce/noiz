@@ -762,7 +762,7 @@ pub trait ValueBlender<I: VectorSpace, V> {
 }
 
 /// Same as [`ValueBlender`] but also differentiates the result.
-pub trait DifferentiableValueBlender<I: VectorSpace, V> {
+pub trait DifferentiableValueBlender<I: VectorSpace, V>: ValueBlender<I, V> {
     /// Same as [`blend_values`](ValueBlender::blend_values) but also differentiates the result.
     fn differential_blend_values(
         &self,
@@ -783,7 +783,7 @@ pub trait GradientBlender<I: VectorSpace> {
 }
 
 /// Same as [`GradientBlender`] but also differentiates the result.
-pub trait DifferentiableGradientBlender<I: VectorSpace> {
+pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
     /// Same as [`blend_gradients`](GradientBlender::blend_gradients) but also differentiates the result.
     fn differential_blend_gradients(
         &self,
@@ -1304,6 +1304,46 @@ impl<V, I: VectorSpace, B: ValueBlender<I, V>> ValueBlender<I, V> for LocalBlend
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
         self.blender
             .blend_values(to_blend, blending_half_radius * self.radius_scale)
+    }
+}
+
+impl<V, I: VectorSpace, B: DifferentiableValueBlender<I, V>> DifferentiableValueBlender<I, V>
+    for LocalBlend<B>
+{
+    #[inline]
+    fn differential_blend_values(
+        &self,
+        to_blend: impl Iterator<Item = (V, I)>,
+        blending_half_radius: f32,
+    ) -> WithGradient<V, I> {
+        self.blender
+            .differential_blend_values(to_blend, blending_half_radius * self.radius_scale)
+    }
+}
+
+impl<I: VectorSpace, B: GradientBlender<I>> GradientBlender<I> for LocalBlend<B> {
+    #[inline]
+    fn blend_gradients(
+        &self,
+        to_blend: impl Iterator<Item = (I, I)>,
+        blending_half_radius: f32,
+    ) -> f32 {
+        self.blender
+            .blend_gradients(to_blend, blending_half_radius * self.radius_scale)
+    }
+}
+
+impl<I: VectorSpace, B: DifferentiableGradientBlender<I>> DifferentiableGradientBlender<I>
+    for LocalBlend<B>
+{
+    #[inline]
+    fn differential_blend_gradients(
+        &self,
+        to_blend: impl Iterator<Item = (I, I)>,
+        blending_half_radius: f32,
+    ) -> WithGradient<f32, I> {
+        self.blender
+            .differential_blend_gradients(to_blend, blending_half_radius * self.radius_scale)
     }
 }
 
