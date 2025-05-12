@@ -1412,8 +1412,6 @@ mod tests {
     use super::*;
 
     #[test]
-    // #[ignore = "These gradients are not mathematically rigorous."]
-    // TODO: Make them rigorous and keep the test.
     fn test_simplex_gradients() {
         /// Amount we step to approximate gradient. This must be significantly smaller than the
         /// noise features to be any sort of accurate.
