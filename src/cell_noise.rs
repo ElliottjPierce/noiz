@@ -1390,7 +1390,13 @@ macro_rules! impl_simplectic_blend {
                         gradient: val.gradient * falloff + val.value * d_falloff, // product rule
                     };
                 }
-                sum.gradient *= 2.0; // I'm not sure which part of the math this comes from, but it makes the tests pass.
+                sum.value =
+                    Blender::<$i, f32>::counter_dot_product(self, sum.value, blending_half_radius);
+                sum.gradient = Blender::<$i, $i>::counter_dot_product(
+                    self,
+                    sum.gradient,
+                    blending_half_radius,
+                );
                 sum
             }
         }
@@ -1436,12 +1442,12 @@ mod tests {
             let positive_grad = Vec2::new(
                 noise.sample_for::<f32>(point + STEP * Vec2::X) - result.value,
                 noise.sample_for::<f32>(point + STEP * Vec2::Y) - result.value,
-            ) / STEP;
+            );
             let negative_grad = Vec2::new(
                 result.value - noise.sample_for::<f32>(point - STEP * Vec2::X),
                 result.value - noise.sample_for::<f32>(point - STEP * Vec2::Y),
-            ) / STEP;
-            let approximate_gradient = positive_grad + negative_grad;
+            );
+            let approximate_gradient = (positive_grad + negative_grad) / (STEP * 2.0);
             let analytical_gradient = result.gradient;
             if approximate_gradient.distance(result.gradient) > EPSILON {
                 println!(
