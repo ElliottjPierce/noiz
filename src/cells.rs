@@ -1,6 +1,6 @@
 //! This contains logic for partitioning a domain into cells.
 
-use core::ops::{Add, AddAssign, Mul, MulAssign};
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign};
 
 use bevy_math::{
     Curve, IVec2, IVec3, IVec4, Vec2, Vec3, Vec3A, Vec4, VectorSpace,
@@ -135,6 +135,26 @@ impl<T: MulAssign<f32>, G: MulAssign<f32>> MulAssign<f32> for WithGradient<T, G>
     fn mul_assign(&mut self, rhs: f32) {
         self.gradient *= rhs;
         self.value *= rhs;
+    }
+}
+
+impl<T: Div<f32, Output = T>, G: Div<f32, Output = G>> Div<f32> for WithGradient<T, G> {
+    type Output = Self;
+
+    #[inline(always)]
+    fn div(self, rhs: f32) -> Self::Output {
+        Self {
+            value: self.value / rhs,
+            gradient: self.gradient / rhs,
+        }
+    }
+}
+
+impl<T: DivAssign<f32>, G: DivAssign<f32>> DivAssign<f32> for WithGradient<T, G> {
+    #[inline(always)]
+    fn div_assign(&mut self, rhs: f32) {
+        self.gradient /= rhs;
+        self.value /= rhs;
     }
 }
 

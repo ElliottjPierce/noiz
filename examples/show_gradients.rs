@@ -17,7 +17,10 @@ use noiz::{
     cell_noise::{BlendCellGradients, QuickGradients, SimplecticBlend},
     cells::{OrthoGrid, SimplexGrid, Voronoi, WithGradient},
     curves::Smoothstep,
-    prelude::{BlendCellValues, Masked, MixCellGradients, MixCellValues},
+    prelude::{
+        BlendCellValues, FractalLayers, LayeredNoise, Masked, MixCellGradients, MixCellValues,
+        Normed, Octave, Persistence,
+    },
     rng::{Random, SNorm},
 };
 
@@ -68,6 +71,25 @@ fn setup(
                 name: "Simplex",
                 noise: Box::new(Noise::<
                     BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Simplex FBM",
+                noise: Box::new(Noise::<
+                    LayeredNoise<
+                        Normed<WithGradient<f32, Vec2>>,
+                        Persistence,
+                        FractalLayers<
+                            Octave<
+                                BlendCellGradients<
+                                    SimplexGrid,
+                                    SimplecticBlend,
+                                    QuickGradients,
+                                    true,
+                                >,
+                            >,
+                        >,
+                    >,
                 >::default()),
             },
             NoiseOption {

@@ -1,6 +1,10 @@
 //! Contains logic for layering different [`NoiseFunction`]s on top of each other.
 
-use core::{f32, marker::PhantomData, ops::Div};
+use core::{
+    f32,
+    marker::PhantomData,
+    ops::{AddAssign, Div, Mul},
+};
 
 use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction, rng::NoiseRng};
 use bevy_math::{Curve, VectorSpace};
@@ -582,7 +586,7 @@ pub struct Normed<T> {
     total_weights: f32,
 }
 
-impl<T: VectorSpace> Default for Normed<T> {
+impl<T> Default for Normed<T> {
     fn default() -> Self {
         Self {
             marker: PhantomData,
@@ -591,7 +595,7 @@ impl<T: VectorSpace> Default for Normed<T> {
     }
 }
 
-impl<T: VectorSpace> LayerResultContext for Normed<T>
+impl<T> LayerResultContext for Normed<T>
 where
     NormedResult<T>: LayerResult,
 {
@@ -601,14 +605,17 @@ where
     }
 }
 
-impl<T: VectorSpace, I> LayerResultContextFor<I> for Normed<T> {
+impl<T: Default, I> LayerResultContextFor<I> for Normed<T>
+where
+    NormedResult<T>: LayerResult,
+{
     type Result = NormedResult<T>;
 
     #[inline]
     fn start_result(&self) -> Self::Result {
         NormedResult {
             total_weights: self.total_weights,
-            running_total: T::ZERO,
+            running_total: T::default(),
         }
     }
 }
@@ -634,13 +641,13 @@ impl<T: Div<f32>> LayerResult for NormedResult<T> {
     }
 }
 
-impl<T: VectorSpace, I: Into<T>> LayerResultFor<I> for NormedResult<T>
+impl<T: AddAssign + Mul<f32, Output = T>, I: Into<T>> LayerResultFor<I> for NormedResult<T>
 where
     Self: LayerResult,
 {
     #[inline]
     fn include_value(&mut self, value: I, weight: f32) {
-        self.running_total = self.running_total + (value.into() * weight);
+        self.running_total += value.into() * weight;
     }
 }
 
