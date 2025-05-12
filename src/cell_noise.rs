@@ -759,7 +759,10 @@ pub trait ValueBlender<I: VectorSpace, V> {
     /// Blends together each value `V` of `to_blend` according to some weight `I`, where weights beyond the range of `blending_half_radius` are ignored.
     /// `blending_half_radius` cuts off the blend before it hits discontinuities.
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V;
+}
 
+/// Same as [`ValueBlender`] but also differentiates the result.
+pub trait DifferentiableValueBlender<I: VectorSpace, V> {
     /// Same as [`blend_values`](ValueBlender::blend_values) but also differentiates the result.
     fn differential_blend_values(
         &self,
@@ -777,7 +780,10 @@ pub trait GradientBlender<I: VectorSpace> {
         to_blend: impl Iterator<Item = (I, I)>,
         blending_half_radius: f32,
     ) -> f32;
+}
 
+/// Same as [`GradientBlender`] but also differentiates the result.
+pub trait DifferentiableGradientBlender<I: VectorSpace> {
     /// Same as [`blend_gradients`](GradientBlender::blend_gradients) but also differentiates the result.
     fn differential_blend_gradients(
         &self,
@@ -852,7 +858,7 @@ impl<
 impl<
     I: VectorSpace + Mul<N::Concrete, Output = I>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
-    B: ValueBlender<I, N::Concrete>,
+    B: DifferentiableValueBlender<I, N::Concrete>,
     N: ConcreteAnyValueFromBits<Concrete: Copy>,
 > NoiseFunction<I> for BlendCellValues<P, B, N, true>
 {
@@ -1028,7 +1034,7 @@ impl<
 impl<
     I: VectorSpace,
     P: Partitioner<I, Cell: BlendableDomainCell>,
-    B: GradientBlender<I>,
+    B: DifferentiableGradientBlender<I>,
     G: GradientGenerator<I>,
 > NoiseFunction<I> for BlendCellGradients<P, B, G, true>
 {
@@ -1276,14 +1282,6 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
         }
         sum * (weight_sum / (cnt as f32 * clamp_len))
     }
-
-    fn differential_blend_values(
-        &self,
-        to_blend: impl Iterator<Item = (V, I)>,
-        blending_half_radius: f32,
-    ) -> WithGradient<V, I> {
-        todo!()
-    }
 }
 
 /// A [`Blender`] that defers to another [`Blender`] `T` and scales its blending radius by some value.
@@ -1306,15 +1304,6 @@ impl<V, I: VectorSpace, B: ValueBlender<I, V>> ValueBlender<I, V> for LocalBlend
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
         self.blender
             .blend_values(to_blend, blending_half_radius * self.radius_scale)
-    }
-
-    fn differential_blend_values(
-        &self,
-        to_blend: impl Iterator<Item = (V, I)>,
-        blending_half_radius: f32,
-    ) -> WithGradient<V, I> {
-        self.blender
-            .differential_blend_values(to_blend, blending_half_radius * self.radius_scale)
     }
 }
 
@@ -1371,7 +1360,13 @@ macro_rules! impl_simplectic_blend {
                 }
                 sum
             }
+        }
 
+        impl<V: Mul<f32, Output = V> + Default + AddAssign<V> + Copy>
+            DifferentiableValueBlender<$i, V> for SimplecticBlend
+        where
+            $i: Mul<V, Output = $i> + Mul<f32, Output = $i>,
+        {
             #[inline]
             fn differential_blend_values(
                 &self,
@@ -1415,7 +1410,9 @@ macro_rules! impl_simplectic_blend {
                 sum *= counter_dot_product;
                 sum
             }
+        }
 
+        impl DifferentiableGradientBlender<$i> for SimplecticBlend {
             #[inline]
             fn differential_blend_gradients(
                 &self,
