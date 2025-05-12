@@ -8,14 +8,17 @@ use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 /// This represents the context of some [`LayerResult`].
 /// This may store metadata collected in [`LayerOperation::prepare`].
 pub trait LayerResultContext {
-    /// This is the type that actually computes the result based on this context.
-    type Result: LayerResult;
-
     /// Informs the context that this much weight is expected.
     /// This allows precomputing the total weight.
     fn expect_weight(&mut self, weight: f32);
+}
 
-    /// Based on this context, creates a result that can start accumulating noise operations.
+/// A [`LayerResultContext`] that works for inputs of type `I`.
+pub trait LayerResultContextFor<I>: LayerResultContext {
+    /// The result the context makes.
+    type Result: LayerResult;
+
+    /// Based on some context, starts an empty result.
     fn start_result(&self) -> Self::Result;
 }
 
@@ -64,7 +67,7 @@ pub trait LayerOperation<R: LayerResultContext, W: LayerWeights> {
 
 /// Specifies that this [`LayerOperation`] can be done on type `I`.
 /// If this adds to the `result`, this is called an octave. The most common kind of octave is [`Octave`].
-pub trait LayerOperationFor<I: VectorSpace, R: LayerResultContext, W: LayerWeights>:
+pub trait LayerOperationFor<I: VectorSpace, R: LayerResultContextFor<I>, W: LayerWeights>:
     LayerOperation<R, W>
 {
     /// Performs the layer operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
@@ -89,7 +92,7 @@ macro_rules! impl_all_operation_tuples {
             }
         }
 
-        impl<I: VectorSpace, R: LayerResultContext, W: LayerWeights, $i: LayerOperationFor<I, R, W>, $($ni: LayerOperationFor<I, R, W>),* > LayerOperationFor<I, R, W> for ($i, $($ni),*) {
+        impl<I: VectorSpace, R: LayerResultContextFor<I>, W: LayerWeights, $i: LayerOperationFor<I, R, W>, $($ni: LayerOperationFor<I, R, W>),* > LayerOperationFor<I, R, W> for ($i, $($ni),*) {
             #[inline]
             fn do_noise_op(
                 &self,
@@ -218,7 +221,7 @@ impl<R: LayerResultContext, W: LayerWeightsSettings, N: LayerOperation<R, W::Wei
 
 impl<
     I: VectorSpace,
-    R: LayerResultContext,
+    R: LayerResultContextFor<I>,
     W: LayerWeightsSettings,
     N: LayerOperationFor<I, R, W::Weights>,
 > NoiseFunction<I> for LayeredNoise<R, W, N, false>
@@ -237,7 +240,7 @@ impl<
 
 impl<
     I: VectorSpace,
-    R: LayerResultContext,
+    R: LayerResultContextFor<I>,
     W: LayerWeightsSettings,
     N: LayerOperationFor<I, R, W::Weights>,
 > NoiseFunction<I> for LayeredNoise<R, W, N, true>
@@ -272,7 +275,7 @@ impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for Octave<
 impl<
     T: NoiseFunction<I>,
     I: VectorSpace,
-    R: LayerResultContext<Result: LayerResultFor<T::Output>>,
+    R: LayerResultContextFor<I, Result: LayerResultFor<T::Output>>,
     W: LayerWeights,
 > LayerOperationFor<I, R, W> for Octave<T>
 {
@@ -281,7 +284,7 @@ impl<
         &self,
         seeds: &mut NoiseRng,
         working_loc: &mut I,
-        result: &mut <R as LayerResultContext>::Result,
+        result: &mut R::Result,
         weights: &mut W,
     ) {
         let octave_result = self.0.evaluate(*working_loc, seeds);
@@ -347,7 +350,7 @@ impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for DomainW
     fn prepare(&self, _result_context: &mut R, _weights: &mut W) {}
 }
 
-impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: LayerWeights>
+impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContextFor<I>, W: LayerWeights>
     LayerOperationFor<I, R, W> for DomainWarp<T>
 {
     #[inline]
@@ -355,7 +358,7 @@ impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResultContext, W: 
         &self,
         seeds: &mut NoiseRng,
         working_loc: &mut I,
-        _result: &mut <R as LayerResultContext>::Result,
+        _result: &mut R::Result,
         _weights: &mut W,
     ) {
         let warp_by = self.warper.evaluate(*working_loc, seeds) * self.strength;
@@ -415,7 +418,7 @@ impl<T: LayerOperation<R, PersistenceWeights>, R: LayerResultContext>
     }
 }
 
-impl<T: LayerOperationFor<I, R, PersistenceWeights>, I: VectorSpace, R: LayerResultContext>
+impl<T: LayerOperationFor<I, R, PersistenceWeights>, I: VectorSpace, R: LayerResultContextFor<I>>
     LayerOperationFor<I, R, PersistenceWeights> for PersistenceConfig<T>
 where
     Self: LayerOperation<R, PersistenceWeights>,
@@ -425,7 +428,7 @@ where
         &self,
         seeds: &mut NoiseRng,
         working_loc: &mut I,
-        result: &mut <R as LayerResultContext>::Result,
+        result: &mut R::Result,
         weights: &mut PersistenceWeights,
     ) {
         weights.persistence.0 *= self.config;
@@ -492,7 +495,7 @@ impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOpera
     }
 }
 
-impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: LayerWeights>
+impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContextFor<I>, W: LayerWeights>
     LayerOperationFor<I, R, W> for FractalLayers<T>
 {
     #[inline]
@@ -500,7 +503,7 @@ impl<I: VectorSpace, T: LayerOperationFor<I, R, W>, R: LayerResultContext, W: La
         &self,
         seeds: &mut NoiseRng,
         working_loc: &mut I,
-        result: &mut <R as LayerResultContext>::Result,
+        result: &mut R::Result,
         weights: &mut W,
     ) {
         self.layer.do_noise_op(seeds, working_loc, result, weights);
@@ -592,12 +595,14 @@ impl<T: VectorSpace> LayerResultContext for Normed<T>
 where
     NormedResult<T>: LayerResult,
 {
-    type Result = NormedResult<T>;
-
     #[inline]
     fn expect_weight(&mut self, weight: f32) {
         self.total_weights += weight;
     }
+}
+
+impl<T: VectorSpace, I> LayerResultContextFor<I> for Normed<T> {
+    type Result = NormedResult<T>;
 
     #[inline]
     fn start_result(&self) -> Self::Result {
@@ -699,12 +704,18 @@ impl<T: VectorSpace, L: Copy, C: Copy> LayerResultContext for NormedByDerivative
 where
     NormedResult<T>: LayerResult,
 {
-    type Result = NormedByDerivativeResult<T, L, C>;
-
     #[inline]
     fn expect_weight(&mut self, weight: f32) {
         self.total_weights += weight;
     }
+}
+
+impl<T: VectorSpace, I: VectorSpace, L: Copy, C: Copy> LayerResultContextFor<I>
+    for NormedByDerivative<T, L, C>
+where
+    NormedResult<T>: LayerResult,
+{
+    type Result = NormedByDerivativeResult<T, L, C>;
 
     #[inline]
     fn start_result(&self) -> Self::Result {
