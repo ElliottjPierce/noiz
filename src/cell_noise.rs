@@ -1382,19 +1382,12 @@ macro_rules! impl_simplectic_blend {
                 for (val, weight) in to_blend {
                     let len_sqr = weight.length_squared();
                     let falloff = general_simplex_weight(len_sqr, blending_half_radius);
-                    let d_falloff =
-                        general_simplex_weight_derivative(len_sqr, blending_half_radius)
-                            * 2.0
-                            * weight;
-                    let value = Blender::<$i, f32>::counter_dot_product(
-                        self,
-                        val.value * falloff,
-                        blending_half_radius,
-                    );
+                    let d_falloff = weight
+                        * general_simplex_weight_derivative(len_sqr, blending_half_radius)
+                        * (-2.0 / blending_half_radius); // chain rule
                     sum += WithGradient {
-                        value,
-                        gradient: val.gradient * falloff
-                            + weight.normalize_or_zero() * value * d_falloff * val.gradient,
+                        value: val.value * falloff,
+                        gradient: val.gradient * falloff + val.value * d_falloff, // product rule
                     };
                 }
                 sum
@@ -1418,7 +1411,7 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "These gradients are not mathematically rigorous."]
+    // #[ignore = "These gradients are not mathematically rigorous."]
     // TODO: Make them rigorous and keep the test.
     fn test_simplex_gradients() {
         /// Amount we step to approximate gradient. This must be significantly smaller than the
