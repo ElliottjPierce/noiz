@@ -759,13 +759,27 @@ pub trait ValueBlender<I: VectorSpace, V> {
     /// Blends together each value `V` of `to_blend` according to some weight `I`, where weights beyond the range of `blending_half_radius` are ignored.
     /// `blending_half_radius` cuts off the blend before it hits discontinuities.
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V;
+
+    /// Same as [`blend_values`](ValueBlender::blend_values) but also differentiates the result.
+    fn differential_blend_values(
+        &self,
+        to_blend: impl Iterator<Item = (V, I)>,
+        blending_half_radius: f32,
+    ) -> WithGradient<V, I>;
 }
 
 /// Similar to [`ValueBlender`] but specialized for blending gradient dot products.
 /// In other words, the weight has a role in the value, even before blending.
 pub trait GradientBlender<I: VectorSpace> {
-    /// Blends between gradient and offset pairs, returning a dot product blended value and the derivative gradient of that blend.
+    /// Blends between gradient and offset pairs, returning a dot product blended value.
     fn blend_gradients(
+        &self,
+        to_blend: impl Iterator<Item = (I, I)>,
+        blending_half_radius: f32,
+    ) -> f32;
+
+    /// Same as [`blend_gradients`](GradientBlender::blend_gradients) but also differentiates the result.
+    fn differential_blend_gradients(
         &self,
         to_blend: impl Iterator<Item = (I, I)>,
         blending_half_radius: f32,
@@ -838,7 +852,7 @@ impl<
 impl<
     I: VectorSpace + Mul<N::Concrete, Output = I>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
-    B: ValueBlender<I, WithGradient<N::Concrete, I>>,
+    B: ValueBlender<I, N::Concrete>,
     N: ConcreteAnyValueFromBits<Concrete: Copy>,
 > NoiseFunction<I> for BlendCellValues<P, B, N, true>
 {
@@ -848,17 +862,12 @@ impl<
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         let cell = self.cells.partition(input);
         let to_blend = cell.iter_points(*seeds).map(|p| {
+            // We can't use the `linear_equivalent_value` because the blend type is not linear.
             let value = self.noise.any_value(p.rough_id);
-            (
-                WithGradient {
-                    value,
-                    gradient: -p.offset * value,
-                },
-                p.offset,
-            )
+            (value, p.offset)
         });
         self.blender
-            .blend_values(to_blend, cell.blending_half_radius())
+            .differential_blend_values(to_blend, cell.blending_half_radius())
     }
 }
 
@@ -1012,7 +1021,7 @@ impl<
             (grad, p.offset)
         });
         let radius = cell.blending_half_radius();
-        self.blender.blend_gradients(to_blend, radius).value
+        self.blender.blend_gradients(to_blend, radius)
     }
 }
 
@@ -1033,7 +1042,7 @@ impl<
             (grad, p.offset)
         });
         let radius = cell.blending_half_radius();
-        self.blender.blend_gradients(to_blend, radius)
+        self.blender.differential_blend_gradients(to_blend, radius)
     }
 }
 
@@ -1267,6 +1276,14 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
         }
         sum * (weight_sum / (cnt as f32 * clamp_len))
     }
+
+    fn differential_blend_values(
+        &self,
+        to_blend: impl Iterator<Item = (V, I)>,
+        blending_half_radius: f32,
+    ) -> WithGradient<V, I> {
+        todo!()
+    }
 }
 
 /// A [`Blender`] that defers to another [`Blender`] `T` and scales its blending radius by some value.
@@ -1289,6 +1306,15 @@ impl<V, I: VectorSpace, B: ValueBlender<I, V>> ValueBlender<I, V> for LocalBlend
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
         self.blender
             .blend_values(to_blend, blending_half_radius * self.radius_scale)
+    }
+
+    fn differential_blend_values(
+        &self,
+        to_blend: impl Iterator<Item = (V, I)>,
+        blending_half_radius: f32,
+    ) -> WithGradient<V, I> {
+        self.blender
+            .differential_blend_values(to_blend, blending_half_radius * self.radius_scale)
     }
 }
 
@@ -1327,8 +1353,10 @@ fn general_simplex_weight_derivative(length_sqrd: f32, blending_half_radius: f32
 
 macro_rules! impl_simplectic_blend {
     ($i:ty, $c:literal) => {
-        impl<V: Mul<f32, Output = V> + Default + AddAssign<V>> ValueBlender<$i, V>
+        impl<V: Mul<f32, Output = V> + Default + AddAssign<V> + Copy> ValueBlender<$i, V>
             for SimplecticBlend
+        where
+            $i: Mul<V, Output = $i> + Mul<f32, Output = $i>,
         {
             #[inline]
             fn blend_values(
@@ -1343,11 +1371,53 @@ macro_rules! impl_simplectic_blend {
                 }
                 sum
             }
+
+            #[inline]
+            fn differential_blend_values(
+                &self,
+                to_blend: impl Iterator<Item = (V, $i)>,
+                blending_half_radius: f32,
+            ) -> WithGradient<V, $i> {
+                let mut sum = WithGradient {
+                    value: V::default(),
+                    gradient: <$i>::ZERO,
+                };
+                for (val, weight) in to_blend {
+                    let len_sqr = weight.length_squared();
+                    let falloff = general_simplex_weight(len_sqr, blending_half_radius);
+                    let d_falloff = weight
+                        * general_simplex_weight_derivative(len_sqr, blending_half_radius)
+                        * (-2.0 / blending_half_radius); // chain rule
+                    sum.value += val * falloff;
+                    sum.gradient += d_falloff * val;
+                }
+                sum
+            }
         }
 
         impl GradientBlender<$i> for SimplecticBlend {
             #[inline]
             fn blend_gradients(
+                &self,
+                to_blend: impl Iterator<Item = ($i, $i)>,
+                blending_half_radius: f32,
+            ) -> f32 {
+                let mut sum = 0.0;
+                let blending_half_radius_sqrd = blending_half_radius * blending_half_radius;
+                let counter_dot_product =
+                    ($c * blending_half_radius_sqrd * blending_half_radius_sqrd);
+                for (grad, offset) in to_blend {
+                    let dot = grad.dot(offset);
+                    let len_sqr = offset.length_squared();
+                    let falloff = general_simplex_weight(len_sqr, blending_half_radius);
+                    sum += dot * falloff;
+                }
+                sum *= counter_dot_product;
+                sum
+            }
+
+            #[inline]
+            fn differential_blend_gradients(
                 &self,
                 to_blend: impl Iterator<Item = ($i, $i)>,
                 blending_half_radius: f32,
