@@ -792,7 +792,7 @@ pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
     ) -> WithGradient<f32, I>;
 }
 
-/// A [`NoiseFunction`] that blends values sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// A [`NoiseFunction`] that blends values sourced from a [`ConcreteAnyValueFromBits`] `N` by a [`ValueBlender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
 ///
 /// This results in smooth blending between values. Note that this does *not* mix between values; it only blends them together so there isn't a sharp jump.
 /// To see this clearly, run the "show_noise" example.
@@ -811,7 +811,7 @@ pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
 /// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>>::default();
 /// ```
 ///
-/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default), and use a [`DifferentiableValueBlender`].
 ///
 /// ```
 /// # use noiz::prelude::*;
@@ -828,7 +828,7 @@ pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
     pub cells: P,
     /// The [`ConcreteAnyValueFromBits`].
     pub noise: N,
-    /// The [`Blender`].
+    /// The [`ValueBlender`].
     pub blender: B,
 }
 
@@ -978,7 +978,7 @@ impl<
     }
 }
 
-/// A [`NoiseFunction`] that blends gradients sourced from a [`GradientGenerator`] `G` by a [`Blender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
+/// A [`NoiseFunction`] that blends gradients sourced from a [`GradientGenerator`] `G` by a [`GradientBlender`] `B` within some [`DomainCell`] form a [`Partitioner`] `P`.
 ///
 /// This is typically used for simplex noise:
 ///
@@ -987,7 +987,7 @@ impl<
 /// let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>>::default();
 /// ```
 ///
-/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
+/// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default), and use a  [`DifferentiableGradientBlender`].
 ///
 /// ```
 /// # use noiz::prelude::*;
@@ -1004,7 +1004,7 @@ pub struct BlendCellGradients<P, B, G, const DIFFERENTIATE: bool = false> {
     pub cells: P,
     /// The [`GradientGenerator`].
     pub gradients: G,
-    /// The [`Blender`].
+    /// The [`GradientBlender`].
     pub blender: B,
 }
 
@@ -1247,7 +1247,7 @@ impl GradientGenerator<Vec3A> for QualityGradients {
     }
 }
 
-/// A [`Blender`] that weighs each values by it's distance, as computed by a [`LengthFunction`].
+/// A [`ValueBlender`] that weighs each values by it's distance, as computed by a [`LengthFunction`].
 ///
 /// This is mainly used for fun worly noise:
 ///
@@ -1282,13 +1282,14 @@ impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: 
     }
 }
 
-/// A [`Blender`] that defers to another [`Blender`] `T` and scales its blending radius by some value.
+/// A blender that defers to another blender `T` and scales its blending radius by some value.
+/// This works with [`GradientBlender`], [`DifferentiableGradientBlender`], [`ValueBlender`], and [`DifferentiableValueBlender`].
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct LocalBlend<T> {
-    /// The inner [`Blender`].
+    /// The inner blender.
     pub blender: T,
     /// The scale of the blending radius.
     /// Values in (0, 1) will decrease the blending, producing more localized values.
@@ -1345,10 +1346,11 @@ impl<I: VectorSpace, B: DifferentiableGradientBlender<I>> DifferentiableGradient
     }
 }
 
-/// A [`Blender`] built for the [`SimplexGrid`](crate::cells::SimplexGrid) for simplex noise that smoothly blends values in a pleasant way.
+/// A [`GradientBlender`] and [`ValueBlender`] built for the [`SimplexGrid`](crate::cells::SimplexGrid) for simplex noise that smoothly blends values in a pleasant way.
+/// This also implements [`DifferentiableGradientBlender`] and [`DifferentiableValueBlender`].
 ///
 /// This can also be used to make "even" blending in [`BlendCellValues`].
-/// If you're not sure which [`Blender`] to use, start with this one.
+/// If you're not sure which blender to use, start with this one.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
