@@ -768,7 +768,7 @@ impl<T: Div<f32>, G: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T,
 impl<
     T: AddAssign + Mul<f32, Output = T>,
     I: Into<T>,
-    IG: Into<G> + Copy,
+    IG: Into<G>,
     G: VectorSpace,
     L: LengthFunction<G>,
     C: Curve<f32>,
@@ -779,14 +779,18 @@ where
 {
     #[inline]
     fn include_value(&mut self, value: WithGradient<I, IG>, weight: f32) {
-        self.running_derivative = self.running_derivative + value.gradient.into();
+        let WithGradient { value, gradient } = value;
+        let gradient = gradient.into();
+
         let total_derivative = self
             .derivative_calculator
-            .length_of(self.running_derivative);
+            .length_of(self.running_derivative + gradient);
         let additional_weight = self
             .derivative_contribution
             .sample_unchecked(total_derivative * self.derivative_falloff);
+
         let full_weight = weight * additional_weight;
+        self.running_derivative = self.running_derivative + gradient * full_weight;
         self.running_total += value.into() * full_weight;
     }
 }
