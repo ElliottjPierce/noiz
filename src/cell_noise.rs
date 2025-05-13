@@ -1490,53 +1490,45 @@ impl_simplectic_blend!(Vec4, 62.795_597);
 
 #[cfg(test)]
 mod tests {
-    use bevy_math::vec2;
-
-    use crate::prelude::*;
-
     use super::*;
+    use crate::{Noise, SampleableFor, cells::SimplexGrid};
 
-    #[test]
-    fn test_simplex_gradients() {
-        /// Amount we step to approximate gradient. This must be significantly smaller than the
-        /// noise features to be any sort of accurate.
-        const STEP: f32 = 1e-3;
-        /// Epsilon for gradient approximation comparison.
-        const EPSILON: f32 = 1e-3;
-        let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>::default();
-        let sample_points = [
-            vec2(0.0, 0.0),
-            vec2(0.0, 0.5),
-            vec2(0.0, 1.0),
-            vec2(0.5, 0.0),
-            vec2(0.5, 0.5),
-            vec2(0.5, 1.0),
-            vec2(1.0, 0.0),
-            vec2(1.0, 0.5),
-            vec2(1.0, 1.0),
-        ];
+    /// Amount we step to approximate gradient. This must be significantly smaller than the
+    /// noise features to be any sort of accurate.
+    const STEP: f32 = 1e-3;
+    /// Epsilon for gradient approximation comparison.
+    const EPSILON: f32 = 1e-3;
+
+    fn test_grads_2d(noise: impl SampleableFor<Vec2, WithGradient<f32, Vec2>>) {
         let mut failure = false;
-        for point in sample_points {
-            let result = noise.sample_for::<WithGradient<f32, Vec2>>(point);
-            let positive_grad = Vec2::new(
-                noise.sample_for::<f32>(point + STEP * Vec2::X) - result.value,
-                noise.sample_for::<f32>(point + STEP * Vec2::Y) - result.value,
-            );
-            let negative_grad = Vec2::new(
-                result.value - noise.sample_for::<f32>(point - STEP * Vec2::X),
-                result.value - noise.sample_for::<f32>(point - STEP * Vec2::Y),
-            );
-            let approximate_gradient = (positive_grad + negative_grad) / (STEP * 2.0);
-            let analytical_gradient = result.gradient;
-            if approximate_gradient.distance(result.gradient) > EPSILON {
-                println!(
-                    "Gradient mismatch at point {point:?}: expected {approximate_gradient:?}, got {analytical_gradient:?}"
-                );
-                failure = true;
+        for x in -10..=10 {
+            for y in -10..=10 {
+                let point = Vec2::new(x as f32, y as f32) * 0.2;
+                let result = noise.sample(point);
+                let approximate_gradient = Vec2::new(
+                    noise.sample(point + STEP * Vec2::X).value
+                        - noise.sample(point - STEP * Vec2::X).value,
+                    noise.sample(point + STEP * Vec2::Y).value
+                        - noise.sample(point - STEP * Vec2::Y).value,
+                ) / (STEP * 2.0);
+                let analytical_gradient = result.gradient;
+                if approximate_gradient.distance(result.gradient) > EPSILON {
+                    println!(
+                        "Gradient mismatch at point {point:?}: approximate: {approximate_gradient:?}, analytical: {analytical_gradient:?}"
+                    );
+                    failure = true;
+                }
             }
         }
         if failure {
             panic!("Simplex gradients failed at the above points.");
         }
+    }
+
+    #[test]
+    fn test_simplex_gradients() {
+        test_grads_2d(Noise::<
+            BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+        >::default());
     }
 }
