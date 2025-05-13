@@ -1522,8 +1522,10 @@ mod tests {
                 ) / (STEP * 2.0);
                 let analytical_gradient = result.gradient;
                 if approximate_gradient.distance(result.gradient) > EPSILON {
+                    let dir_approx = approximate_gradient.normalize_or_zero();
+                    let dir_analytical = analytical_gradient.normalize_or_zero();
                     println!(
-                        "Gradient mismatch at point {point:?}: approximate: {approximate_gradient:?}, analytical: {analytical_gradient:?}"
+                        "Gradient mismatch at point {point:?}: approximate: {approximate_gradient:?} dir {dir_approx:?}, analytical: {analytical_gradient:?} dir {dir_analytical:?}"
                     );
                     failure = true;
                 }
@@ -1599,7 +1601,15 @@ mod tests {
                     Octave<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>,
                 >,
             >,
-        >::default());
+        >::from(LayeredNoise::new(
+            NormedByDerivative::default().with_falloff(1.0),
+            Default::default(),
+            FractalLayers {
+                layer: Octave::default(),
+                lacunarity: 1.0,
+                amount: 8,
+            },
+        )));
     }
 
     #[test]

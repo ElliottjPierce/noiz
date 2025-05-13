@@ -7,7 +7,7 @@ use core::{
 };
 
 use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction, rng::NoiseRng};
-use bevy_math::{Curve, VectorSpace};
+use bevy_math::{Curve, VectorSpace, WithDerivative, curve::derivatives::SampleDerivative};
 
 /// This represents the context of some [`LayerResult`].
 /// This may store metadata collected in [`LayerOperation::prepare`].
@@ -896,17 +896,15 @@ where
 }
 
 impl<
-    T: AddAssign + Mul<f32, Output = T>,
-    IT: Into<T>,
+    IT: Into<f32>,
     IG: Into<G> + Copy,
-    G: VectorSpace + AddAssign + Mul<f32, Output = G>,
+    G: VectorSpace + AddAssign,
     L: LengthFunction<G>,
-    C: Curve<f32>,
+    C: SampleDerivative<f32>,
 > FractalLayerResultCompatible<WithGradient<IT, IG>>
-    for NormedByDerivativeResult<WithGradient<T, G>, G, L, C>
+    for NormedByDerivativeResult<WithGradient<f32, G>, G, L, C>
 where
     Self: LayerResultFor<WithGradient<IT, IG>>,
-    WithGradient<IT, IG>: Into<WithGradient<T, G>>,
 {
     #[inline]
     fn include_fractal_value(
@@ -915,19 +913,22 @@ where
         weight: f32,
         artificial_frequency: f32,
     ) {
-        let gradient = value.gradient.into();
-        self.running_derivative += gradient * weight;
+        let gradient = value.gradient.into() * artificial_frequency;
+        let value = value.value.into();
 
         let total_derivative = self
             .derivative_calculator
             .length_of(self.running_derivative);
         let additional_weight = self
             .derivative_contribution
-            .sample_unchecked(total_derivative * self.derivative_falloff);
+            .sample_with_derivative_unchecked(total_derivative * self.derivative_falloff);
+        self.running_derivative += gradient * weight;
 
-        let full_weight = weight * additional_weight;
-        self.running_total.value += value.value.into() * full_weight;
-        self.running_total.gradient += value.gradient.into() * full_weight * artificial_frequency;
+        self.running_total.value += value * weight * additional_weight.value;
+        self.running_total.gradient += gradient
+            * weight
+            * (additional_weight.value
+                + value * weight * self.derivative_falloff * additional_weight.derivative);
     }
 }
 
@@ -951,6 +952,16 @@ impl Curve<f32> for PeakDerivativeContribution {
     #[inline]
     fn sample_unchecked(&self, t: f32) -> f32 {
         1.0 / (1.0 + t)
+    }
+}
+
+impl SampleDerivative<f32> for PeakDerivativeContribution {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
+        WithDerivative {
+            value: 1.0 / (1.0 + t),
+            derivative: -1.0 / ((1.0 + t) * (1.0 + t)),
+        }
     }
 }
 
