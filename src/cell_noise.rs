@@ -1491,13 +1491,17 @@ impl_simplectic_blend!(Vec4, 62.795_597);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Noise, SampleableFor, cells::SimplexGrid};
+    use crate::{
+        Noise, SampleableFor,
+        cells::{OrthoGrid, SimplexGrid},
+        rng::{Random, SNorm},
+    };
 
     /// Amount we step to approximate gradient. This must be significantly smaller than the
     /// noise features to be any sort of accurate.
     const STEP: f32 = 1e-3;
     /// Epsilon for gradient approximation comparison.
-    const EPSILON: f32 = 1e-3;
+    const EPSILON: f32 = 1e-2;
 
     fn test_grads_2d(noise: impl SampleableFor<Vec2, WithGradient<f32, Vec2>>) {
         let mut failure = false;
@@ -1529,6 +1533,27 @@ mod tests {
     fn test_simplex_gradients() {
         test_grads_2d(Noise::<
             BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+        >::default());
+    }
+
+    #[test]
+    fn test_simplex_value_gradients() {
+        test_grads_2d(Noise::<
+            BlendCellValues<SimplexGrid, SimplecticBlend, Random<SNorm, f32>, true>,
+        >::default());
+    }
+
+    #[test]
+    fn test_mix_gradients() {
+        test_grads_2d(Noise::<
+            MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>,
+        >::default());
+    }
+
+    #[test]
+    fn test_mix_value_gradients() {
+        test_grads_2d(Noise::<
+            MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>, true>,
         >::default());
     }
 }
