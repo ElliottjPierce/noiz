@@ -1492,20 +1492,23 @@ impl_simplectic_blend!(Vec4, 62.795_597);
 mod tests {
     use super::*;
     use crate::{
-        Noise, SampleableFor,
+        Noise, SampleableFor, ScalableNoise,
         cells::{OrthoGrid, SimplexGrid},
         math_noise::Abs,
-        prelude::{Billow, Masked, UNormToSNorm},
+        prelude::{
+            Billow, FractalLayers, LayeredNoise, Masked, Normed, NormedByDerivative, Octave,
+            PeakDerivativeContribution, Persistence, UNormToSNorm,
+        },
         rng::{Random, SNorm},
     };
 
     /// Amount we step to approximate gradient. This must be significantly smaller than the
     /// noise features to be any sort of accurate.
-    const STEP: f32 = 1e-3;
+    const STEP: f32 = 1e-4;
     /// Epsilon for gradient approximation comparison.
     const EPSILON: f32 = 1e-2;
 
-    fn test_grads_2d(noise: impl SampleableFor<Vec2, WithGradient<f32, Vec2>>) {
+    fn test_grads_2d(noise: impl SampleableFor<Vec2, WithGradient<f32, Vec2>> + ScalableNoise) {
         let mut failure = false;
         for x in -10..=10 {
             for y in -10..=10 {
@@ -1565,6 +1568,38 @@ mod tests {
             Masked<
                 MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>,
                 BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+            >,
+        >::default());
+    }
+
+    #[test]
+    #[ignore = "fbm is too detailed to be precisely tested."]
+    fn test_fbm_gradients() {
+        test_grads_2d(Noise::<
+            LayeredNoise<
+                Normed<WithGradient<f32, Vec2>>,
+                Persistence,
+                FractalLayers<
+                    Octave<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>,
+                >,
+            >,
+        >::default());
+    }
+
+    #[test]
+    #[ignore = "fbm is too detailed to be precisely tested."]
+    fn test_erosion_approx_fbm_gradients() {
+        test_grads_2d(Noise::<
+            LayeredNoise<
+                NormedByDerivative<
+                    WithGradient<f32, Vec2>,
+                    EuclideanLength,
+                    PeakDerivativeContribution,
+                >,
+                Persistence,
+                FractalLayers<
+                    Octave<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>,
+                >,
             >,
         >::default());
     }

@@ -103,7 +103,7 @@ pub trait SeedableNoise {
     fn set_seed(&mut self, seed: u32);
 
     /// Gets the seed of the noise.
-    fn get_seed(&mut self) -> u32;
+    fn get_seed(&self) -> u32;
 }
 
 /// Specifies that this noise is scalable.
@@ -129,7 +129,7 @@ pub trait ScalableNoise {
 
     /// Gets the scale of the noise via its frequency.
     /// See also [`get_frequency`](ScalableNoise::get_frequency).
-    fn get_frequency(&mut self) -> f32;
+    fn get_frequency(&self) -> f32;
 
     /// Sets the scale of the noise via its period.
     /// The `period` is the inverse of the [`frequency`](ScalableNoise::set_frequency).
@@ -148,7 +148,7 @@ pub trait ScalableNoise {
 
     /// Gets the scale of the noise via its period.
     /// See also [`set_period`](ScalableNoise::set_period).
-    fn get_period(&mut self) -> f32 {
+    fn get_period(&self) -> f32 {
         1.0 / self.get_frequency()
     }
 }
@@ -330,7 +330,7 @@ impl<N> ScalableNoise for Noise<N> {
         self.frequency = frequency;
     }
 
-    fn get_frequency(&mut self) -> f32 {
+    fn get_frequency(&self) -> f32 {
         self.frequency
     }
 }
@@ -340,7 +340,7 @@ impl<N> SeedableNoise for Noise<N> {
         self.seed = NoiseRng(seed);
     }
 
-    fn get_seed(&mut self) -> u32 {
+    fn get_seed(&self) -> u32 {
         self.seed.0
     }
 }
@@ -410,7 +410,7 @@ impl<N> SeedableNoise for RawNoise<N> {
         self.seed = NoiseRng(seed);
     }
 
-    fn get_seed(&mut self) -> u32 {
+    fn get_seed(&self) -> u32 {
         self.seed.0
     }
 }

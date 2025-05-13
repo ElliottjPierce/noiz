@@ -483,7 +483,7 @@ impl<T: Default> Default for FractalLayers<T> {
         Self {
             layer: T::default(),
             lacunarity: 2.0,
-            amount: 8,
+            amount: 2,
         }
     }
 }
