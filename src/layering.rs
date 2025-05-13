@@ -694,7 +694,7 @@ impl<T, L: Default, C: Default> Default for NormedByDerivative<T, L, C> {
             total_weights: 0.0,
             derivative_calculator: L::default(),
             derivative_contribution: C::default(),
-            derivative_falloff: 1.0,
+            derivative_falloff: 0.25,
         }
     }
 }
