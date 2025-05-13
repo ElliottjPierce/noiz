@@ -348,6 +348,7 @@ macro_rules! impl_for_gradients {
                 <Self as NoiseFunction<G>>::Output,
             >;
 
+            #[inline]
             fn evaluate(
                 &self,
                 input: WithGradient<T, G>,
@@ -369,6 +370,7 @@ impl_for_gradients!(Negate);
 impl<G: Neg<Output = G>> NoiseFunction<WithGradient<f32, G>> for Abs {
     type Output = WithGradient<f32, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<f32, G>,
@@ -388,6 +390,7 @@ impl<G: Neg<Output = G>> NoiseFunction<WithGradient<f32, G>> for Abs {
 impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Inverse {
     type Output = WithGradient<f32, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<f32, G>,
@@ -403,6 +406,7 @@ impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Inverse {
 impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Pow2 {
     type Output = WithGradient<f32, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<f32, G>,
@@ -418,6 +422,7 @@ impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Pow2 {
 impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Pow3 {
     type Output = WithGradient<f32, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<f32, G>,
@@ -433,6 +438,7 @@ impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Pow3 {
 impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Pow4 {
     type Output = WithGradient<f32, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<f32, G>,
@@ -448,6 +454,7 @@ impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for Pow4 {
 impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for PowF {
     type Output = WithGradient<f32, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<f32, G>,
@@ -466,6 +473,7 @@ where
 {
     type Output = WithGradient<<Self as NoiseFunction<T>>::Output, G>;
 
+    #[inline]
     fn evaluate(
         &self,
         input: WithGradient<T, G>,

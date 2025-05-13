@@ -362,6 +362,10 @@ impl NoiseFunction<Vec4> for DisAligned {
 /// A [`NoiseFunction`] that forces a gradient of this value.
 /// This is mathematically arbitrary and will not be an actual derivative/gradient unless you calculate it to be so.
 /// This exists as an escape hatch to use [`crate::layering::NormedByDerivative`] with noise functions that are not differentiable.
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct WithGradientOf<G>(pub G);
 
 impl<T, G: Copy> NoiseFunction<T> for WithGradientOf<G> {
