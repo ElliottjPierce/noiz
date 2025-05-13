@@ -742,14 +742,15 @@ where
 pub struct NormedByDerivativeResult<T, G, L, C> {
     total_weights: f32,
     running_total: T,
+    /// This is the derivative of each layer, not the derivative of the final noise.
     running_derivative: G,
     derivative_calculator: L,
     derivative_contribution: C,
     derivative_falloff: f32,
 }
 
-impl<T: Div<f32>, G: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> {
-    type Output = WithGradient<T::Output, G::Output>;
+impl<T: Div<f32>, G, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> {
+    type Output = T::Output;
 
     #[inline]
     fn add_unexpected_weight_to_total(&mut self, weight: f32) {
@@ -758,17 +759,14 @@ impl<T: Div<f32>, G: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T,
 
     #[inline]
     fn finish(self, _rng: &mut NoiseRng) -> Self::Output {
-        WithGradient {
-            value: self.running_total / self.total_weights,
-            gradient: self.running_derivative / self.total_weights,
-        }
+        self.running_total / self.total_weights
     }
 }
 
 impl<
     T: AddAssign + Mul<f32, Output = T>,
-    I: Into<T>,
-    IG: Into<G>,
+    I,
+    IG: Into<G> + Copy,
     G: VectorSpace,
     L: LengthFunction<G>,
     C: Curve<f32>,
@@ -779,8 +777,7 @@ where
 {
     #[inline]
     fn include_value(&mut self, value: WithGradient<I, IG>, weight: f32) {
-        let WithGradient { value, gradient } = value;
-        let gradient = gradient.into();
+        let gradient = value.gradient.into();
 
         let total_derivative = self
             .derivative_calculator

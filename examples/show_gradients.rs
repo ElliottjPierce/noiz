@@ -96,7 +96,11 @@ fn setup(
                 name: "Simplex Approximated Erosion FBM",
                 noise: Box::new(Noise::<
                     LayeredNoise<
-                        NormedByDerivative<f32, EuclideanLength, PeakDerivativeContribution>,
+                        NormedByDerivative<
+                            WithGradient<f32, Vec2>,
+                            EuclideanLength,
+                            PeakDerivativeContribution,
+                        >,
                         Persistence,
                         FractalLayers<
                             Octave<
