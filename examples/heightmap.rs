@@ -20,7 +20,7 @@ use noiz::{
 const SEED: u32 = 0;
 const RESOLUTION: f32 = 2.0;
 const EXTENT: f32 = 512.0;
-const PERIOD: f32 = 256.0;
+const PERIOD: f32 = 512.0;
 const AMPLITUDE: f32 = 128.0;
 
 const SPEED: f32 = 25.0;
@@ -30,7 +30,7 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
     Noise {
         noise: LayeredNoise::new(
             NormedByDerivative::<f32, EuclideanLength, PeakDerivativeContribution>::default()
-                .with_falloff(0.0002),
+                .with_falloff(0.05),
             Persistence(0.6),
             FractalLayers {
                 layer: Octave(BlendCellGradients::<

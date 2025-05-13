@@ -564,8 +564,7 @@ impl LayerWeightsSettings for Persistence {
     fn start_weights(&self) -> Self::Weights {
         PersistenceWeights {
             persistence: *self,
-            // Start high to minimize precision loss, not that it's a big deal.
-            next: 1000.0,
+            next: 1.0,
         }
     }
 }
@@ -778,16 +777,16 @@ where
     #[inline]
     fn include_value(&mut self, value: WithGradient<I, IG>, weight: f32) {
         let gradient = value.gradient.into();
+        self.running_derivative = self.running_derivative + gradient * weight;
 
         let total_derivative = self
             .derivative_calculator
-            .length_of(self.running_derivative + gradient);
+            .length_of(self.running_derivative);
         let additional_weight = self
             .derivative_contribution
             .sample_unchecked(total_derivative * self.derivative_falloff);
 
         let full_weight = weight * additional_weight;
-        self.running_derivative = self.running_derivative + gradient * full_weight;
         self.running_total += value.into() * full_weight;
     }
 }
