@@ -4,7 +4,7 @@ use core::ops::{Add, Mul};
 
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 
-use crate::{NoiseFunction, rng::NoiseRng};
+use crate::{NoiseFunction, cells::WithGradient, rng::NoiseRng};
 
 /// A [`NoiseFunction`] that wraps an inner [`NoiseFunction`] `N` and produces values of the same type as the input with random elements sourced from `N`.
 ///
@@ -356,5 +356,22 @@ impl NoiseFunction<Vec4> for DisAligned {
     #[inline(always)]
     fn evaluate(&self, input: Vec4, _seeds: &mut NoiseRng) -> Self::Output {
         input
+    }
+}
+
+/// A [`NoiseFunction`] that forces a gradient of this value.
+/// This is mathematically arbitrary and will not be an actual derivative/gradient unless you calculate it to be so.
+/// This exists as an escape hatch to use [`crate::layering::NormedByDerivative`] with noise functions that are not differentiable.
+pub struct WithGradientOf<G>(pub G);
+
+impl<T, G: Copy> NoiseFunction<T> for WithGradientOf<G> {
+    type Output = WithGradient<T, G>;
+
+    #[inline(always)]
+    fn evaluate(&self, input: T, _seeds: &mut NoiseRng) -> Self::Output {
+        WithGradient {
+            value: input,
+            gradient: self.0,
+        }
     }
 }
