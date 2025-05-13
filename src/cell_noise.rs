@@ -1573,7 +1573,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "fbm is too detailed to be precisely tested."]
     fn test_fbm_gradients() {
         test_grads_2d(Noise::<
             LayeredNoise<
@@ -1587,7 +1586,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "fbm is too detailed to be precisely tested."]
     fn test_erosion_approx_fbm_gradients() {
         test_grads_2d(Noise::<
             LayeredNoise<
