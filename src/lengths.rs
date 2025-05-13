@@ -2,6 +2,8 @@
 
 use bevy_math::{Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 
+use crate::cells::WithGradient;
+
 /// Represents some function on a vector `T` that computes some version of it's length.
 pub trait LengthFunction<T: VectorSpace> {
     /// If the absolute value of no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
@@ -16,6 +18,12 @@ pub trait LengthFunction<T: VectorSpace> {
     fn length_ordering(&self, vec: T) -> f32;
     /// Returns the length of some `T` based on [`LengthFunction::length_ordering`].
     fn length_from_ordering(&self, ordering: f32) -> f32;
+}
+
+/// A [`LengthFunction`] that can be differentiated.
+pub trait DifferentiableLengthFunction<T: VectorSpace>: LengthFunction<T> {
+    /// Same as [`length_of`](LengthFunction::length_of) but also gives gradient information.
+    fn length_and_gradient_of(&self, vec: T) -> WithGradient<f32, T>;
 }
 
 /// A [`LengthFunction`] for "as the crow flies" length
@@ -101,6 +109,16 @@ macro_rules! impl_distances {
             }
         }
 
+        impl DifferentiableLengthFunction<$t> for EuclideanLength {
+            #[inline]
+            fn length_and_gradient_of(&self, vec: $t) -> WithGradient<f32, $t> {
+                WithGradient {
+                    value: vec.length_squared().sqrt(),
+                    gradient: vec / crate::rng::force_float_non_zero(vec.length_squared().sqrt()),
+                }
+            }
+        }
+
         impl LengthFunction<$t> for EuclideanSqrdLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
@@ -115,6 +133,16 @@ macro_rules! impl_distances {
             #[inline]
             fn length_from_ordering(&self, ordering: f32) -> f32 {
                 ordering
+            }
+        }
+
+        impl DifferentiableLengthFunction<$t> for EuclideanSqrdLength {
+            #[inline]
+            fn length_and_gradient_of(&self, vec: $t) -> WithGradient<f32, $t> {
+                WithGradient {
+                    value: vec.length_squared(),
+                    gradient: vec * 2.0,
+                }
             }
         }
 

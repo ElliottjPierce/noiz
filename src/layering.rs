@@ -6,7 +6,12 @@ use core::{
     ops::{AddAssign, Div, Mul},
 };
 
-use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction, rng::NoiseRng};
+use crate::{
+    NoiseFunction,
+    cells::WithGradient,
+    lengths::{DifferentiableLengthFunction, LengthFunction},
+    rng::NoiseRng,
+};
 use bevy_math::{Curve, VectorSpace, WithDerivative, curve::derivatives::SampleDerivative};
 
 /// This represents the context of some [`LayerResult`].
@@ -898,8 +903,8 @@ where
 impl<
     IT: Into<f32>,
     IG: Into<G> + Copy,
-    G: VectorSpace + AddAssign,
-    L: LengthFunction<G>,
+    G: VectorSpace + AddAssign + Mul<G, Output = G>,
+    L: DifferentiableLengthFunction<G>,
     C: SampleDerivative<f32>,
 > FractalLayerResultCompatible<WithGradient<IT, IG>>
     for NormedByDerivativeResult<WithGradient<f32, G>, G, L, C>
@@ -913,22 +918,25 @@ where
         weight: f32,
         artificial_frequency: f32,
     ) {
-        let gradient = value.gradient.into() * artificial_frequency;
+        let gradient: G = value.gradient.into() * artificial_frequency;
         let value = value.value.into();
 
         let total_derivative = self
             .derivative_calculator
-            .length_of(self.running_derivative);
+            .length_and_gradient_of(self.running_derivative);
         let additional_weight = self
             .derivative_contribution
-            .sample_with_derivative_unchecked(total_derivative * self.derivative_falloff);
+            .sample_with_derivative_unchecked(total_derivative.value * self.derivative_falloff);
         self.running_derivative += gradient * weight;
+        let d_additional_weight = total_derivative.gradient
+            * gradient
+            * additional_weight.derivative
+            * self.derivative_falloff
+            * weight;
 
         self.running_total.value += value * weight * additional_weight.value;
-        self.running_total.gradient += gradient
-            * weight
-            * (additional_weight.value
-                + value * weight * self.derivative_falloff * additional_weight.derivative);
+        self.running_total.gradient +=
+            gradient * weight * additional_weight.value + d_additional_weight * value * weight;
     }
 }
 

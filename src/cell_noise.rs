@@ -1494,6 +1494,7 @@ mod tests {
     use crate::{
         Noise, SampleableFor, ScalableNoise,
         cells::{OrthoGrid, SimplexGrid},
+        lengths::EuclideanSqrdLength,
         math_noise::Abs,
         prelude::{
             Billow, FractalLayers, LayeredNoise, Masked, Normed, NormedByDerivative, Octave,
@@ -1593,7 +1594,7 @@ mod tests {
             LayeredNoise<
                 NormedByDerivative<
                     WithGradient<f32, Vec2>,
-                    EuclideanLength,
+                    EuclideanSqrdLength,
                     PeakDerivativeContribution,
                 >,
                 Persistence,
@@ -1607,7 +1608,7 @@ mod tests {
             FractalLayers {
                 layer: Octave::default(),
                 lacunarity: 1.0,
-                amount: 8,
+                amount: 2,
             },
         )));
     }
