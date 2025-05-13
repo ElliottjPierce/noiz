@@ -687,7 +687,7 @@ pub struct NormedByDerivative<T, L, C> {
     total_weights: f32,
 }
 
-impl<T: VectorSpace, L: Default, C: Default> Default for NormedByDerivative<T, L, C> {
+impl<T, L: Default, C: Default> Default for NormedByDerivative<T, L, C> {
     fn default() -> Self {
         Self {
             marker: PhantomData,
@@ -699,7 +699,7 @@ impl<T: VectorSpace, L: Default, C: Default> Default for NormedByDerivative<T, L
     }
 }
 
-impl<T: VectorSpace, L, C> NormedByDerivative<T, L, C> {
+impl<T, L, C> NormedByDerivative<T, L, C> {
     /// Sets [`NormedByDerivative::derivative_falloff`].
     pub fn with_falloff(mut self, derivative_falloff: f32) -> Self {
         self.derivative_falloff = derivative_falloff;
@@ -707,7 +707,7 @@ impl<T: VectorSpace, L, C> NormedByDerivative<T, L, C> {
     }
 }
 
-impl<T: VectorSpace, L: Copy, C: Copy> LayerResultContext for NormedByDerivative<T, L, C>
+impl<T, L: Copy, C: Copy> LayerResultContext for NormedByDerivative<T, L, C>
 where
     NormedResult<T>: LayerResult,
 {
@@ -717,10 +717,10 @@ where
     }
 }
 
-impl<T: VectorSpace, I: VectorSpace, L: Copy, C: Copy> LayerResultContextFor<I>
+impl<T: Default + Div<f32>, I: VectorSpace, L: Copy, C: Copy> LayerResultContextFor<I>
     for NormedByDerivative<T, L, C>
 where
-    NormedResult<T>: LayerResult,
+    NormedByDerivativeResult<T, I, L, C>: LayerResult,
 {
     type Result = NormedByDerivativeResult<T, I, L, C>;
 
@@ -728,7 +728,7 @@ where
     fn start_result(&self) -> Self::Result {
         NormedByDerivativeResult {
             total_weights: self.total_weights,
-            running_total: T::ZERO,
+            running_total: T::default(),
             running_derivative: I::ZERO,
             derivative_calculator: self.derivative_calculator,
             derivative_contribution: self.derivative_contribution,
@@ -748,8 +748,8 @@ pub struct NormedByDerivativeResult<T, G, L, C> {
     derivative_falloff: f32,
 }
 
-impl<T: Div<f32>, G, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> {
-    type Output = T::Output;
+impl<T: Div<f32>, G: Div<f32>, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> {
+    type Output = WithGradient<T::Output, G::Output>;
 
     #[inline]
     fn add_unexpected_weight_to_total(&mut self, weight: f32) {
@@ -758,24 +758,24 @@ impl<T: Div<f32>, G, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> 
 
     #[inline]
     fn finish(self, _rng: &mut NoiseRng) -> Self::Output {
-        self.running_total / self.total_weights
+        WithGradient {
+            value: self.running_total / self.total_weights,
+            gradient: self.running_derivative / self.total_weights,
+        }
     }
 }
 
-impl<T: VectorSpace, G, L, C> LayerResultFor<T> for NormedByDerivativeResult<T, G, L, C>
+impl<
+    T: AddAssign + Mul<f32, Output = T>,
+    I: Into<T>,
+    IG: Into<G> + Copy,
+    G: VectorSpace,
+    L: LengthFunction<G>,
+    C: Curve<f32>,
+> LayerResultFor<WithGradient<I, IG>> for NormedByDerivativeResult<T, G, L, C>
 where
     Self: LayerResult,
-{
-    #[inline]
-    fn include_value(&mut self, value: T, weight: f32) {
-        self.running_total = self.running_total + (value * weight);
-    }
-}
-
-impl<T: VectorSpace, I: Into<T>, IG: Into<G>, G: VectorSpace, L: LengthFunction<G>, C: Curve<f32>>
-    LayerResultFor<WithGradient<I, IG>> for NormedByDerivativeResult<T, G, L, C>
-where
-    Self: LayerResult,
+    WithGradient<I, IG>: Into<T>,
 {
     #[inline]
     fn include_value(&mut self, value: WithGradient<I, IG>, weight: f32) {
@@ -786,7 +786,8 @@ where
         let additional_weight = self
             .derivative_contribution
             .sample_unchecked(total_derivative * self.derivative_falloff);
-        self.running_total = self.running_total + value.value.into() * (weight * additional_weight);
+        let full_weight = weight * additional_weight;
+        self.running_total += value.into() * full_weight;
     }
 }
 

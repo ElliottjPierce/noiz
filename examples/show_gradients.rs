@@ -18,8 +18,8 @@ use noiz::{
     cells::{OrthoGrid, SimplexGrid, Voronoi, WithGradient},
     curves::Smoothstep,
     prelude::{
-        BlendCellValues, FractalLayers, LayeredNoise, Masked, MixCellGradients, MixCellValues,
-        Normed, Octave, Persistence,
+        BlendCellValues, EuclideanLength, FractalLayers, LayeredNoise, Masked, MixCellGradients,
+        MixCellValues, Normed, NormedByDerivative, Octave, PeakDerivativeContribution, Persistence,
     },
     rng::{Random, SNorm},
 };
@@ -78,6 +78,25 @@ fn setup(
                 noise: Box::new(Noise::<
                     LayeredNoise<
                         Normed<WithGradient<f32, Vec2>>,
+                        Persistence,
+                        FractalLayers<
+                            Octave<
+                                BlendCellGradients<
+                                    SimplexGrid,
+                                    SimplecticBlend,
+                                    QuickGradients,
+                                    true,
+                                >,
+                            >,
+                        >,
+                    >,
+                >::default()),
+            },
+            NoiseOption {
+                name: "Simplex Approximated Erosion FBM",
+                noise: Box::new(Noise::<
+                    LayeredNoise<
+                        NormedByDerivative<f32, EuclideanLength, PeakDerivativeContribution>,
                         Persistence,
                         FractalLayers<
                             Octave<

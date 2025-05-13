@@ -3,9 +3,11 @@
 //! Note that some of them have specific requirements for the domain of their inputs.
 //! To see some examples of this, see the "show_noise" example.
 
+use core::ops::Neg;
+
 use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
 
-use crate::{NoiseFunction, lengths::LengthFunction};
+use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction};
 
 /// A [`NoiseFunction`] that maps vectors from (-1,1) to (0, 1).
 #[derive(Default, PartialEq, Clone, Copy)]
@@ -332,5 +334,52 @@ impl<L: LengthFunction<Vec2>> NoiseFunction<Vec2> for Spiral<L> {
         let len = self.0.length_of(input);
         let theta = input.to_angle() * core::f32::consts::FRAC_1_PI * self.1;
         Vec2::new(theta * len.floor(), len)
+    }
+}
+
+macro_rules! impl_for_gradients {
+    ($n:ty) => {
+        impl<T, G> NoiseFunction<WithGradient<T, G>> for $n
+        where
+            Self: NoiseFunction<T> + NoiseFunction<G>,
+        {
+            type Output = WithGradient<
+                <Self as NoiseFunction<T>>::Output,
+                <Self as NoiseFunction<G>>::Output,
+            >;
+
+            fn evaluate(
+                &self,
+                input: WithGradient<T, G>,
+                seeds: &mut crate::rng::NoiseRng,
+            ) -> Self::Output {
+                WithGradient {
+                    value: self.evaluate(input.value, seeds),
+                    gradient: self.evaluate(input.gradient, seeds),
+                }
+            }
+        }
+    };
+}
+
+impl_for_gradients!(SNormToUNorm);
+impl_for_gradients!(UNormToSNorm);
+
+impl<G: Neg<Output = G>> NoiseFunction<WithGradient<f32, G>> for Abs {
+    type Output = WithGradient<f32, G>;
+
+    fn evaluate(
+        &self,
+        input: WithGradient<f32, G>,
+        _seeds: &mut crate::rng::NoiseRng,
+    ) -> Self::Output {
+        if input.value > 0.0 {
+            input
+        } else {
+            WithGradient {
+                value: -input.value,
+                gradient: -input.gradient,
+            }
+        }
     }
 }
