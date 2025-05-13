@@ -60,6 +60,8 @@ pub struct PowF(pub f32);
 pub struct PositiveApproachZero;
 
 /// A [`NoiseFunction`] that takes the absolute value of its input.
+///
+/// Note that differentiation is implemented for this, but it is not smooth and is not mathematically rigorous.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
@@ -89,6 +91,8 @@ pub struct Negate;
 
 /// A [`NoiseFunction`] that produces a billowing effect for SNorm values.
 /// Inspired by [libnoise](https://docs.rs/libnoise/latest/libnoise/).
+///
+/// Note that differentiation is implemented for this, but it is not smooth and is not mathematically rigorous.
 pub type Billow = (Abs, UNormToSNorm);
 
 /// A [`NoiseFunction`] that wraps values over this one back below it.
@@ -337,35 +341,60 @@ impl<L: LengthFunction<Vec2>> NoiseFunction<Vec2> for Spiral<L> {
     }
 }
 
-macro_rules! impl_for_gradients {
-    ($n:ty) => {
-        impl<T, G> NoiseFunction<WithGradient<T, G>> for $n
-        where
-            Self: NoiseFunction<T> + NoiseFunction<G>,
-        {
-            type Output = WithGradient<
-                <Self as NoiseFunction<T>>::Output,
-                <Self as NoiseFunction<G>>::Output,
-            >;
-
-            #[inline]
-            fn evaluate(
-                &self,
-                input: WithGradient<T, G>,
-                seeds: &mut crate::rng::NoiseRng,
-            ) -> Self::Output {
-                WithGradient {
-                    value: self.evaluate(input.value, seeds),
-                    gradient: self.evaluate(input.gradient, seeds),
-                }
-            }
+impl<T, G: Mul<f32, Output = G>> NoiseFunction<WithGradient<T, G>> for SNormToUNorm
+where
+    Self: NoiseFunction<T, Output = T>,
+{
+    type Output = WithGradient<T, G>;
+    #[inline]
+    fn evaluate(
+        &self,
+        input: WithGradient<T, G>,
+        seeds: &mut crate::rng::NoiseRng,
+    ) -> Self::Output {
+        WithGradient {
+            value: self.evaluate(input.value, seeds),
+            gradient: input.gradient * 0.5,
         }
-    };
+    }
 }
 
-impl_for_gradients!(SNormToUNorm);
-impl_for_gradients!(UNormToSNorm);
-impl_for_gradients!(Negate);
+impl<T, G: Mul<f32, Output = G>> NoiseFunction<WithGradient<T, G>> for UNormToSNorm
+where
+    Self: NoiseFunction<T, Output = T>,
+{
+    type Output = WithGradient<T, G>;
+    #[inline]
+    fn evaluate(
+        &self,
+        input: WithGradient<T, G>,
+        seeds: &mut crate::rng::NoiseRng,
+    ) -> Self::Output {
+        WithGradient {
+            value: self.evaluate(input.value, seeds),
+            gradient: input.gradient * 2.0,
+        }
+    }
+}
+
+impl<T, G> NoiseFunction<WithGradient<T, G>> for Negate
+where
+    Self: NoiseFunction<T> + NoiseFunction<G>,
+{
+    type Output =
+        WithGradient<<Self as NoiseFunction<T>>::Output, <Self as NoiseFunction<G>>::Output>;
+    #[inline]
+    fn evaluate(
+        &self,
+        input: WithGradient<T, G>,
+        seeds: &mut crate::rng::NoiseRng,
+    ) -> Self::Output {
+        WithGradient {
+            value: self.evaluate(input.value, seeds),
+            gradient: self.evaluate(input.gradient, seeds),
+        }
+    }
+}
 
 impl<G: Neg<Output = G>> NoiseFunction<WithGradient<f32, G>> for Abs {
     type Output = WithGradient<f32, G>;

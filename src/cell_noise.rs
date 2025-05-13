@@ -1494,6 +1494,8 @@ mod tests {
     use crate::{
         Noise, SampleableFor,
         cells::{OrthoGrid, SimplexGrid},
+        math_noise::Abs,
+        prelude::{Billow, Masked, UNormToSNorm},
         rng::{Random, SNorm},
     };
 
@@ -1555,5 +1557,41 @@ mod tests {
         test_grads_2d(Noise::<
             MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>, true>,
         >::default());
+    }
+
+    #[test]
+    fn test_mask_gradients() {
+        test_grads_2d(Noise::<
+            Masked<
+                MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>,
+                BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+            >,
+        >::default());
+    }
+
+    #[test]
+    #[ignore = "abs is not mathematically rigorously differentiable"]
+    fn test_billowing_gradients() {
+        test_grads_2d(Noise::<(
+            BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+            Billow,
+        )>::default());
+    }
+
+    #[test]
+    #[ignore = "abs is not mathematically rigorously differentiable"]
+    fn test_abs_gradients() {
+        test_grads_2d(Noise::<(
+            BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+            Abs,
+        )>::default());
+    }
+
+    #[test]
+    fn test_unorm_to_snorm_gradients() {
+        test_grads_2d(Noise::<(
+            BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>,
+            UNormToSNorm,
+        )>::default());
     }
 }
