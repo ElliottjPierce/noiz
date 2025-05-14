@@ -91,11 +91,11 @@ impl Default for MinkowskiLength {
 }
 
 macro_rules! impl_distances {
-    ($t:path, $d:literal, $sqrt_d:expr) => {
+    ($t:path) => {
         impl LengthFunction<$t> for EuclideanLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
-                element_max * $sqrt_d
+                element_max * <$t>::SQRT_NUM_ELEMENTS
             }
 
             #[inline]
@@ -122,7 +122,7 @@ macro_rules! impl_distances {
         impl LengthFunction<$t> for EuclideanSqrdLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
-                element_max * element_max * $d
+                element_max * element_max * <$t>::NUM_ELEMENTS
             }
 
             #[inline]
@@ -149,7 +149,7 @@ macro_rules! impl_distances {
         impl LengthFunction<$t> for ManhattanLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
-                element_max * $d
+                element_max * <$t>::NUM_ELEMENTS
             }
 
             #[inline]
@@ -177,8 +177,8 @@ macro_rules! impl_distances {
         impl LengthFunction<$t> for HybridLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
-                // element_max * element_max * $d + element_max * $d
-                element_max * 2.0 * element_max * $d
+                // element_max * element_max * <$t>::NUM_ELEMENTS + element_max * <$t>::NUM_ELEMENTS
+                element_max * 2.0 * element_max * <$t>::NUM_ELEMENTS
             }
 
             #[inline]
@@ -222,7 +222,7 @@ macro_rules! impl_distances {
         impl LengthFunction<$t> for MinkowskiLength {
             #[inline]
             fn max_for_element_max(&self, element_max: f32) -> f32 {
-                element_max * $d
+                element_max * <$t>::NUM_ELEMENTS
             }
 
             #[inline]
@@ -238,7 +238,35 @@ macro_rules! impl_distances {
     };
 }
 
-impl_distances!(Vec2, 2.0, core::f32::consts::SQRT_2);
-impl_distances!(Vec3, 3.0, 1.732_050_8);
-impl_distances!(Vec3A, 3.0, 1.732_050_8);
-impl_distances!(Vec4, 4.0, 2.0);
+impl_distances!(Vec2);
+impl_distances!(Vec3);
+impl_distances!(Vec3A);
+impl_distances!(Vec4);
+
+/// Represents a [`VectorSpace`] with a known dimension.
+pub trait ElementalVectorSpace: VectorSpace {
+    /// The number of elements in the vector / the number of dimensions there are.
+    const NUM_ELEMENTS: f32;
+    /// Compile time `NUM_ELEMENTS.sqrt()`
+    const SQRT_NUM_ELEMENTS: f32;
+}
+
+impl ElementalVectorSpace for Vec2 {
+    const NUM_ELEMENTS: f32 = 2.0;
+    const SQRT_NUM_ELEMENTS: f32 = core::f32::consts::SQRT_2;
+}
+
+impl ElementalVectorSpace for Vec3 {
+    const NUM_ELEMENTS: f32 = 3.0;
+    const SQRT_NUM_ELEMENTS: f32 = 1.732_050_8;
+}
+
+impl ElementalVectorSpace for Vec3A {
+    const NUM_ELEMENTS: f32 = 3.0;
+    const SQRT_NUM_ELEMENTS: f32 = 1.732_050_8;
+}
+
+impl ElementalVectorSpace for Vec4 {
+    const NUM_ELEMENTS: f32 = 4.0;
+    const SQRT_NUM_ELEMENTS: f32 = 1.0;
+}
