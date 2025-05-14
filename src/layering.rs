@@ -918,8 +918,8 @@ where
         weight: f32,
         artificial_frequency: f32,
     ) {
-        let gradient: G = value.gradient.into() * artificial_frequency;
-        let value = value.value.into();
+        let gradient: G = value.gradient.into() * artificial_frequency * weight;
+        let value = value.value.into() * weight;
 
         let total_derivative = self
             .derivative_calculator
@@ -927,16 +927,15 @@ where
         let additional_weight = self
             .derivative_contribution
             .sample_with_derivative_unchecked(total_derivative.value * self.derivative_falloff);
-        self.running_derivative += gradient * weight;
+        self.running_derivative += gradient;
         let d_additional_weight = total_derivative.gradient
             * gradient
             * additional_weight.derivative
-            * self.derivative_falloff
-            * weight;
+            * self.derivative_falloff;
 
-        self.running_total.value += value * weight * additional_weight.value;
+        self.running_total.value += value * additional_weight.value;
         self.running_total.gradient +=
-            gradient * weight * additional_weight.value + d_additional_weight * value * weight;
+            gradient * additional_weight.value + d_additional_weight * value;
     }
 }
 
