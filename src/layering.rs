@@ -837,32 +837,13 @@ impl<T: Div<f32>, G, L, C> LayerResult for NormedByDerivativeResult<T, G, L, C> 
     }
 }
 
-impl<
-    T: AddAssign + Mul<f32, Output = T>,
-    I,
-    IG: Into<G> + Copy,
-    G: VectorSpace,
-    L: LengthFunction<G>,
-    C: Curve<f32>,
-> LayerResultFor<WithGradient<I, IG>> for NormedByDerivativeResult<T, G, L, C>
+impl<I, T, G, L, C> LayerResultFor<I> for NormedByDerivativeResult<T, G, L, C>
 where
-    Self: LayerResult,
-    WithGradient<I, IG>: Into<T>,
+    Self: FractalLayerResultCompatible<I> + LayerResult,
 {
     #[inline]
-    fn include_value(&mut self, value: WithGradient<I, IG>, weight: f32) {
-        let gradient = value.gradient.into();
-        self.running_derivative = self.running_derivative + gradient * weight;
-
-        let total_derivative = self
-            .derivative_calculator
-            .length_of(self.running_derivative);
-        let additional_weight = self
-            .derivative_contribution
-            .sample_unchecked(total_derivative * self.derivative_falloff);
-
-        let full_weight = weight * additional_weight;
-        self.running_total += value.into() * full_weight;
+    fn include_value(&mut self, value: I, weight: f32) {
+        self.include_fractal_value(value, weight, 1.0);
     }
 }
 
@@ -874,19 +855,16 @@ impl<
     L: LengthFunction<G>,
     C: Curve<f32>,
 > FractalLayerResultCompatible<WithGradient<I, IG>> for NormedByDerivativeResult<T, G, L, C>
-where
-    Self: LayerResultFor<WithGradient<I, IG>>,
-    WithGradient<I, IG>: Into<T>,
 {
     #[inline]
     fn include_fractal_value(
         &mut self,
         value: WithGradient<I, IG>,
         weight: f32,
-        _artificial_frequency: f32,
+        artificial_frequency: f32,
     ) {
-        let gradient = value.gradient.into();
-        self.running_derivative += gradient * weight;
+        let gradient: G = value.gradient.into() * artificial_frequency * weight;
+        let value = value.value.into() * weight;
 
         let total_derivative = self
             .derivative_calculator
@@ -894,9 +872,9 @@ where
         let additional_weight = self
             .derivative_contribution
             .sample_unchecked(total_derivative * self.derivative_falloff);
+        self.running_derivative += gradient;
 
-        let full_weight = weight * additional_weight;
-        self.running_total += value.into() * full_weight;
+        self.running_total += value * additional_weight;
     }
 }
 
@@ -908,8 +886,6 @@ impl<
     C: SampleDerivative<f32>,
 > FractalLayerResultCompatible<WithGradient<IT, IG>>
     for NormedByDerivativeResult<WithGradient<f32, G>, G, L, C>
-where
-    Self: LayerResultFor<WithGradient<IT, IG>>,
 {
     #[inline]
     fn include_fractal_value(
