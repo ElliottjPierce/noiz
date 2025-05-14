@@ -617,7 +617,7 @@ impl LayerWeightsSettings for Persistence {
 /// This is a good default for most noise functions.
 /// This is a building block for traditional fractal brownian motion. See also [`FractalLayers`].
 ///
-/// `T` is the [`VectorSpace`] you want to collect.
+/// `T` is the type you want to collect, usually a [`VectorSpace`].
 /// If what you want to collect is more advanced than a single vector space, consider making your own [`LayerResultContext`].
 /// If you want to use derivatives to approximate erosion, etc, see [`NormedByDerivative`].
 #[derive(Clone, Copy, PartialEq)]
@@ -728,7 +728,7 @@ where
 /// A [`LayerResultContext`] that will normalize the results into a weighted average where the derivatives affect the weight.
 /// See also [`Normed`].
 ///
-/// `T` is the [`VectorSpace`] you want to collect.
+/// `T` is the type you want to collect, usually a [`VectorSpace`].
 /// `L` is the [`LengthFunction`] to calculate the derivative from the gradient.
 /// `C` is the [`Curve`] that determines how much a derivative's value should contribute to the result.
 ///
@@ -745,6 +745,9 @@ where
 ///     FractalLayers<Octave<common_noise::Perlin>>,
 /// >>::default();
 /// ```
+///
+/// Note that if you ask to collect a [`WithGradient`], the gradient collected may not be exact.
+/// It is usable, but is not mathematically rigorous.
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
