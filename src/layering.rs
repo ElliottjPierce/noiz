@@ -968,3 +968,13 @@ impl Curve<f32> for SmoothDerivativeContribution {
         (-t).exp()
     }
 }
+
+impl SampleDerivative<f32> for SmoothDerivativeContribution {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
+        WithDerivative {
+            value: (-t).exp(),
+            derivative: (-t).exp() * -1.0,
+        }
+    }
+}

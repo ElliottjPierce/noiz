@@ -163,6 +163,16 @@ macro_rules! impl_distances {
             }
         }
 
+        impl DifferentiableLengthFunction<$t> for ManhattanLength {
+            #[inline]
+            fn length_and_gradient_of(&self, vec: $t) -> WithGradient<f32, $t> {
+                WithGradient {
+                    value: vec.abs().element_sum(),
+                    gradient: vec,
+                }
+            }
+        }
+
         // inspired by https://github.com/Auburn/FastNoiseLite/blob/master/Rust/src/lib.rs#L1825
         impl LengthFunction<$t> for HybridLength {
             #[inline]
@@ -179,6 +189,16 @@ macro_rules! impl_distances {
             #[inline]
             fn length_from_ordering(&self, ordering: f32) -> f32 {
                 ordering
+            }
+        }
+
+        impl DifferentiableLengthFunction<$t> for HybridLength {
+            #[inline]
+            fn length_and_gradient_of(&self, vec: $t) -> WithGradient<f32, $t> {
+                WithGradient {
+                    value: vec.length_squared() + vec.abs().element_sum(),
+                    gradient: vec * 3.0,
+                }
             }
         }
 
