@@ -11,6 +11,7 @@ use noiz::{
     Noise, SampleableFor, ScalableNoise, SeedableNoise,
     cells::{OrthoGrid, SimplexGrid},
     curves::Smoothstep,
+    math_noise::Pow2,
     misc_noise::Constant,
     prelude::{
         BlendCellGradients, EuclideanLength, FractalLayers, LayeredNoise, Masked, MixCellGradients,
@@ -51,8 +52,9 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
             (
                 MixCellGradients::<OrthoGrid, Smoothstep, QuickGradients>::default(),
                 SNormToUNorm,
+                Pow2,
                 Offset {
-                    offseter: Constant(0.5),
+                    offseter: Constant(0.75),
                     offset_strength: 1.0,
                 },
             ),
