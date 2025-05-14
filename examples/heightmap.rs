@@ -7,18 +7,7 @@ use bevy::{
     render::mesh::{Indices, Mesh},
 };
 use bevy_math::Vec2;
-use noiz::{
-    Noise, SampleableFor, ScalableNoise, SeedableNoise,
-    cells::{OrthoGrid, SimplexGrid},
-    curves::Smoothstep,
-    math_noise::Pow2,
-    misc_noise::Constant,
-    prelude::{
-        BlendCellGradients, EuclideanLength, FractalLayers, LayeredNoise, Masked, MixCellGradients,
-        NormedByDerivative, Octave, Offset, PeakDerivativeContribution, Persistence,
-        QuickGradients, SNormToUNorm, SimplecticBlend,
-    },
-};
+use noiz::{math_noise::Pow2, misc_noise::Constant, prelude::*};
 
 // Feel free to play around with this and the example noise!
 const SEED: u32 = 0;
@@ -36,7 +25,7 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
         noise: Masked(
             LayeredNoise::new(
                 NormedByDerivative::<f32, EuclideanLength, PeakDerivativeContribution>::default()
-                    .with_falloff(0.05),
+                    .with_falloff(0.3),
                 Persistence(0.6),
                 FractalLayers {
                     layer: Octave(BlendCellGradients::<
@@ -61,6 +50,25 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
         ),
         ..default()
     }
+    // Here's another one you can try: (Might want to increase the AMPLITUDE for this one.)
+    // Noise {
+    //     noise: LayeredNoise::new(
+    //         NormedByDerivative::<f32, EuclideanLength, PeakDerivativeContribution>::default()
+    //             .with_falloff(0.3),
+    //         Persistence(0.6),
+    //         FractalLayers {
+    //             layer: Octave(MixCellGradients::<
+    //                 OrthoGrid,
+    //                 Smoothstep,
+    //                 QuickGradients,
+    //                 true,
+    //             >::default()),
+    //             lacunarity: 1.8,
+    //             amount: 8,
+    //         },
+    //     ),
+    //     ..default()
+    // }
 }
 
 // NOTE That if you want to do this for real, you can do a lot better than this.
