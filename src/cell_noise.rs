@@ -16,7 +16,7 @@ use crate::{
         WithGradient, WorleyDomainCell,
     },
     curves::{SmoothMin, Smoothstep},
-    lengths::{EuclideanLength, LengthFunction},
+    lengths::{ElementalVectorSpace, EuclideanLength, LengthFunction},
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
 
@@ -923,7 +923,7 @@ pub struct MixCellGradients<P, C, G, const DIFFERENTIATE: bool = false> {
 }
 
 impl<
-    I: VectorSpace,
+    I: ElementalVectorSpace,
     P: Partitioner<I, Cell: InterpolatableCell>,
     C: Curve<f32>,
     G: GradientGenerator<I>,
@@ -939,6 +939,7 @@ impl<
             |point| {
                 self.gradients
                     .get_gradient_dot(point.rough_id, point.offset)
+                    * I::SQRT_NUM_ELEMENTS
             },
             &self.curve,
         )
@@ -946,7 +947,7 @@ impl<
 }
 
 impl<
-    I: VectorSpace,
+    I: ElementalVectorSpace,
     P: Partitioner<I, Cell: DifferentiableCell<Gradient<f32>: Into<I>>>,
     C: SampleDerivative<f32>,
     G: GradientGenerator<I>,
@@ -959,7 +960,7 @@ impl<
         let segment = self.cells.partition(input);
         let gradients = segment.interpolate_within(
             *seeds,
-            |point| self.gradients.get_gradient(point.rough_id),
+            |point| self.gradients.get_gradient(point.rough_id) * I::SQRT_NUM_ELEMENTS,
             &self.curve,
         );
         let WithGradient { value, gradient } = segment.interpolate_with_gradient(
@@ -967,6 +968,7 @@ impl<
             |point| {
                 self.gradients
                     .get_gradient_dot(point.rough_id, point.offset)
+                    * I::SQRT_NUM_ELEMENTS
             },
             &self.curve,
             1.0,
