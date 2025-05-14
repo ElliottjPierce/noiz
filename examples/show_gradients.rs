@@ -189,7 +189,6 @@ fn setup(
                     -(sample.y as f32 - (HEIGHT / 2.0)),
                 );
                 let out = noise.grad_at(loc);
-                println!("Updated Gradient: {out:?}");
                 hit.gradient = out;
                 hit.position = loc;
             },
