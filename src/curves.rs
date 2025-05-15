@@ -195,3 +195,13 @@ impl<T: VectorSpace> Curve<T> for Lerped<T> {
         self.start.lerp(self.end, t)
     }
 }
+
+impl<T: VectorSpace> SampleDerivative<T> for Lerped<T> {
+    #[inline]
+    fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<T> {
+        WithDerivative {
+            value: self.start.lerp(self.end, t),
+            derivative: self.end - self.start,
+        }
+    }
+}
