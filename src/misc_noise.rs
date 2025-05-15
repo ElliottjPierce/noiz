@@ -1,8 +1,11 @@
 //! A grab bag of miscellaneous noise functions that have no better place to be.
 
-use core::ops::{Add, Mul};
+use core::{
+    marker::PhantomData,
+    ops::{Add, Mul},
+};
 
-use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
+use bevy_math::{Curve, HasTangent, Vec2, Vec3, Vec3A, Vec4, curve::derivatives::SampleDerivative};
 
 use crate::{NoiseFunction, cells::WithGradient, rng::NoiseRng};
 
@@ -379,6 +382,69 @@ impl<T, G: Copy> NoiseFunction<T> for WithGradientOf<G> {
         WithGradient {
             value: input,
             gradient: self.0,
+        }
+    }
+}
+
+/// A [`NoiseFunction`] that remaps a scalar input by passing it through a [`Curve`].
+/// If `CLAMP` is `true`, this will use [`Curve::sample_clamped`]; otherwise, it will use [`Curve::sample_unchecked`].
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct RemapCurve<C, T, const CLAMP: bool = true> {
+    /// The [`Curve`] to sample with.
+    pub curve: C,
+    /// The marker data for the [`Curve`]'s output.
+    pub marker: PhantomData<T>,
+}
+
+impl<C, T, const CLAMP: bool> From<C> for RemapCurve<C, T, CLAMP> {
+    fn from(value: C) -> Self {
+        Self {
+            curve: value,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<C: Default, T, const CLAMP: bool> Default for RemapCurve<C, T, CLAMP> {
+    fn default() -> Self {
+        Self {
+            curve: Default::default(),
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<C: Curve<T>, T, const CLAMP: bool> NoiseFunction<f32> for RemapCurve<C, T, CLAMP> {
+    type Output = T;
+
+    #[inline]
+    fn evaluate(&self, input: f32, _seeds: &mut NoiseRng) -> Self::Output {
+        if CLAMP {
+            self.curve.sample_clamped(input)
+        } else {
+            self.curve.sample_unchecked(input)
+        }
+    }
+}
+
+impl<C: SampleDerivative<T>, T: HasTangent, G: Add<T::Tangent>, const CLAMP: bool>
+    NoiseFunction<WithGradient<f32, G>> for RemapCurve<C, T, CLAMP>
+{
+    type Output = WithGradient<T, G::Output>;
+
+    #[inline]
+    fn evaluate(&self, input: WithGradient<f32, G>, _seeds: &mut NoiseRng) -> Self::Output {
+        let f = if CLAMP {
+            self.curve.sample_with_derivative_clamped(input.value)
+        } else {
+            self.curve.sample_with_derivative_unchecked(input.value)
+        };
+        WithGradient {
+            value: f.value,
+            gradient: input.gradient + f.derivative,
         }
     }
 }

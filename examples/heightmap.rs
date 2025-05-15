@@ -42,7 +42,10 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
                 MixCellGradients::<OrthoGrid, Smoothstep, QuickGradients>::default(),
                 SNormToUNorm,
                 Pow2,
-                Translated(0.75),
+                RemapCurve::<Lerped<f32>, f32, false>::from(Lerped {
+                    start: 0.5f32,
+                    end: 1.0,
+                }),
             ),
         ),
         ..default()

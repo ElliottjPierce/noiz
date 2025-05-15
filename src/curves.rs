@@ -1,7 +1,7 @@
 //! Contains a variety of curves built to work well with noise.
 
 use bevy_math::{
-    Curve, WithDerivative,
+    Curve, VectorSpace, WithDerivative,
     curve::{Interval, derivatives::SampleDerivative},
 };
 
@@ -169,5 +169,29 @@ impl SmoothMin for CubicSMin {
         let diff = (a - b).abs();
         let h = 0f32.max(k - diff) / k;
         a.min(b) - h * h * blend_radius
+    }
+}
+
+/// Interpolates a domain of [0, 1] to values of type `T`.
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Lerped<T> {
+    /// The value when the input it 0.
+    pub start: T,
+    /// The value when the input it 1.
+    pub end: T,
+}
+
+impl<T: VectorSpace> Curve<T> for Lerped<T> {
+    #[inline]
+    fn domain(&self) -> Interval {
+        Interval::EVERYWHERE
+    }
+
+    #[inline]
+    fn sample_unchecked(&self, t: f32) -> T {
+        self.start.lerp(self.end, t)
     }
 }

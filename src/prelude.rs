@@ -8,14 +8,14 @@ pub use crate::{
         PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyLeastDistance,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
-    curves::{DoubleSmoothstep, Linear, Smoothstep},
+    curves::{DoubleSmoothstep, Lerped, Linear, Smoothstep},
     layering::{
         DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
     },
     lengths::{EuclideanLength, ManhattanLength},
     math_noise::{Billow, PingPong, SNormToUNorm, UNormToSNorm},
-    misc_noise::{Masked, Offset, RandomElements, Scaled, SelfMasked, Translated},
+    misc_noise::{Masked, Offset, RandomElements, RemapCurve, Scaled, SelfMasked, Translated},
     rng::{Random, SNorm, UNorm},
 };
 
