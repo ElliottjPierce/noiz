@@ -15,7 +15,7 @@ const EXTENT: f32 = 512.0;
 const RESOLUTION: f32 = 2.0;
 
 const PERIOD: f32 = 512.0;
-const AMPLITUDE: f32 = 128.0;
+const AMPLITUDE: f32 = 256.0;
 
 const SPEED: f32 = 50.0;
 const SENSITIVITY: f32 = 0.01;
@@ -51,7 +51,7 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
         ..default()
     }
 
-    // Here's another one you can try: (Might want to increase the AMPLITUDE for this one.)
+    // Here's another one you can try:
     // Noise {
     //     noise: LayeredNoise::new(
     //         NormedByDerivative::<f32, EuclideanLength, PeakDerivativeContribution>::default()
