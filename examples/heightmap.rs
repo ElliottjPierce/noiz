@@ -7,7 +7,7 @@ use bevy::{
     render::mesh::{Indices, Mesh},
 };
 use bevy_math::Vec2;
-use noiz::{math_noise::Pow2, misc_noise::Constant, prelude::*};
+use noiz::{math_noise::Pow2, prelude::*};
 
 // Feel free to play around with this and the example noise!
 const SEED: u32 = 0;
@@ -42,14 +42,12 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
                 MixCellGradients::<OrthoGrid, Smoothstep, QuickGradients>::default(),
                 SNormToUNorm,
                 Pow2,
-                Offset {
-                    offseter: Constant(0.75),
-                    offset_strength: 1.0,
-                },
+                Translated(0.75),
             ),
         ),
         ..default()
     }
+
     // Here's another one you can try: (Might want to increase the AMPLITUDE for this one.)
     // Noise {
     //     noise: LayeredNoise::new(

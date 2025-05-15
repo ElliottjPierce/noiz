@@ -11,11 +11,11 @@ pub use crate::{
     curves::{DoubleSmoothstep, Linear, Smoothstep},
     layering::{
         DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
-        PeakDerivativeContribution, Persistence,
+        PeakDerivativeContribution, Persistence, SmoothDerivativeContribution,
     },
     lengths::{EuclideanLength, ManhattanLength},
     math_noise::{Billow, PingPong, SNormToUNorm, UNormToSNorm},
-    misc_noise::{Masked, Offset, RandomElements, SelfMasked},
+    misc_noise::{Masked, Offset, RandomElements, Scaled, SelfMasked, Translated},
     rng::{Random, SNorm, UNorm},
 };
 
