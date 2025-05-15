@@ -7,7 +7,7 @@ pub use crate::{
         BlendCellGradients, BlendCellValues, DistanceBlend, MixCellGradients, MixCellValues,
         PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyLeastDistance,
     },
-    cells::{OrthoGrid, SimplexGrid, Voronoi},
+    cells::{OrthoGrid, SimplexGrid, Voronoi, WithGradient},
     curves::{DoubleSmoothstep, Lerped, Linear, Smoothstep},
     layering::{
         DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
@@ -35,6 +35,16 @@ pub mod common_noise {
 
     /// A [`NoiseFunction`] that produces simplex noise `f32`s between -1 and 1.
     pub type Simplex = BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>;
+
+    /// A [`NoiseFunction`] that produces value noise `f32`s between 0 and 1 and its gradient in a [`WithGradient`].
+    pub type ValueWithDerivative = MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>, true>;
+
+    /// A [`NoiseFunction`] that produces perlin noise `f32`s between -1 and 1 and its gradient in a [`WithGradient`].
+    pub type PerlinWithDerivative = MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>;
+
+    /// A [`NoiseFunction`] that produces simplex noise `f32`s between -1 and 1 and its gradient in a [`WithGradient`].
+    pub type SimplexWithDerivative =
+        BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>;
 
     /// A [`NoiseFunction`] that produces traditional worley noise `f32`s between 0 and 1.
     pub type Worley = PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>;

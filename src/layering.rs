@@ -182,6 +182,7 @@ impl_all_operation_tuples!(
 ///         },
 ///     )
 /// ));
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// In this example, `noise` is fractal brownian motion where the first 4 octaves are simplex noise to create some defining features, and the last 4 octaves are perlin noise to efficiently add some detail.
@@ -309,6 +310,7 @@ impl<T: NoiseFunction<I>, I: VectorSpace, R: LayerResultFor<T::Output>, W: Layer
 ///         Octave<common_noise::Perlin>,
 ///     )>,
 /// >>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This produces domain warped noise. Here's another way:
@@ -320,9 +322,11 @@ impl<T: NoiseFunction<I>, I: VectorSpace, R: LayerResultFor<T::Output>, W: Layer
 ///     Normed<f32>,
 ///     Persistence,
 ///     FractalLayers<Octave<(
-///         Offset<RandomElements<common_noise::Perlin>>, Octave<common_noise::Perlin>
+///         Offset<RandomElements<common_noise::Perlin>>,
+///         common_noise::Perlin
 ///     )>>,
 /// >>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This one isn't context aware; it will warp each octave individually, but [`DomainWarp`] will apply the warp of one octave to the next so they build on eachother.
@@ -384,6 +388,7 @@ impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResult, W: LayerWe
 ///         PersistenceConfig<Octave<common_noise::Simplex>>
 ///     )>,
 /// >>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This puts more weight on the simplex noise than on the perlin noise, which can be a useful utility.
@@ -455,6 +460,7 @@ impl<T: LayerOperationFor<I, R, PersistenceWeights>, I: VectorSpace, R: LayerRes
 ///     Persistence,
 ///     FractalLayers<Octave<common_noise::Perlin>>,
 /// >>::default();
+/// # let val = fbm_perlin_noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 #[derive(Clone, Copy, PartialEq)]
@@ -742,8 +748,9 @@ where
 /// let heightmap = Noise::<LayeredNoise<
 ///     NormedByDerivative<f32, EuclideanLength, PeakDerivativeContribution>,
 ///     Persistence,
-///     FractalLayers<Octave<common_noise::Perlin>>,
+///     FractalLayers<Octave<common_noise::PerlinWithDerivative>>,
 /// >>::default();
+/// # let val = heightmap.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// Note that if you ask to collect a [`WithGradient`], the gradient collected may not be exact.

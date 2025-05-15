@@ -95,6 +95,7 @@ mod function_impls {
 /// # use noiz::prelude::*;
 /// let mut noise = Noise::<common_noise::Perlin>::default();
 /// noise.set_seed(1234);
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 pub trait SeedableNoise {
     /// Sets the seed of the noise.
@@ -112,6 +113,7 @@ pub trait SeedableNoise {
 /// # use noiz::prelude::*;
 /// let mut noise = Noise::<common_noise::Perlin>::default();
 /// noise.set_period(30.0);
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 pub trait ScalableNoise {
     /// Sets the scale of the noise via its frequency.
@@ -121,9 +123,10 @@ pub trait ScalableNoise {
     ///
     /// ```
     /// # use noiz::prelude::*;
-    /// # let mut heighmap = Noise::<common_noise::Perlin>::default();
+    /// # let mut heightmap = Noise::<common_noise::Perlin>::default();
     /// // I want each sample to represent data from 30 units apart.
-    /// heighmap.set_frequency(30.0);
+    /// heightmap.set_frequency(30.0);
+    /// # let val = heightmap.sample_for::<f32>(bevy_math::Vec2::ZERO);
     /// ```
     fn set_frequency(&mut self, frequency: f32);
 
@@ -138,9 +141,10 @@ pub trait ScalableNoise {
     ///
     /// ```
     /// # use noiz::prelude::*;
-    /// # let mut heighmap = Noise::<common_noise::Perlin>::default();
+    /// # let mut heightmap = Noise::<common_noise::Perlin>::default();
     /// // I want each big mountain to be 30 units apart.
-    /// heighmap.set_period(30.0);
+    /// heightmap.set_period(30.0);
+    /// # let val = heightmap.sample_for::<f32>(bevy_math::Vec2::ZERO);
     /// ```
     fn set_period(&mut self, period: f32) {
         self.set_frequency(1.0 / period);

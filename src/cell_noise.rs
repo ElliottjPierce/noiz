@@ -29,6 +29,7 @@ use crate::{
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// And here's some with triangles/tetrahedrons:
@@ -36,6 +37,7 @@ use crate::{
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<PerCell<SimplexGrid, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 #[derive(Default, Clone, Copy, PartialEq)]
@@ -69,6 +71,7 @@ impl<I: VectorSpace, P: Partitioner<I>, N: NoiseFunction<u32>> NoiseFunction<I> 
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::PerNearestPoint;
 /// let noise = Noise::<PerNearestPoint<Voronoi, EuclideanLength, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// You can also use this to make hexagons:
@@ -77,6 +80,7 @@ impl<I: VectorSpace, P: Partitioner<I>, N: NoiseFunction<u32>> NoiseFunction<I> 
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::PerNearestPoint;
 /// let noise = Noise::<PerNearestPoint<SimplexGrid, EuclideanLength, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 #[derive(Default, Clone, Copy, PartialEq)]
@@ -131,6 +135,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::DistanceToEdge;
 /// let noise = Noise::<DistanceToEdge<Voronoi>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -275,6 +280,7 @@ fn two_least(vals: impl Iterator<Item = f32>) -> (f32, f32) {
 /// use noiz::cell_noise::WorleySmoothMin;
 /// use noiz::curves::CubicSMin;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySmoothMin<CubicSMin>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -327,6 +333,7 @@ impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
 /// use noiz::cell_noise::WorleyNearestSmoothMin;
 /// use noiz::curves::CubicSMin;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyNearestSmoothMin<CubicSMin>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -373,6 +380,7 @@ impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -404,6 +412,7 @@ impl WorleyMode for WorleyLeastDistance {
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::WorleySecondLeastDistance;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleySecondLeastDistance>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -432,6 +441,7 @@ impl WorleyMode for WorleySecondLeastDistance {
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::WorleyDifference;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyDifference>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -461,6 +471,7 @@ impl WorleyMode for WorleyDifference {
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::WorleyAverage;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyAverage>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -491,6 +502,7 @@ impl WorleyMode for WorleyAverage {
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::WorleyProduct;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyProduct>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -520,6 +532,7 @@ impl WorleyMode for WorleyProduct {
 /// # use noiz::prelude::*;
 /// use noiz::cell_noise::WorleyRatio;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyRatio>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
@@ -550,6 +563,7 @@ impl WorleyMode for WorleyRatio {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<PerCellPointDistances<Voronoi, EuclideanLength, WorleyLeastDistance>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// Lots of noise types are available. See also [`WorleyMode`], [`WorleyLeastDistance`], [`WorleyDifference`], etc.
@@ -600,6 +614,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<MixCellValues<OrthoGrid, Linear, Random<SNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// Usually linear doesn't look very good, so here's smoothstep:
@@ -607,6 +622,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default).
@@ -614,6 +630,7 @@ impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainC
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<SNorm, f32>, true>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
@@ -690,6 +707,7 @@ impl<
 ///     Offset<MixCellValuesForDomain<OrthoGrid, Smoothstep, SNorm>>,
 ///     common_noise::Perlin,
 /// )>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// See also [`DomainWarp`](crate::layering::DomainWarp) and [`RandomElements`](crate::misc_noise::RandomElements) as alternatives.
@@ -802,6 +820,7 @@ pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<BlendCellValues<SimplexGrid, SimplecticBlend, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// You can also use this to make fun stars:
@@ -809,6 +828,7 @@ pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default), and use a [`DifferentiableValueBlender`].
@@ -816,6 +836,7 @@ pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<BlendCellValues<SimplexGrid, SimplecticBlend, Random<UNorm, f32>, true>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
@@ -896,6 +917,7 @@ pub trait GradientGenerator<I: VectorSpace> {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// If you need smoother derivatives (ex: to compute analytical normals), try a smoother [`Curve`] like [`DoubleSmoothstep`](crate::curves::DoubleSmoothstep).
@@ -906,6 +928,7 @@ pub trait GradientGenerator<I: VectorSpace> {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<MixCellGradients<OrthoGrid, Smoothstep, QuickGradients, true>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
@@ -987,6 +1010,7 @@ impl<
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// If you are interested in calculating the gradient of the noise as well, turn on `DIFFERENTIATE` (off by default), and use a  [`DifferentiableGradientBlender`].
@@ -994,6 +1018,7 @@ impl<
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<BlendCellGradients<SimplexGrid, SimplecticBlend, QuickGradients, true>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 /// This is typically used with [`NormedByDerivative`](crate::layering::NormedByDerivative).
@@ -1256,6 +1281,7 @@ impl GradientGenerator<Vec3A> for QualityGradients {
 /// ```
 /// # use noiz::prelude::*;
 /// let noise = Noise::<BlendCellValues<Voronoi, DistanceBlend<ManhattanLength>, Random<UNorm, f32>>>::default();
+/// # let val = noise.sample_for::<f32>(bevy_math::Vec2::ZERO);
 /// ```
 ///
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
