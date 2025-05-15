@@ -144,6 +144,24 @@ impl<I: Mul<T>, T: Copy> NoiseFunction<I> for Scaled<T> {
     }
 }
 
+/// A [`NoiseFunction`] that translates/adds its input by some offset `T`.
+///
+/// If you want this to be [`NoiseFunction`] based, see [`Masked`].
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Translated<T>(pub T);
+
+impl<I: Add<T>, T: Copy> NoiseFunction<I> for Translated<T> {
+    type Output = I::Output;
+
+    #[inline]
+    fn evaluate(&self, input: I, _seeds: &mut NoiseRng) -> Self::Output {
+        input + self.0
+    }
+}
+
 /// A [`NoiseFunction`] always returns a constant `T`.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
