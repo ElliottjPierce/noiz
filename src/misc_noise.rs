@@ -126,36 +126,21 @@ impl<I: Add<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::
     }
 }
 
-/// A [`NoiseFunction`] that scales its input by some factor calculated by an inner [`NoiseFunction`] `N`.
-#[derive(Clone, Copy, PartialEq)]
+/// A [`NoiseFunction`] that scales/multiplies its input by some factor `T`.
+///
+/// If you want this to be [`NoiseFunction`] based, see [`Masked`].
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct Scaled<N> {
-    /// The inner [`NoiseFunction`].
-    pub scaler: N,
-    /// The scale's strength/multiplier.
-    pub scale_strength: f32,
-}
+pub struct Scaled<T>(pub T);
 
-impl<N: Default> Default for Scaled<N> {
-    fn default() -> Self {
-        Self {
-            scaler: N::default(),
-            scale_strength: 1.0,
-        }
-    }
-}
-
-impl<I: Mul<N::Output> + Copy, N: NoiseFunction<I, Output: Mul<f32, Output = N::Output>>>
-    NoiseFunction<I> for Scaled<N>
-{
+impl<I: Mul<T>, T: Copy> NoiseFunction<I> for Scaled<T> {
     type Output = I::Output;
 
     #[inline]
-    fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
-        let offset = self.scaler.evaluate(input, seeds) * self.scale_strength;
-        input * offset
+    fn evaluate(&self, input: I, _seeds: &mut NoiseRng) -> Self::Output {
+        input * self.0
     }
 }
 
