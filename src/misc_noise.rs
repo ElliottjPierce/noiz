@@ -146,7 +146,7 @@ impl<I: Mul<T>, T: Copy> NoiseFunction<I> for Scaled<T> {
 
 /// A [`NoiseFunction`] that translates/adds its input by some offset `T`.
 ///
-/// If you want this to be [`NoiseFunction`] based, see [`Masked`].
+/// If you want this to be [`NoiseFunction`] based, see [`Offset`].
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize))]
