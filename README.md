@@ -33,7 +33,7 @@ Noiz is not:
 
 | Bevy version | noiz version |
 |--------------|--------------|
-| 0.16         | 0.1          |
+| 0.16         | 0.1, 0.2 |
 
 ## What Makes Noiz Unique?
 
