@@ -319,10 +319,3 @@ Use `libnoise` if you don't need a ton of configuration, are using relatively sm
 If you absolutely need `f64` support, use `libnoise`, but again, the permutation table rng makes the large domain kinda a moot point. Same goes for `noise`.
 If you are integrating with `bevy`, need lots of customization, need general, high performance, or need serialization and reflection, use `noiz`.
 I am not aware of a reason to use `noise` (though there may well be one I'm missing).
-
-## Rough Roadmap
-
-- [ ] Optimize with fastmath coming in rust 1.88
-- [ ] Add dynamic types to switch between noise functions via reflection.
-- [ ] (Maybe) Let noise types generate WESL code. (Specify noise in rust, build to WESL.) Possible, but maybe not worth it.
-- [ ] Any reasonable suggestions that come in.
