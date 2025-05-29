@@ -6,9 +6,9 @@ If there are any issues you run across, please don't hesitate to open an issue!
 ## Enhancements
 
 When collecting results of layered noise, `Normed` and `NormedByDerivative` can now collect gradients. Ex: `Normed<WithGradient<f32, Vec2>>`.
-This is the proper way to collect gradient information of fractal layered noise and is very useful for things like analytical normals and mesh generation.
+This is the proper way to collect gradient information of fractal layered noise and is very useful for things like analytical normals for mesh generation.
 
-`WithGradientOf` can now be used to "fudge" a gradient value.
+A new noise function, `WithGradientOf`, can now be used to "fudge" a gradient value.
 Although this will not be correct, it can be artistically useful when paired with `NormedByDerivative`, or other systems that use gradient information to affect the output.
 
 A new `Lerped` curve now allows interpolating between vector space values.
@@ -30,7 +30,7 @@ Many of these are now fixed, including simplex noise, fractal noise, masked nois
 Notably, `Abs`, `Billow`, and `NormedByDerivative` are still not mathematically rigorous.
 These do not appear to be classically differentiable, but "good enough" implementations are still provided.
 
-Perlin noise is not normalized to ±1; it was ±(1/√N) where N was the number of dimensions.
+Perlin noise is now normalized to ±1; it was ±(1/√N) where N was the number of dimensions.
 This was previously not normalized for performance (it's a linear scale, which the user will configure anyway), but it has been fixed to help with usability.
 With fast-math coming in rust 1.88, this will be made zero cost in the future.
 
@@ -45,18 +45,17 @@ This will not affect most users, but if you were making custom layers, this will
 `Scaled` now scales directly rather than going through a nested noise function.
 If you want the previous behavior, use `Masked`.
 
-I have deliberately kept this brief, as these changes are unlikely to affect anyone.
-If you have any trouble migrating, please open an issue!
+I have deliberately kept this brief, as these changes are unlikely to affect anyone, but if you have any trouble migrating, please open an issue!
 
 ## What's next
 
-It's hard to predict the future here, as I have limited time, and lots of my aspirations here depend on other projects.
-However, there are some ideas I'd like to explore for the future:
+It's hard to predict the future here, as I have limited time, and lots of my ideas here depend on other projects.
+However, there are some things I'd like to explore for the future:
 
 - 64 bit support: Noiz is powered by bevy_math, which is growing to support 64 bit precision.
 When that work is complete, Noiz will upgrade to support `f64` based inputs and outputs.
 - even faster: Rust 1.88 brings support for fast-math, offering some insane performance opportunities at the cost of precision.
-This will probably be an opt-out feature, but this is still up for debate.
+This will probably be an opt-out feature, as it is not without downsides, but this is still up for debate.
 - Other rng backends: Noiz is powered by a *very* specialized and optimized random number generator.
 Some power users may want to make their own generators to either sacrifice quality for speed or speed for quality.
 - GPU support: This is especially tricky to think about.
