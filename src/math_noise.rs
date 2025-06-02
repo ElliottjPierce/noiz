@@ -119,6 +119,15 @@ macro_rules! impl_vector_spaces {
                 input.abs()
             }
         }
+
+        impl NoiseFunction<$n> for PowF {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input.powf(self.0)
+            }
+        }
     };
 
     (both $n:ty) => {
@@ -164,15 +173,6 @@ macro_rules! impl_vector_spaces {
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 (input * input) * (input * input)
-            }
-        }
-
-        impl NoiseFunction<$n> for PowF {
-            type Output = $n;
-
-            #[inline]
-            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-                input.powf(self.0)
             }
         }
 
@@ -229,6 +229,15 @@ impl NoiseFunction<f32> for Abs {
     #[inline]
     fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
         bevy_math::ops::abs(input)
+    }
+}
+
+impl NoiseFunction<f32> for PowF {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        bevy_math::ops::powf(input, self.0)
     }
 }
 
@@ -507,8 +516,8 @@ impl<G: Mul<f32, Output = G>> NoiseFunction<WithGradient<f32, G>> for PowF {
         _seeds: &mut crate::rng::NoiseRng,
     ) -> Self::Output {
         WithGradient {
-            value: input.value.powf(self.0),
-            gradient: input.gradient * (self.0 * input.value.powf(self.0 - 1.0)),
+            value: bevy_math::ops::powf(input.value, self.0),
+            gradient: input.gradient * (self.0 * bevy_math::ops::powf(input.value, self.0 - 1.0)),
         }
     }
 }
