@@ -58,6 +58,13 @@ pub struct PowF(pub f32);
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct PowI(pub i32);
 
+/// A [`NoiseFunction`] that takes the square root of its input.
+#[derive(Default, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(feature = "serialize", derive(serde::Serialize))]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Sqrt;
+
 /// A [`NoiseFunction`] makes more positive numbers get closer to 0.
 /// Negative numbers are meaningless. Positive numbers will produce UNorm results.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
@@ -114,12 +121,39 @@ macro_rules! impl_vector_spaces {
     (scalar $n:ty) => {
         impl_vector_spaces!(both $n);
 
+        impl NoiseFunction<$n> for Abs {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                bevy_math::ops::abs(input)
+            }
+        }
+
+        impl NoiseFunction<$n> for PowF {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                bevy_math::ops::powf(input, self.0)
+            }
+        }
+
         impl NoiseFunction<$n> for PowI {
             type Output = $n;
 
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 input.powi(self.0)
+            }
+        }
+
+        impl NoiseFunction<$n> for Sqrt {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                bevy_math::ops::sqrt(input)
             }
         }
     };
@@ -142,6 +176,15 @@ macro_rules! impl_vector_spaces {
             #[inline]
             fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
                 input.powf(self.0)
+            }
+        }
+
+        impl NoiseFunction<$n> for Sqrt {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input.map(bevy_math::ops::sqrt)
             }
         }
 
@@ -246,24 +289,6 @@ macro_rules! impl_vector_spaces {
             }
         }
     };
-}
-
-impl NoiseFunction<f32> for Abs {
-    type Output = f32;
-
-    #[inline]
-    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-        bevy_math::ops::abs(input)
-    }
-}
-
-impl NoiseFunction<f32> for PowF {
-    type Output = f32;
-
-    #[inline]
-    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-        bevy_math::ops::powf(input, self.0)
-    }
 }
 
 impl_vector_spaces!(scalar f32);
