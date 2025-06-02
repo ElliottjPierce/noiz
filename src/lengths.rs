@@ -105,7 +105,7 @@ macro_rules! impl_distances {
 
             #[inline]
             fn length_from_ordering(&self, ordering: f32) -> f32 {
-                ordering.sqrt()
+                bevy_math::ops::sqrt(ordering)
             }
         }
 
@@ -113,8 +113,11 @@ macro_rules! impl_distances {
             #[inline]
             fn length_and_gradient_of(&self, vec: $t) -> WithGradient<f32, $t> {
                 WithGradient {
-                    value: vec.length_squared().sqrt(),
-                    gradient: vec / crate::rng::force_float_non_zero(vec.length_squared().sqrt()),
+                    value: bevy_math::ops::sqrt(vec.length_squared()),
+                    gradient: vec
+                        / crate::rng::force_float_non_zero(bevy_math::ops::sqrt(
+                            vec.length_squared(),
+                        )),
                 }
             }
         }
