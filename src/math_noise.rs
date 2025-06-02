@@ -104,7 +104,24 @@ pub type Billow = (Abs, UNormToSNorm);
 pub struct Wrapped(pub f32);
 
 macro_rules! impl_vector_spaces {
-    ($n:ty) => {
+    (scalar $n:ty) => {
+        impl_vector_spaces!(both $n);
+    };
+
+    (vec $n:ty) => {
+        impl_vector_spaces!(both $n);
+
+        impl NoiseFunction<$n> for Abs {
+            type Output = $n;
+
+            #[inline]
+            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+                input.abs()
+            }
+        }
+    };
+
+    (both $n:ty) => {
         impl NoiseFunction<$n> for SNormToUNorm {
             type Output = $n;
 
@@ -168,15 +185,6 @@ macro_rules! impl_vector_spaces {
             }
         }
 
-        impl NoiseFunction<$n> for Abs {
-            type Output = $n;
-
-            #[inline]
-            fn evaluate(&self, input: $n, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
-                input.abs()
-            }
-        }
-
         impl NoiseFunction<$n> for Inverse {
             type Output = $n;
 
@@ -215,11 +223,20 @@ macro_rules! impl_vector_spaces {
     };
 }
 
-impl_vector_spaces!(f32);
-impl_vector_spaces!(Vec2);
-impl_vector_spaces!(Vec3);
-impl_vector_spaces!(Vec3A);
-impl_vector_spaces!(Vec4);
+impl NoiseFunction<f32> for Abs {
+    type Output = f32;
+
+    #[inline]
+    fn evaluate(&self, input: f32, _seeds: &mut crate::rng::NoiseRng) -> Self::Output {
+        bevy_math::ops::abs(input)
+    }
+}
+
+impl_vector_spaces!(scalar f32);
+impl_vector_spaces!(vec Vec2);
+impl_vector_spaces!(vec Vec3);
+impl_vector_spaces!(vec Vec3A);
+impl_vector_spaces!(vec Vec4);
 
 /// A [`NoiseFunction`] produces a ping ponging effect for UNorm values.
 /// The inner value represents the strength of the ping pong.

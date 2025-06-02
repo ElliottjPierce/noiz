@@ -166,7 +166,7 @@ pub struct CubicSMin;
 impl SmoothMin for CubicSMin {
     fn smin_norm(&self, a: f32, b: f32, blend_radius: f32) -> f32 {
         let k = 4.0 * blend_radius;
-        let diff = (a - b).abs();
+        let diff = bevy_math::ops::abs(a - b);
         let h = 0f32.max(k - diff) / k;
         a.min(b) - h * h * blend_radius
     }
