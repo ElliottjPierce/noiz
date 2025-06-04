@@ -1,0 +1,8 @@
+[book]
+authors = ["Elliott Pierce"]
+language = "en"
+src = "book/src"
+title = "Noiz Book"
+
+[build]
+build-dir = "book/build"
