@@ -15,7 +15,8 @@ use noiz::{
         BlendCellGradients, BlendCellValues, DistanceBlend, DistanceToEdge, MixCellGradients,
         MixCellValues, MixCellValuesForDomain, PerCell, PerCellPointDistances, PerNearestPoint,
         QualityGradients, QuickGradients, SimplecticBlend, WorleyAverage, WorleyDifference,
-        WorleyLeastDistance, WorleySmoothMin,
+        WorleyLeastDistance, WorleyProduct, WorleyRatio, WorleySecondLeastDistance,
+        WorleySmoothMin,
     },
     cells::{OrthoGrid, SimplexGrid, Voronoi},
     curves::{CubicSMin, DoubleSmoothstep, Linear, Smoothstep},
@@ -259,7 +260,7 @@ fn main() -> AppExit {
                                         layer: (
                                             DomainWarp {
                                                 warper: Default::default(),
-                                                strength: 2.0, // Warp by double the strength. This should be fun...
+                                                strength: 1.0, // Warp by double the strength. This should be fun...
                                             },
                                             Default::default(),
                                         ),
@@ -285,7 +286,7 @@ fn main() -> AppExit {
                                             MixCellValues<
                                                 OrthoGrid,
                                                 Smoothstep,
-                                                Random<UNorm, f32>,
+                                                Random<SNorm, f32>,
                                             >,
                                         >,
                                     )>,
@@ -299,7 +300,48 @@ fn main() -> AppExit {
                                         layer: (
                                             DomainWarp {
                                                 warper: Default::default(),
-                                                strength: 4.0,
+                                                strength: 1.0,
+                                            },
+                                            Default::default(),
+                                        ),
+                                        lacunarity: 1.8,
+                                        amount: 8,
+                                    },
+                                ),
+                                Default::default(),
+                            ))),
+                        },
+                        NoiseOption {
+                            name: "Domain Warped Fractal Perlin noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalLayers<(
+                                        DomainWarp<
+                                            RandomElements<
+                                                MixCellGradients<
+                                                    OrthoGrid,
+                                                    Smoothstep,
+                                                    QuickGradients,
+                                                >,
+                                            >,
+                                        >,
+                                        Octave<
+                                            MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                        >,
+                                    )>,
+                                >,
+                                SNormToUNorm,
+                            )>::from((
+                                LayeredNoise::new(
+                                    Normed::default(),
+                                    Persistence(0.6),
+                                    FractalLayers {
+                                        layer: (
+                                            DomainWarp {
+                                                warper: Default::default(),
+                                                strength: 1.0,
                                             },
                                             Default::default(),
                                         ),
@@ -314,7 +356,7 @@ fn main() -> AppExit {
                         // But they don't have to. To do that, we won't change the sample for LayeredNoise.
                         // Instead, we'll change the input to the perlin noise via Offset.
                         NoiseOption {
-                            name: "Domain Warped Fractal Perlin noise",
+                            name: "Domain Offset Fractal Perlin noise",
                             noise: Box::new(Noise::<(
                                 LayeredNoise<
                                     Normed<f32>,
@@ -331,6 +373,62 @@ fn main() -> AppExit {
                                                 >,
                                             >,
                                             MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                        )>,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::default()),
+                        },
+                        NoiseOption {
+                            name: "Domain Offset Fractal Simplex noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalLayers<
+                                        Octave<(
+                                            Offset<
+                                                RandomElements<
+                                                    BlendCellGradients<
+                                                        SimplexGrid,
+                                                        SimplecticBlend,
+                                                        QuickGradients,
+                                                    >,
+                                                >,
+                                            >,
+                                            BlendCellGradients<
+                                                SimplexGrid,
+                                                SimplecticBlend,
+                                                QuickGradients,
+                                            >,
+                                        )>,
+                                    >,
+                                >,
+                                SNormToUNorm,
+                            )>::default()),
+                        },
+                        NoiseOption {
+                            name: "Domain Offset Fractal Value noise",
+                            noise: Box::new(Noise::<(
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalLayers<
+                                        Octave<(
+                                            Offset<
+                                                RandomElements<
+                                                    MixCellValues<
+                                                        OrthoGrid,
+                                                        Smoothstep,
+                                                        Random<SNorm, f32>,
+                                                    >,
+                                                >,
+                                            >,
+                                            MixCellValues<
+                                                OrthoGrid,
+                                                Smoothstep,
+                                                Random<SNorm, f32>,
+                                            >,
                                         )>,
                                     >,
                                 >,
@@ -389,6 +487,28 @@ fn main() -> AppExit {
                             name: "Worley difference",
                             noise: Box::new(Noise::<
                                 PerCellPointDistances<Voronoi, EuclideanLength, WorleyDifference>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Worley ratio",
+                            noise: Box::new(Noise::<
+                                PerCellPointDistances<Voronoi, EuclideanLength, WorleyRatio>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Worley product",
+                            noise: Box::new(Noise::<
+                                PerCellPointDistances<Voronoi, EuclideanLength, WorleyProduct>,
+                            >::default()),
+                        },
+                        NoiseOption {
+                            name: "Worley second-least-distance",
+                            noise: Box::new(Noise::<
+                                PerCellPointDistances<
+                                    Voronoi,
+                                    EuclideanLength,
+                                    WorleySecondLeastDistance,
+                                >,
                             >::default()),
                         },
                         // Notice how WorleyDifference seems to correlate to how close a point is to a nearby worley cell?

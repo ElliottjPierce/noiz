@@ -12,5 +12,6 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-# mdbook
+# book
 book/build/
+book/src/images_uncompressed
