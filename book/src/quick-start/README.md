@@ -105,4 +105,4 @@ Depending on what you want to do with the output and if you want the sample call
 Note also that not all types can be scaled.
 For that (rare) case, there is [`RawNoise`](https://docs.rs/noiz/latest/noiz/struct.RawNoise.html).
 
-Armed with this knowledge, let's take a look at the main noise types in the next chapter.
+Next, let's look at some more complex algorithms.

@@ -6,3 +6,6 @@ title = "Noiz Book"
 
 [build]
 build-dir = "book/build"
+
+[output.html.playground]
+runnable = false
