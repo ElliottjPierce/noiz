@@ -442,11 +442,11 @@ fn main() -> AppExit {
                                     FractalLayers<
                                         Octave<(
                                             Offset<
-                                                RandomElements<
-                                                    MixCellValues<
+                                                Offset<
+                                                    MixCellValuesForDomain<
                                                         OrthoGrid,
                                                         Smoothstep,
-                                                        Random<SNorm, f32>,
+                                                        SNorm,
                                                     >,
                                                 >,
                                             >,
