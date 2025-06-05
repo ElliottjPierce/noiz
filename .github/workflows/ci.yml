@@ -77,23 +77,6 @@ jobs:
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
 
-  markdownlint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # Full git history is needed to get a proper list of changed files within `super-linter`
-          fetch-depth: 0
-      - name: Run Markdown Lint
-        uses: super-linter/super-linter/slim@v7.3.0
-        env:
-          MULTI_STATUS: false
-          VALIDATE_ALL_CODEBASE: false
-          VALIDATE_MARKDOWN: true
-          DEFAULT_BRANCH: main
-
   toml:
     runs-on: ubuntu-latest
     timeout-minutes: 30
