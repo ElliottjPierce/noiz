@@ -25,7 +25,7 @@ use noiz::{
         PeakDerivativeContribution, Persistence, PersistenceConfig, SmoothDerivativeContribution,
     },
     lengths::{ChebyshevLength, EuclideanLength, ManhattanLength},
-    math_noise::{Billow, PingPong, SNormToUNorm, Spiral},
+    math_noise::{Billow, PingPong, Pow4, SNormToUNorm, Spiral},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
     rng::{Random, SNorm, UNorm},
 };
@@ -139,6 +139,14 @@ fn main() -> AppExit {
                             noise: Box::new(Noise::<(
                                 MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
                                 SNormToUNorm,
+                            )>::default()),
+                        },
+                        NoiseOption {
+                            name: "Perlin noise",
+                            noise: Box::new(Noise::<(
+                                MixCellGradients<OrthoGrid, Smoothstep, QuickGradients>,
+                                SNormToUNorm,
+                                Pow4,
                             )>::default()),
                         },
                         // QuickGradients uses a lookup table to be really fast, but with speed comes lower quality (specifically directional artifacts).
@@ -452,32 +460,6 @@ fn main() -> AppExit {
                                 >,
                                 SNormToUNorm,
                             )>::default()),
-                        },
-                        NoiseOption {
-                            name: "Approximate erosion of perlin noise",
-                            noise: Box::new(Noise::from((
-                                LayeredNoise::new(
-                                    NormedByDerivative::<
-                                        f32,
-                                        EuclideanLength,
-                                        PeakDerivativeContribution,
-                                    >::default()
-                                    .with_falloff(0.3),
-                                    Persistence(0.6),
-                                    FractalLayers {
-                                        layer: Octave(MixCellGradients::<
-                                            OrthoGrid,
-                                            Smoothstep,
-                                            QuickGradients,
-                                            true,
-                                        >::default(
-                                        )),
-                                        lacunarity: 1.8,
-                                        amount: 8,
-                                    },
-                                ),
-                                SNormToUNorm,
-                            ))),
                         },
                         // Let's take a break from fractal gradient noise to explore voronoi.
                         // Voronoi is a partitioner just like OrthoGrid, only it is not uniform.

@@ -152,3 +152,7 @@ let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 
 This produces: ![voronoi blend gradients image](../images/blend-voronoi-gradients-noise.jpeg)
 Pretty cool!
+
+---
+
+For more information about how voronoi and worley noise works (and noise in general), check out [this](https://iquilezles.org/articles/) website.

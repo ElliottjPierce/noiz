@@ -6,6 +6,8 @@ Sometime you also need to know how the noise function changes over some space.
 How a noise function changes is called a derivative, or more rigorously, a gradient.
 But since gradients can also refer to gradient noise, noiz calls them derivative in most places.
 
+## Computing Derivatives
+
 Not all noise functions have derivatives implemented, but those that do will have a `DIFFERENTIATE` constant, which is off by default.
 For example: `MixCellGradients::<OrthoGrid, Smoothstep, QuickGradients, true>` is differentiated perlin noise.
 These will produce [`WithGradient`](https://docs.rs/noiz/latest/noiz/cells/struct.WithGradient.html) values which contain derivative information.

@@ -84,6 +84,10 @@ where those values come from the `NoiseFunction` `Random<UNorm, f32>`.
 There's a lot of power here: You could change `Random<UNorm, f32>` to any function you like, and you could change `OrthoGrid` to any partitioner you like.
 For example, `PerCell<SimplexGrid, Random<UNorm, f32>>`, will make triangles!
 
+Note that the noise function does not need to know the type it is sampled with.
+As long as the type supports it, you can use anything you like.
+For example, we could have used `Vec3`, `Vec4`, etc above.
+
 ## Putting it all together
 
 You might have noticed two small annoyances with this approach:
@@ -101,8 +105,9 @@ let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
 
 The `Noise` type just has one generic `NoiseFunction` and takes care of seeds, rng, and scale.
 Note that interacting with `Noise` goes trough various sampling traits, in this case [`SampleableFor`](https://docs.rs/noiz/latest/noiz/trait.SampleableFor.html).
-Depending on what you want to do with the output and if you want the sample call to be inlined or not, other traits are available.
-Note also that not all types can be scaled.
+Depending on what you want to do with the output, if you want the sample call to be inlined or not, and `dyn` compatibility, other traits are available.
+
+> Note also that not all input types can be scaled.
 For that (rare) case, there is [`RawNoise`](https://docs.rs/noiz/latest/noiz/struct.RawNoise.html).
 
 Next, let's look at some more complex algorithms.
