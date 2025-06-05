@@ -5,8 +5,8 @@ We've looked so far at `OrthoGrid`, `SimplexGrid` and `Voronoi` partitioners, bu
 ## Voronoi
 
 The `Voronoi` graph is just a grid that has been nudged around a bit.
-As has been noted, you can customize how much it is those nudges move the grid around.
-But, you can also turn on a flag that approximates the graph.
+As has been noted, you can customize how much it nudges the grid around,
+but you can also turn on a flag that approximates the graph.
 This is not a perfect approximation.
 It has artifacts when paired with `WorleyMode`s that need more than just the nearest point,
 and it is significantly less random than a normal `Voronoi` graph.
@@ -26,6 +26,7 @@ which is needed for it to work.
 However, you can use `OrthoGrid<i32>` for example to wrap noise generated on that grid.
 Vector types also work for making rectangles of wrapping noise.
 You can also make your own wrapping amounts.
+This is very useful if you want the result to tile.
 
 Here's an example of wrapping perlin noise:
 

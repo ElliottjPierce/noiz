@@ -4,8 +4,8 @@ If you want to make something but don't see how to do it with only what noiz pro
 This page covers some ideas for how to do that.
 
 - Custom modifiers:
-If you want to change or morph the output(s) of a noise function in a custom way, you'll want to make a `NoiseFunction`.
-If you modifier is math based, you can ignore the supplied `NoiseRng`.
+If you want to change or morph the output of a noise function(s) in a custom way, you'll want to make a `NoiseFunction`.
+If your modifier is math based, you can ignore the supplied `NoiseRng`.
 If you are passing it to other noise functions, consider calling `NoiseRng::re_seed`, which will prevent repetition between the noise functions.
 
 - Custom noise algorithms:
@@ -14,6 +14,7 @@ To drive randomness, use the supplied `NoiseRng` paired with types that are `Noi
 To make that output meaningful, use `AnyValueFromBits` or other functions in `rng`.
 If you are dividing floats that may be zero, see also [`force_float_non_zero`](https://docs.rs/noiz/latest/noiz/rng/fn.force_float_non_zero.html).
 Consider also differentiating the function analytically with calculus.
+Note also that many noise algorithms should be made generic over a `Partitioner` when possible.
 
 - Custom shapes:
 If you want to create uniquely shaped noise, you'll need a custom `Partitioner`, `DomainCell`, etc.

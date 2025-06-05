@@ -46,6 +46,8 @@ Time (milliseconds) per 1024 ^ 2 = 1048576 samples. Lower is better.
 | worley                | 5.7      ✅ | 24.5         | 11.8           | 17.8            |
 | worley approximate    | 2.8      ✅ | ---          | ---            | ---             |
 
+Note that "worley approximate" is a faster version of "worley" with some compromises.
+
 ### 3D
 
 Time (milliseconds) per 101 ^ 3 = 1030301 samples. Lower is better.
@@ -111,8 +113,6 @@ This is likely also due to the difference in rng methods, and the same quality i
 For simplex noise, `noiz` is the clear winner. Simplex is about half as fast as perlin for 2d, but it gets better for higher dimensions, beating perlin in 4d.
 
 For Worley noise, the results vary greatly depending on use-case. See for yourself.
-Worley approximate, if you're wondering, is a version of worley noise that is much faster but restricts the voronoi points to be only half as random as normal.
-This works great if you only need an approximation.
 
 ## What to Choose
 

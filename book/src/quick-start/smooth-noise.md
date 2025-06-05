@@ -47,7 +47,7 @@ One way you might think of is to blur the lines between the squares.
 That's values noise!
 
 Basically, instead of picking a value for each domain cell, pick one for each corner of the domain cell, and mix those values together across the cell.
-If that didn't make sense, see a visual explanation [here](https://www.youtube.com/watch?v=DxUY42r_6Cg&t=619s), which covers both value and perlin noise, more on perlin in a bit.
+If that didn't make sense, see a visual explanation [here](https://www.youtube.com/watch?v=DxUY42r_6Cg&t=619s), which covers both value and perlin noise; more on perlin in a bit.
 This is called [bilinear interpolation](https://en.wikipedia.org/wiki/Bilinear_interpolation).
 In noiz, we call this mixing, as it is generalized for squares, cubes, and hyper cubes.
 
@@ -57,14 +57,16 @@ use bevy_math::prelude::*;
 let noise = Noise::<MixCellValues<
     OrthoGrid,
     Linear,
-    Random<UNorm, f32>
+    Random<UNorm, f32>,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 Here, `MixCellValues` is told to mix values over each domain cell, sourced from `OrthoGrid`, by the `Linear` curve, where each value comes from `Random<UNorm, f32>`.
-Note that `MixCellValues` only really works with `OrthoGrid` or a custom `Partitioner` you make.
-It is possible to implement for other shapes, but they are not worth it for the runtime cost.
+
+> Note that `MixCellValues` only really works with `OrthoGrid` variants (more on those later) or a custom `Partitioner` you make.
+It is possible to implement mixing for other shapes, but they are not worth it for the runtime cost.
+
 Regardless, values noise produces this:
 
 ![linear value noise image](../images/linear-value-noise.jpeg)
@@ -79,12 +81,12 @@ Changing `Linear` to `Smoothstep`, unsurprisingly, makes the image smoother:
 This is traditional value noise.
 It's so common, noiz provides a type alias for it in `prelude::common_noise`.
 
-This curve generic parameter runs on `bevy_math`'s [`Curve`](https://docs.rs/bevy/latest/bevy/math/trait.Curve.html) trait,
+This generic curve parameter runs on `bevy_math`'s [`Curve`](https://docs.rs/bevy/latest/bevy/math/trait.Curve.html) trait,
 so you can also use ones in their library or make you're own.
 Depending on what you want, `Smoothstep` is almost always the right choice for mixing.
-Sometimes `Linear` or a custom curve is artistically appealing.
+Though, sometimes `Linear` or a custom curve is artistically appealing.
 
-> When picking the curve, keep in mind that the more derivatives that can be taken from a function, the smoother the result generally appears.
+> When picking the curve, keep in mind that the more derivatives that can be taken from a curve, the smoother the result generally appears.
 For example, `Linear` produces harsh changes in the noise, as you saw.
 Then, `Smoothstep` eliminated those abrupt changes, but the derivative of the noise, how the value is changing, still has sharp changes of it's own!
 When you care about the smoothness of the derivative of noise, you may want to use a smoother curve.
@@ -101,7 +103,7 @@ That's where perlin noise comes in!
 Instead of mixing *random* values over a domain cell, source those values partly from the sample location and partly from a random unit vector.
 That probably won't make sense at first (and that's ok).
 If you want a visual explanation, see [here](https://www.youtube.com/watch?v=DxUY42r_6Cg&t=619s) again.
-Ultimately, since the sample location has more affect, this adds lots more shapes to the noise.
+Ultimately, since the sample location has more effect, this adds lots more shapes to the noise.
 Here's how this works in noiz:
 
 ```rust
@@ -110,14 +112,14 @@ use bevy_math::prelude::*;
 let noise = Noise::<MixCellGradients<
     OrthoGrid,
     Smoothstep,
-    QuickGradients
+    QuickGradients,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 Here, `MixCellGradients` is told to mix those unit vector + sample location combinations over domain cells from `OrthoGrid`, via the `Smoothstep` curve.
-Of course, we need to specify how to make those unit vectors, called gradients.
-Usually, the best choice for this is `QuickGradients`, which provides fast, decent gradients.
+Those unit vectors are called gradients, and we specify how to make them, here with `QuickGradients`.
+Usually `QuickGradients` is the right choice; it provides fast, decent gradients.
 
 > Any time this "random unit vector combined with sample location" trick is used, it's called gradient noise, since it comes from, well, gradients.
 Noise that just merges random values directly is generally called value noise, even if it isn't the traditional value noise described above.
@@ -129,7 +131,7 @@ This is so common, it has a type alias for it in `prelude::common_noise`.
 
 Perlin noise isn't perfect.
 If you look closely, you'll see directional artifacts: places that seem to form lines together.
-This isn't always a big deal, but it can be minimized with a other gradient generators that sacrifice speed for quality.
+This isn't always a big deal, but it can be minimized with other gradient generators that sacrifice speed for quality.
 Some of these are also provided in `Noiz`, with various trade-offs.
 See [here](https://docs.rs/noiz/latest/noiz/cell_noise/trait.GradientGenerator.html#implementors).
 
@@ -138,7 +140,7 @@ Additionally, the same configuration operations for the curve apply here too: `D
 
 ## Simplex Noise
 
-Even with a good seed and a high quality gradient generator, perlin noise can and will generate directional artifacts from time to time.
+Even with a high quality gradient generator, perlin noise can and will generate directional artifacts from time to time.
 Usually, this isn't a big deal; sometimes, it's even desirable—but not always.
 In those cases, simplex noise is the solution.
 
@@ -146,14 +148,14 @@ Instead of being based on squares, it's based on triangles.
 This eliminates straight linear artifacts, though some zig-zagy ones may remain.
 Still, that's about as good as one can ask for.
 
-One issues with using triangles is that it's very inefficient to mix values over them.
+One issue with using triangles is that it's very inefficient to mix values over them.
 Instead, simplex noise blends values.
 What's the difference?
-Think of it like this: mixing is like a movie blurring to transition between two scenes; blending is like the movie fading to black on one scene before fading from black to a new scene.
+Think of it like this: mixing is like a movie blurring to transition between two scenes; blending is like the movie fading to black from one scene before fading from black to a new scene.
 It's an imperfect analogy, but hopefully it gives you an idea.
 If you want the details, check out [this](https://muugumuugu.github.io/bOOkshelF/generative%20art/simplexnoise.pdf) paper.
 
-Before jumping into blending, here's what blending cell values looks like instead of mixing them:
+Before jumping into simplex, here's what blending cell values looks like instead of mixing them:
 
 ```rust
 use noiz::prelude::*;
@@ -161,7 +163,7 @@ use bevy_math::prelude::*;
 let noise = Noise::<BlendCellValues<
     OrthoGrid,
     SimplecticBlend,
-    Random<UNorm, f32>
+    Random<UNorm, f32>,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
@@ -184,7 +186,7 @@ use bevy_math::prelude::*;
 let noise = Noise::<BlendCellGradients<
     OrthoGrid,
     SimplecticBlend,
-    QuickGradients
+    QuickGradients,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
@@ -194,7 +196,7 @@ This produces:
 ![gradients blending image](../images/ortho-simplectic-blend-gradient-noise.jpeg)
 
 Well, that's better, but it still has those grid lines!
-Now for the last step: using triangles to remove grid lines using `SimplexGrid`.
+Now for the last step: using triangles to remove grid lines via `SimplexGrid`.
 
 Here's it at work:
 
@@ -204,7 +206,7 @@ use bevy_math::prelude::*;
 let noise = Noise::<BlendCellGradients<
     SimplexGrid,
     SimplecticBlend,
-    QuickGradients
+    QuickGradients,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
@@ -213,6 +215,8 @@ The above produces:
 
 ![simplex noise image](../images/simplex-noise.jpeg)
 
+Tada!
+Traditional simplex noise.
 This is also so common that it has a type alias in `prelude::common_noise`.
 Simplex noise still isn't perfect, but it is more than good enough in practice.
 

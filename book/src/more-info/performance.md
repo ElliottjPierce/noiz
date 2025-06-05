@@ -1,6 +1,6 @@
 # Performance
 
-This is a list of tips for making performant noiz code.
+This is a list of tips for writing performant noiz code.
 Always benchmark your noise functions.
 Small changes can have surprising butterfly affects!
 
@@ -10,7 +10,7 @@ Make sure `Cargo.toml` is configured for speed.
 See [this](https://github.com/lineality/rust_compile_optimizations_cheatsheet) guide for how to do this effectively.
 
 Noiz is so fast because of strongly worded letters to the compiler (`#[inline]`) and rust's incredible zero-cost abstractions.
-Seriously, noiz is driven by traits and types and it's just as fast as megalithic functions!
+Seriously, noiz is driven by traits and types and it's just as fast as traditional megalithic functions!
 Anyway, expect much worse performance when cargo has not been configured to make use of the inlining, etc.
 
 ## Only Pay for What You Use
@@ -26,6 +26,7 @@ Sometimes there's easy ways to make noise algorithms faster:
 - Consider trading `RandomElements` for `MixCellValuesForDomain`,
 - Consider using `SelfMasked` instead of `Masked`,
 - Consider using `Linear` instead of `Smoothstep`,
+- Consider using `WorleyNearestSmoothMin` instead of `WorleySmoothMin`.
 - Use `QuickGradients` instead of higher quality but slower generators,
 - Use `RawNoise` instead of `Noise` to skip scaling,
 - Use `SampleableFor` and `sample_for` instead of their dynamic counterparts when in tight loops for better inlining,
@@ -44,7 +45,7 @@ let noise = Noise::<LayeredNoise<
         FractalLayers<Octave<MixCellGradients<
             OrthoGrid,
             Smoothstep,
-            QuickGradients
+            QuickGradients,
         >>>,
         FractalLayers<Octave<MixCellValues<
             OrthoGrid,
@@ -55,6 +56,8 @@ let noise = Noise::<LayeredNoise<
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
+
+This will generate the large features from perlin noise and use value noise to add some detail on top.
 
 ## Neat Tricks
 

@@ -1,7 +1,7 @@
 # Distance Noise
 
-Mixing and blending is not the only way to smooth out the rough white noise.
-Another idea you might have had is to pick some point in each cell and generate values based on that point instead of the whole cell.
+Mixing and blending is not the only way to smooth out rough white noise.
+When thinking about how to smooth it out, another idea you might have had is to pick some point in each cell and generate values based on that point instead of the whole cell.
 Then, you could return results based on the sample's location relative to those points instead of just what cell it lands in.
 This is considered distance noise since it is ultimately always tied to the distance between points.
 
@@ -19,7 +19,7 @@ use bevy_math::prelude::*;
 let noise = Noise::<PerNearestPoint<
     SimplexGrid,
     EuclideanLength,
-    Random<UNorm, f32>
+    Random<UNorm, f32>,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
@@ -51,7 +51,6 @@ the general shape in which the distance between two points change.
 - `EuclideanSqrdLength`: produces circles with non-linear scaling
 - `ManhattanLength`: produce diamonds
 - `HybridLength`: combines `EuclideanLength` and `ManhattanLength`, producing diagonal shapes
-- `ManhattanLength`: produce diamonds
 - `ChebyshevLength`: produce squares
 - `MinikowskiLength`: produce concave diamonds, like stars
 
@@ -61,7 +60,7 @@ Here's a look at using `ManhattanLength`:
 
 ## Worley Noise
 
-Right now, each cell in the cellular noise is flat since it only comes from the nearest cell point itself.
+In cellular noise, each cell is flat since it only comes from the nearest cell point itself.
 So, another approach is to calculate the result based on the distances themselves rather that the *point* at the closest distance.
 This is called worley noise.
 Here's how to do it in noiz:
@@ -133,7 +132,7 @@ let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 This makes: ![voronoi simplectic blend noise image](../images/blend-voronoi-simplectic-noise.jpeg)
 
 There's also `DistanceBlend<T>`, where `T` is a length function as an alternative to `SimplecticBlend`.
-Using `ManhattanLength` for example makes:
+Using `DistanceBlend<ManhattanLength>` for example makes:
 
 ![voronoi manhattan blend noise image](../images/blend-voronoi-manhattan-noise.jpeg)
 
@@ -145,7 +144,7 @@ use bevy_math::prelude::*;
 let noise = Noise::<BlendCellGradients<
     Voronoi,
     SimplecticBlend,
-    QuickGradients
+    QuickGradients,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```

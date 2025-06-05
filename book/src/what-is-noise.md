@@ -1,12 +1,12 @@
 # What is noise?
 
-But before all that, what even is noise?
+What even is noise?
 The simple definition is that noise is a kind of randomness in some space.
 This is best explained with an example:
 
 Imagine you want to generate some trees on a landscape for a video game.
 Where should the trees go?
-You could just put them on pre-defined points, maybe a grid of trees with one meter between each one.
+You could just put them on pre-defined points, maybe a grid of trees with one meter between each tree.
 But that's boring, and it doesn't look very natural.
 The solution: randomness.
 For each of those grid points, instead of putting a tree there no matter what, roll some dice, and only place the tree if the dice land a certain way.

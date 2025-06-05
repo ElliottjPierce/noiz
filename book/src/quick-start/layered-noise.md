@@ -20,7 +20,7 @@ let noise = Noise::<LayeredNoise<
     Octave<MixCellGradients<
         OrthoGrid,
         Smoothstep,
-        QuickGradients
+        QuickGradients,
     >>,
 >>::default();
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
@@ -28,7 +28,7 @@ let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 
 Here, the noise function for `Noise` is `LayeredNoise`, which is generic over a three types.
 First, we need to tell it what to do with all these layers of noise.
-The most common option is `Normed<T>`, which will add up different values of `T` from the layers of noise, and normalize it to either SNorm or UNorm, depending on the range of each layer.
+The most common option is `Normed<T>`, which will add up different values of `T` from the layers of noise, and normalize it to the widest range of outputs of its layers, usually UNorm or SNorm.
 Next, we need to tell it how to weight each layer of noise.
 The most common for this is `Persistence`, which makes layers have progressively different contributions to the output.
 By default, this will makes later noise layers "persist" exponentially less than earlier ones.
@@ -37,6 +37,7 @@ Here, we use only one layer: `Octave`.
 An `Octave` is just a layer of noise that contributes directly to the output.
 There are more kinds of octaves too, but we'll cover those later.
 Each `Octave` also needs its own generic parameter, which determines which `NoiseFunction` to use.
+Here, we use perlin noise.
 
 All of that is great, but the above code actually just makes standard perlin noise.
 That's because we only gave it one octave.
@@ -44,8 +45,8 @@ To add more octaves, they are listed in tuples.
 For example, `(Layer1, Layer2, Layer3)` is itself a layer that runs `Layer1`, then `Layer2`, and then `Layer3`.
 This is only implemented for a finite combination of tuples.
 If the tuple gets too big, you'll need to nest them, which has the same affect: `(Layer1, (Layer2, Layer3))`.
+That lets us make this:
 
-That, lets us make this:
 ```rust
 use noiz::prelude::*;
 use bevy_math::prelude::*;
@@ -56,17 +57,17 @@ let noise = Noise::<LayeredNoise<
         Octave<MixCellGradients<
             OrthoGrid,
             Smoothstep,
-            QuickGradients
+            QuickGradients,
         >>,
         Octave<MixCellGradients<
             OrthoGrid,
             Smoothstep,
-            QuickGradients
+            QuickGradients,
         >>,
         Octave<MixCellGradients<
             OrthoGrid,
             Smoothstep,
-            QuickGradients
+            QuickGradients,
         >>,
     ),
 >>::default();
@@ -87,7 +88,7 @@ Let's fix that!
 
 ## Fractal Layers
 
-The problem is each layer of noise remains the same scale.
+The problem is that each layer of noise remains the same scale.
 This does increase the variation of the noise, but it doesn't have a sense of "depth".
 Since everything is happening at the same scale, you don't get small details on big features–just more varied big features.
 Let's fix this by making layers fractal:
@@ -107,7 +108,7 @@ let noise = Noise::<LayeredNoise<
 let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
-Here, `FractalLayers` repeats its inner layer some number of times (be default, 8), scaling the noise between each repetition.
+Here, `FractalLayers` repeats its inner layer some number of times (by default, 8), scaling the noise between each repetition.
 When used with `Normed` and `Persistence`, this is called fractal brownian motion (fbm), and it produces this:
 
 
