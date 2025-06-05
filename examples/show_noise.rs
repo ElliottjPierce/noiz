@@ -199,6 +199,24 @@ fn main() -> AppExit {
                                 SNormToUNorm,
                             )>::default()),
                         },
+                        NoiseOption {
+                            name: "Fractal Value noise",
+                            noise: Box::new(Noise::<
+                                LayeredNoise<
+                                    Normed<f32>,
+                                    Persistence,
+                                    FractalLayers<
+                                        Octave<
+                                            MixCellValues<
+                                                OrthoGrid,
+                                                Smoothstep,
+                                                Random<UNorm, f32>,
+                                            >,
+                                        >,
+                                    >,
+                                >,
+                            >::default()),
+                        },
                         // A very similar setup can be used for simplex noise!
                         NoiseOption {
                             name: "Fractal Simplex noise",
