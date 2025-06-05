@@ -7,7 +7,7 @@ Let's remind ourselves of what we made:
 ```rust
 use noiz::prelude::*;
 use bevy_math::prelude::*;
-let noise = Noise::<OrthoGrid, Random<UNorm, f32>>::default();
+let noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
 let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
@@ -20,7 +20,14 @@ That let's us visualize this noise as:
 
 ![white noise image](../images/white-noise.jpeg)
 
-It kinda reminds me of TV static.
+We could have also used triangular cells via `SimplexGrid`.
+Just like `OrthoGrid` is built on orthogonal primitives (squares, cubes, etc), `SimplexGrid` is built on simplex primitives (triangles, tetrahedrons, etc).
+Using `SimplexGrid` instead of `OrthoGrid` would produce:
+
+![triangle white noise image](../images/white-simplex-noise.jpeg)
+
+But for now, let's focus on squares.
+
 Anyway, this is white noise, and it's not usually very useful.
 There's no form or flow to it; it's random, but it's certainly not very natural or organic looking.
 Put another way, this noise is rough, but we want smooth noise.
@@ -183,9 +190,7 @@ This produces:
 ![gradients blending image](../images/ortho-simplectic-blend-gradient-noise.jpeg)
 
 Well, that's better, but it still has those grid lines!
-Now for the last step: using triangles to remove grid lines.
-This needs a new `Partitioner`: `SimplexGrid`.
-Just like `OrthoGrid` is built on orthogonal primitives (squares, cubes, etc), `SimplexGrid` is built on simplex primitives (triangles, tetrahedrons, etc.)
+Now for the last step: using triangles to remove grid lines using `SimplexGrid`.
 
 Here's it at work:
 

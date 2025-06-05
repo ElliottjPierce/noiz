@@ -93,7 +93,7 @@ To address this, noiz has one more layer of abstraction: `Noise`.
 ```rust
 use noiz::prelude::*;
 use bevy_math::prelude::*;
-let mut noise = Noise::<OrthoGrid, Random<UNorm, f32>>::default();
+let mut noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
 noise.set_seed(42);
 noise.set_frequency(2.0);
 let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
@@ -106,3 +106,8 @@ Note also that not all types can be scaled.
 For that (rare) case, there is [`RawNoise`](https://docs.rs/noiz/latest/noiz/struct.RawNoise.html).
 
 Next, let's look at some more complex algorithms.
+As we do, feel free to explore them yourself by running or modifying the "show_noise" example.
+
+```txt
+cargo run --example show_noise
+```
