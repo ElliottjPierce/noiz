@@ -453,6 +453,32 @@ fn main() -> AppExit {
                                 SNormToUNorm,
                             )>::default()),
                         },
+                        NoiseOption {
+                            name: "Approximate erosion of perlin noise",
+                            noise: Box::new(Noise::from((
+                                LayeredNoise::new(
+                                    NormedByDerivative::<
+                                        f32,
+                                        EuclideanLength,
+                                        PeakDerivativeContribution,
+                                    >::default()
+                                    .with_falloff(0.3),
+                                    Persistence(0.6),
+                                    FractalLayers {
+                                        layer: Octave(MixCellGradients::<
+                                            OrthoGrid,
+                                            Smoothstep,
+                                            QuickGradients,
+                                            true,
+                                        >::default(
+                                        )),
+                                        lacunarity: 1.8,
+                                        amount: 8,
+                                    },
+                                ),
+                                SNormToUNorm,
+                            ))),
+                        },
                         // Let's take a break from fractal gradient noise to explore voronoi.
                         // Voronoi is a partitioner just like OrthoGrid, only it is not uniform.
                         // Each lattace point is unpredictable. Voronoi graphs are an entire field of study, but all we care about is that extra randomness.

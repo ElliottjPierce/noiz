@@ -123,6 +123,8 @@ And with value noise:
 
 ![fbm value noise](../images/fbm-value-noise.jpeg)
 
+Fbm noise is so common, it has a type alias in `prelude::common_noise`.
+
 ## Configuring Noise
 
 There's lots of options for how to configure all the noise types we've covered, but it's especially fun to do so with fbm noise.

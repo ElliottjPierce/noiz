@@ -7,7 +7,7 @@
   - [Smooth Noise](./quick-start/smooth-noise.md)
   - [Distance Noise](./quick-start/distance-noise.md)
   - [Layered Noise](./quick-start/layered-noise.md)
-  - [Derivatives](./quick-start/derivativese.md)
+  - [Derivatives](./quick-start/derivatives.md)
   - [Modifiers](./quick-start/modifiers.md)
   - [Warping](./quick-start/warping.md)
   - [Wrapping](./quick-start/wrapping.md)
