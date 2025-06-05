@@ -10,7 +10,7 @@
   - [Derivatives](./quick-start/derivatives.md)
   - [Modifiers](./quick-start/modifiers.md)
   - [Warping](./quick-start/warping.md)
-  - [Wrapping](./quick-start/wrapping.md)
+  - [Special Partitioning](./quick-start/special-partitioning.md)
 - [Advanced](./advanced/README.md)
   - [Rng](./advanced/rng.md)
   - [Determinism](./advanced/determinism.md)
