@@ -1,5 +1,8 @@
 # Quick Start
 
+Before using Noiz, remember to also depend on either `bevy_math` or `bevy`.
+These examples use the more minimal, `bevy_math`.
+
 ## Randomness
 
 At the heart of every noise algorithm is a random number generator (RNG).

@@ -13,3 +13,5 @@ By the end of this short book, you will:
 - be familiar with what different kinds of noise looks like,
 - have an intuition for how noise is implemented,
 - get an idea of how to implement custom kinds of noise
+
+If you see anything wrong with this book: unclear explanations, undocumented items, typos, etc, please open an issue on github!
