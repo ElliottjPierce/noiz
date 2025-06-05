@@ -13,6 +13,6 @@
   - [Special Partitioning](./quick-start/special-partitioning.md)
 - [Advanced](./advanced/README.md)
   - [Rng](./advanced/rng.md)
-  - [Determinism](./advanced/determinism.md)
+  - [Feature Flags](./advanced/feature-flags.md)
   - [Custom Types](./advanced/custom-types.md)
   - [Performance](./advanced/performance.md)
