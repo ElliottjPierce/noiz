@@ -1,8 +1,5 @@
-name: Deploy
-on:
-  push:
-    branches:
-      - release-*
+name: Deploy Book
+on: workflow_dispatch
 
 # From https://github.com/rust-lang/mdBook/wiki/Automated-Deployment%3A-GitHub-Actions#GitHub-Pages-Deploy
 
