@@ -132,7 +132,7 @@ fn setup(
     noise.set_period(PERIOD);
     let mesh = build_mesh(noise, EXTENT, RESOLUTION);
 
-    // circular base
+    // terrain
     commands.spawn((
         Mesh3d(meshes.add(mesh)),
         MeshMaterial3d(materials.add(StandardMaterial {
