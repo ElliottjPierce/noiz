@@ -502,6 +502,12 @@ fn main() -> AppExit {
                             >::default()),
                         },
                         NoiseOption {
+                            name: "Worley product",
+                            noise: Box::new(Noise::<
+                                PerCellPointDistances<Voronoi, EuclideanLength, WorleyAverage>,
+                            >::default()),
+                        },
+                        NoiseOption {
                             name: "Worley second-least-distance",
                             noise: Box::new(Noise::<
                                 PerCellPointDistances<

@@ -1,4 +1,7 @@
-# SmoothNoise
+# Smooth Noise
+
+Not all noise is smooth.
+In this chapter, we'll explore smooth noise in noiz.
 
 ## White Noise
 
@@ -8,7 +11,7 @@ Let's remind ourselves of what we made:
 use noiz::prelude::*;
 use bevy_math::prelude::*;
 let noise = Noise::<PerCell<OrthoGrid, Random<UNorm, f32>>>::default();
-let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
+let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 For now, I'll omit setting the seed and scale of the noise, so we can just focus on the algorithms.
@@ -35,6 +38,7 @@ Put another way, this noise is rough, but we want smooth noise.
 > Note that, due to compression, not all details of noise may be clear on these images.
 And, to prevent a large download size, not all noise combinations will have an image.
 There's simply too many combinations of noise settings, which is a good problem to have!
+Also, the scale of the noise may change between images to better show detail, etc.
 
 ## Value Noise
 
@@ -55,7 +59,7 @@ let noise = Noise::<MixCellValues<
     Linear,
     Random<UNorm, f32>
 >>::default();
-let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
+let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 Here, `MixCellValues` is told to mix values over each domain cell, sourced from `OrthoGrid`, by the `Linear` curve, where each value comes from `Random<UNorm, f32>`.
@@ -108,7 +112,7 @@ let noise = Noise::<MixCellGradients<
     Smoothstep,
     QuickGradients
 >>::default();
-let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
+let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 Here, `MixCellGradients` is told to mix those unit vector + sample location combinations over domain cells from `OrthoGrid`, via the `Smoothstep` curve.
@@ -159,7 +163,7 @@ let noise = Noise::<BlendCellValues<
     SimplecticBlend,
     Random<UNorm, f32>
 >>::default();
-let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
+let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 Here, `BlendCellValues` is told to blend values from `Random<UNorm, f32>` between the points of domain cells from `OrthoGrid`.
@@ -182,7 +186,7 @@ let noise = Noise::<BlendCellGradients<
     SimplecticBlend,
     QuickGradients
 >>::default();
-let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
+let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 This produces:
@@ -202,7 +206,7 @@ let noise = Noise::<BlendCellGradients<
     SimplecticBlend,
     QuickGradients
 >>::default();
-let random_unorm: f32 = noise.sample(Vec2::new(1.5, 2.0));
+let value: f32 = noise.sample(Vec2::new(1.5, 2.0));
 ```
 
 The above produces:
@@ -211,3 +215,8 @@ The above produces:
 
 This is also so common that it has a type alias in `prelude::common_noise`.
 Simplex noise still isn't perfect, but it is more than good enough in practice.
+
+---
+
+It might surprise you, but value, perlin, and simplex noise are not the only ways to smooth out white noise.
+Let's look at another...
