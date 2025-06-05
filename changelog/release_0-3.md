@@ -1,6 +1,6 @@
 # Release 0.2
 
-WIP. Updated during development.
+WIP. Updated during development. After release, this is moved to the book.
 
 ## Enhancements
 
