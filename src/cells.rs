@@ -29,7 +29,11 @@ pub trait DomainCell {
 /// Represents a [`DomainCell`] that upholds some guarantees about distance ordering per point.
 pub trait WorleyDomainCell: DomainCell {
     /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the nearest point along each axis will be less than this far away along that axis.
-    fn nearest_1d_point_always_within(&self) -> f32;
+    #[inline(always)]
+    fn nearest_1d_point_always_within(&self) -> f32 {
+        self.next_nearest_1d_point_always_within() * 0.5
+    }
+
     /// For every [`CellPoint::offset`] produced by [`DomainCell::iter_points`], the second nearest point along each axis will be less than this far away along that axis.
     fn next_nearest_1d_point_always_within(&self) -> f32;
 }
@@ -376,11 +380,6 @@ impl<F, I, W> WorleyDomainCell for SquareCell<F, I, W>
 where
     Self: DomainCell,
 {
-    #[inline(always)]
-    fn nearest_1d_point_always_within(&self) -> f32 {
-        0.5
-    }
-
     #[inline(always)]
     fn next_nearest_1d_point_always_within(&self) -> f32 {
         1.0
@@ -1464,16 +1463,6 @@ impl<C: WorleyDomainCell, const HALF_SCALE: bool> WorleyDomainCell for VoronoiCe
 where
     Self: DomainCell,
 {
-    #[inline(always)]
-    fn nearest_1d_point_always_within(&self) -> f32 {
-        let additional = if HALF_SCALE {
-            self.randomness * 0.5
-        } else {
-            self.randomness
-        };
-        (self.cell.nearest_1d_point_always_within() + additional) * 0.5
-    }
-
     #[inline(always)]
     fn next_nearest_1d_point_always_within(&self) -> f32 {
         let additional = if HALF_SCALE {
