@@ -14,9 +14,14 @@ pub mod math_noise;
 pub mod misc_noise;
 pub mod prelude;
 pub mod rng;
+pub mod builder;
 
 use bevy_math::VectorSpace;
 use rng::NoiseRng;
+
+use crate::prelude::{
+        Masked, SNormToUNorm, Scaled, UNormToSNorm
+    };
 
 /// Represents a simple noise function with an input `I` and an output.
 ///
@@ -37,6 +42,14 @@ impl<I, T0: NoiseFunction<I>> NoiseFunction<I> for (T0,) {
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         self.0.evaluate(input, seeds)
+    }
+}
+
+impl<I> NoiseFunction<I> for () {
+    type Output = I;
+    #[inline]
+    fn evaluate(&self, input: I, _seeds: &mut NoiseRng) -> Self::Output {
+        input
     }
 }
 

@@ -17,6 +17,7 @@ pub use crate::{
     math_noise::{Billow, PingPong, SNormToUNorm, UNormToSNorm},
     misc_noise::{Masked, Offset, RandomElements, RemapCurve, Scaled, SelfMasked, Translated},
     rng::{Random, SNorm, UNorm},
+    builder::*
 };
 
 /// Contains type aliases for common noise types.
