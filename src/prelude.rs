@@ -3,6 +3,7 @@
 pub use crate::{
     DynamicConfigurableSampleable, DynamicSampleable, Noise, NoiseFunction, Sampleable,
     SampleableFor, ScalableNoise, SeedableNoise,
+    builder::*,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, MixCellGradients, MixCellValues,
         PerCell, PerCellPointDistances, QuickGradients, SimplecticBlend, WorleyLeastDistance,
@@ -17,7 +18,6 @@ pub use crate::{
     math_noise::{Billow, PingPong, SNormToUNorm, UNormToSNorm},
     misc_noise::{Masked, Offset, RandomElements, RemapCurve, Scaled, SelfMasked, Translated},
     rng::{Random, SNorm, UNorm},
-    builder::*
 };
 
 /// Contains type aliases for common noise types.

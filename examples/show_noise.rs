@@ -10,16 +10,25 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 use noiz::{
+    DynamicConfigurableSampleable, Noise,
     cell_noise::{
         BlendCellGradients, BlendCellValues, DistanceBlend, DistanceToEdge, MixCellGradients,
         MixCellValues, MixCellValuesForDomain, PerCell, PerCellPointDistances, PerNearestPoint,
         QualityGradients, QuickGradients, SimplecticBlend, WorleyAverage, WorleyDifference,
         WorleyLeastDistance, WorleyProduct, WorleyRatio, WorleySecondLeastDistance,
         WorleySmoothMin,
-    }, cells::{OrthoGrid, SimplexGrid, Voronoi}, curves::{CubicSMin, DoubleSmoothstep, Linear, Smoothstep}, layering::{
+    },
+    cells::{OrthoGrid, SimplexGrid, Voronoi},
+    curves::{CubicSMin, DoubleSmoothstep, Linear, Smoothstep},
+    layering::{
         DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
         PeakDerivativeContribution, Persistence, PersistenceConfig, SmoothDerivativeContribution,
-    }, lengths::{ChebyshevLength, EuclideanLength, ManhattanLength}, math_noise::{Billow, PingPong, Pow4, SNormToUNorm, Spiral}, misc_noise::{Offset, Peeled, RandomElements, SelfMasked}, prelude::{common_noise::SimplexWithDerivative, LayeredBuilder, NoiseBuilder}, rng::{Random, SNorm, UNorm}, DynamicConfigurableSampleable, Noise
+    },
+    lengths::{ChebyshevLength, EuclideanLength, ManhattanLength},
+    math_noise::{Billow, PingPong, Pow4, SNormToUNorm, Spiral},
+    misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
+    prelude::{NoiseBuilder, common_noise::SimplexWithDerivative},
+    rng::{Random, SNorm, UNorm},
 };
 
 fn main() -> AppExit {
@@ -626,12 +635,13 @@ fn main() -> AppExit {
                         NoiseOption {
                             name: "Derivative Fractal Simplex noise",
                             noise: Box::new(
-                                NoiseBuilder::new()
-                                    .chain(
-                                        LayeredBuilder::normed_by_peak_derivative(0.6)
-                                            .fractal(SimplexWithDerivative::default(), 1.8, 8)
-                                            .get_noise_fn(),
-                                    )
+                                NoiseBuilder::new(())
+                                    .layered(0.6, |b| {
+                                        b.fractal_with(1.8, 8, |b| {
+                                            b.octave(SimplexWithDerivative::default())
+                                        })
+                                        .normed_by_peak_derivative()
+                                    })
                                     .unorm()
                                     .get_noise_default(),
                             ),

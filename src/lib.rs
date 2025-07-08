@@ -5,6 +5,7 @@
 )]
 #![doc = include_str!("../README.md")]
 
+pub mod builder;
 pub mod cell_noise;
 pub mod cells;
 pub mod curves;
@@ -14,14 +15,11 @@ pub mod math_noise;
 pub mod misc_noise;
 pub mod prelude;
 pub mod rng;
-pub mod builder;
 
 use bevy_math::VectorSpace;
 use rng::NoiseRng;
 
-use crate::prelude::{
-        Masked, SNormToUNorm, Scaled, UNormToSNorm
-    };
+use crate::prelude::{Masked, SNormToUNorm, Scaled, UNormToSNorm};
 
 /// Represents a simple noise function with an input `I` and an output.
 ///
