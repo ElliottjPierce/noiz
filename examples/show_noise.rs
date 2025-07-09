@@ -636,13 +636,20 @@ fn main() -> AppExit {
                             name: "Derivative Fractal Simplex noise",
                             noise: Box::new(
                                 NoiseBuilder::new(())
-                                    .layered(0.6, |b| {
-                                        b.fractal_with(1.8, 8, |b| {
-                                            b.octave(SimplexWithDerivative::default())
-                                        })
-                                        .normed_by_peak_derivative()
-                                    })
-                                    .unorm()
+                                    .layered(
+                                        NormedByDerivative::<
+                                            f32,
+                                            EuclideanLength,
+                                            PeakDerivativeContribution,
+                                        >::default(),
+                                        Persistence(0.6),
+                                        |lbuilder| {
+                                            lbuilder.fractal_with(1.8, 8, |fbuilder| {
+                                                fbuilder.octave(SimplexWithDerivative::default())
+                                            })
+                                        },
+                                    )
+                                    .chain(SNormToUNorm)
                                     .get_noise_default(),
                             ),
                         },

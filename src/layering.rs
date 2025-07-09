@@ -984,7 +984,7 @@ impl SampleDerivative<f32> for SmoothDerivativeContribution {
     fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
         WithDerivative {
             value: bevy_math::ops::exp(-t),
-            derivative: bevy_math::ops::exp(-t) * -1.0,
+            derivative: -bevy_math::ops::exp(-t),
         }
     }
 }

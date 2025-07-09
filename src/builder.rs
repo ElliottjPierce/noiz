@@ -2,17 +2,14 @@
 //! It is optional, but may provide a better experience.
 
 use crate::{
-    Masked, Noise, SNormToUNorm, Scaled, UNormToSNorm,
+    Noise,
     layering::{LayerOperation, LayerResultContext, LayerWeightsSettings},
-    lengths::EuclideanLength,
-    prelude::{
-        DomainWarp, FractalLayers, LayeredNoise, Normed, NormedByDerivative, Octave,
-        PeakDerivativeContribution, Persistence,
-    },
+    prelude::{DomainWarp, FractalLayers, LayeredNoise, Masked, Octave},
     rng::NoiseRng,
 };
 
-///Enables "chaining" tuples together, like an append function.
+/// Enables "chaining" tuples together, like an append function.
+/// If a type is [`TupleChainable<T>`], that means it can be chained with a new element of type `T`
 pub trait TupleChainable<T> {
     ///The output type
     type ChainOutput;
@@ -70,6 +67,7 @@ impl<T2> TupleChainable<T2> for () {
     }
 }
 
+// If max length is exceeded, adds a level of nesting.
 impl<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> TupleChainable<T16>
     for (
         T0,
@@ -146,7 +144,7 @@ mod unnest_impls {
 /// It provides a more streamlined API that the manual setup.
 ///
 /// All the methods on [`NoiseBuilder`] consume the object, and return a new [`NoiseBuilder`], with a new type.
-/// As it is entierly typed, it produces exactly the same [`Noise`] as a manual setup, with the same performance.
+/// As it is entirely typed, it produces exactly the same [`Noise`] as a manual setup, with the same performance.
 ///
 /// All types should be inferred from the parameters.
 ///
@@ -181,33 +179,6 @@ impl<T1> NoiseBuilder<T1> {
         NoiseBuilder((Masked(self.0.unnest(), other),))
     }
 
-    /// Scale the noise
-    /// It is a shortcut for `self.chain(Scaled(scale))`
-    pub fn scale<T>(self, scale: T) -> NoiseBuilder<T1::ChainOutput>
-    where
-        T1: TupleChainable<Scaled<T>>,
-    {
-        self.chain(Scaled::<T>(scale))
-    }
-
-    ///Swap to unorm for this noise
-    /// It is a shortcut for `self.chain(SNormToUNorm)`
-    pub fn unorm(self) -> NoiseBuilder<T1::ChainOutput>
-    where
-        T1: TupleChainable<SNormToUNorm>,
-    {
-        self.chain(SNormToUNorm)
-    }
-
-    ///Swap to snorm for this noise
-    /// It is a shortcut for `self.chain(UNormToSNorm)`
-    pub fn snorm(self) -> NoiseBuilder<T1::ChainOutput>
-    where
-        T1: TupleChainable<UNormToSNorm>,
-    {
-        self.chain(UNormToSNorm)
-    }
-
     /// Create a [`Noise`] for the builder, with the given seed and frequency.
     /// This produces a fully typed object, that can no longer be modified.
     pub fn get_noise(self, seed: u32, frequency: f32) -> Noise<T1::UnnestOutput>
@@ -239,31 +210,26 @@ impl<T1> NoiseBuilder<T1> {
         self.0.unnest()
     }
 
-    /// Chain the inner noise with a layered noise, with the given persistence between layers.
+    /// Chain the inner noise with a layered noise, with the given settings.
     /// It takes a closure that provides a [`LayeredBuilder`], which has the builder methods to build a layered noise.
-    /// The layered noise default to Normed layers with a Persistence, but that can be changed inside the builder.
+    /// The layered noise takes a weight settings (e.g. [`Persistence`]) and a result settings (e.g. [`Normed<f32>`])
     pub fn layered<
         N2,
         R: LayerResultContext,
         W: LayerWeightsSettings,
-        F: FnOnce(LayeredBuilder<Normed<f32>, Persistence, ()>) -> LayeredBuilder<R, W, N2>,
+        F: FnOnce(LayeredBuilder<R, W, ()>) -> LayeredBuilder<R, W, N2>,
     >(
         self,
-        persistence: f32,
-        builder: F,
+        result_settings: R,
+        weight_settings: W,
+        f: F,
     ) -> NoiseBuilder<T1::ChainOutput>
     where
         N2: Unnest,
         N2::UnnestOutput: LayerOperation<R, W::Weights>,
         T1: TupleChainable<LayeredNoise<R, W, N2::UnnestOutput>>,
     {
-        self.chain(
-            builder(LayeredBuilder::new(
-                Normed::default(),
-                Persistence(persistence),
-            ))
-            .get_noise_fn(),
-        )
+        self.chain(f(LayeredBuilder::new(result_settings, weight_settings)).get_noise_fn())
     }
 }
 
@@ -289,27 +255,6 @@ impl<R: LayerResultContext, W: LayerWeightsSettings> LayeredBuilder<R, W, ()> {
 }
 
 impl<R: LayerResultContext, W: LayerWeightsSettings, N> LayeredBuilder<R, W, N> {
-    /// Transform the LayeredNoise to use normed by peak derivative.
-    pub fn normed_by_peak_derivative(
-        self,
-    ) -> LayeredBuilder<NormedByDerivative<f32, EuclideanLength, PeakDerivativeContribution>, W, N>
-    {
-        LayeredBuilder {
-            result_settings: NormedByDerivative::default(),
-            weight_settings: self.weight_settings,
-            noise: self.noise,
-        }
-    }
-
-    /// Transform the LayeredNoise to used normed (the default).
-    pub fn normed(self) -> LayeredBuilder<Normed<f32>, W, N> {
-        LayeredBuilder {
-            result_settings: Normed::default(),
-            weight_settings: self.weight_settings,
-            noise: self.noise,
-        }
-    }
-
     /// Adds an octave layer to the layered noise
     /// It takes a closure that provides a [`NoiseBuilder`] and expects a new one.
     pub fn octave_with<N2: Unnest, F: FnOnce(NoiseBuilder<()>) -> NoiseBuilder<N2>>(

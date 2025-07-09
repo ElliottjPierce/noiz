@@ -19,8 +19,6 @@ pub mod rng;
 use bevy_math::VectorSpace;
 use rng::NoiseRng;
 
-use crate::prelude::{Masked, SNormToUNorm, Scaled, UNormToSNorm};
-
 /// Represents a simple noise function with an input `I` and an output.
 ///
 /// This is the powerhouse of this library.
