@@ -76,7 +76,7 @@ pub trait LayerOperation<R: LayerResultContext, W: LayerWeights> {
 
 /// Specifies that this [`LayerOperation`] can be done on type `I`.
 /// If this adds to the `result`, this is called an octave. The most common kind of octave is [`Octave`].
-pub trait LayerOperationFor<I: VectorSpace, R: LayerResult, W: LayerWeights> {
+pub trait LayerOperationFor<I: VectorSpace<Scalar = f32>, R: LayerResult, W: LayerWeights> {
     /// Performs the layer operation. Use `seeds` to drive randomness, `working_loc` to drive input, `result` to collect output, and `weight` to enable blending with other operations.
     fn do_noise_op(
         &self,
@@ -99,7 +99,7 @@ macro_rules! impl_all_operation_tuples {
             }
         }
 
-        impl<I: VectorSpace, R: LayerResult, W: LayerWeights, $i: LayerOperationFor<I, R, W>, $($ni: LayerOperationFor<I, R, W>),* > LayerOperationFor<I, R, W> for ($i, $($ni),*) {
+        impl<I: VectorSpace<Scalar = f32>, R: LayerResult, W: LayerWeights, $i: LayerOperationFor<I, R, W>, $($ni: LayerOperationFor<I, R, W>),* > LayerOperationFor<I, R, W> for ($i, $($ni),*) {
             #[inline]
             fn do_noise_op(
                 &self,
@@ -228,7 +228,7 @@ impl<R: LayerResultContext, W: LayerWeightsSettings, N: LayerOperation<R, W::Wei
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     R: LayerResultContextFor<I>,
     W: LayerWeightsSettings,
     N: LayerOperationFor<I, R::Result, W::Weights>,
@@ -247,7 +247,7 @@ impl<
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     R: LayerResultContextFor<I>,
     W: LayerWeightsSettings,
     N: LayerOperationFor<I, R::Result, W::Weights>,
@@ -280,8 +280,12 @@ impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for Octave<
     }
 }
 
-impl<T: NoiseFunction<I>, I: VectorSpace, R: LayerResultFor<T::Output>, W: LayerWeights>
-    LayerOperationFor<I, R, W> for Octave<T>
+impl<
+    T: NoiseFunction<I>,
+    I: VectorSpace<Scalar = f32>,
+    R: LayerResultFor<T::Output>,
+    W: LayerWeights,
+> LayerOperationFor<I, R, W> for Octave<T>
 {
     #[inline]
     fn do_noise_op(
@@ -357,7 +361,7 @@ impl<T, R: LayerResultContext, W: LayerWeights> LayerOperation<R, W> for DomainW
     fn prepare(&self, _result_context: &mut R, _weights: &mut W) {}
 }
 
-impl<T: NoiseFunction<I, Output = I>, I: VectorSpace, R: LayerResult, W: LayerWeights>
+impl<T: NoiseFunction<I, Output = I>, I: VectorSpace<Scalar = f32>, R: LayerResult, W: LayerWeights>
     LayerOperationFor<I, R, W> for DomainWarp<T>
 {
     #[inline]
@@ -426,7 +430,7 @@ impl<T: LayerOperation<R, PersistenceWeights>, R: LayerResultContext>
     }
 }
 
-impl<T: LayerOperationFor<I, R, PersistenceWeights>, I: VectorSpace, R: LayerResult>
+impl<T: LayerOperationFor<I, R, PersistenceWeights>, I: VectorSpace<Scalar = f32>, R: LayerResult>
     LayerOperationFor<I, R, PersistenceWeights> for PersistenceConfig<T>
 {
     #[inline]
@@ -503,7 +507,7 @@ impl<T: LayerOperation<R, W>, R: LayerResultContext, W: LayerWeights> LayerOpera
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     T: for<'a> LayerOperationFor<I, FractalLayeredResult<'a, R>, W>,
     R: LayerResult,
     W: LayerWeights,
@@ -700,7 +704,7 @@ where
     }
 }
 
-impl<T: VectorSpace, I: Into<T>> FractalLayerResultCompatible<I> for NormedResult<T>
+impl<T: VectorSpace<Scalar = f32>, I: Into<T>> FractalLayerResultCompatible<I> for NormedResult<T>
 where
     Self: LayerResultFor<I>,
 {
@@ -801,7 +805,7 @@ where
     }
 }
 
-impl<T: Default + Div<f32>, I: VectorSpace, L: Copy, C: Copy> LayerResultContextFor<I>
+impl<T: Default + Div<f32>, I: VectorSpace<Scalar = f32>, L: Copy, C: Copy> LayerResultContextFor<I>
     for NormedByDerivative<T, L, C>
 where
     NormedByDerivativeResult<T, I, L, C>: LayerResult,
@@ -858,10 +862,10 @@ where
 }
 
 impl<
-    T: VectorSpace + AddAssign + Mul<f32, Output = T>,
+    T: VectorSpace<Scalar = f32> + AddAssign + Mul<f32, Output = T>,
     I: Into<T>,
     IG: Into<G> + Copy,
-    G: VectorSpace + AddAssign + Mul<f32, Output = G>,
+    G: VectorSpace<Scalar = f32> + AddAssign + Mul<f32, Output = G>,
     L: LengthFunction<G>,
     C: Curve<f32>,
 > FractalLayerResultCompatible<WithGradient<I, IG>> for NormedByDerivativeResult<T, G, L, C>
@@ -891,7 +895,7 @@ impl<
 impl<
     IT: Into<f32>,
     IG: Into<G> + Copy,
-    G: VectorSpace + AddAssign + Mul<G, Output = G>,
+    G: VectorSpace<Scalar = f32> + AddAssign + Mul<G, Output = G>,
     L: DifferentiableLengthFunction<G>,
     C: SampleDerivative<f32>,
 > FractalLayerResultCompatible<WithGradient<IT, IG>>
@@ -984,7 +988,7 @@ impl SampleDerivative<f32> for SmoothDerivativeContribution {
     fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<f32> {
         WithDerivative {
             value: bevy_math::ops::exp(-t),
-            derivative: bevy_math::ops::exp(-t) * -1.0,
+            derivative: -bevy_math::ops::exp(-t),
         }
     }
 }

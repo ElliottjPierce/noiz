@@ -51,7 +51,9 @@ pub struct PerCell<P, N> {
     pub noise: N,
 }
 
-impl<I: VectorSpace, P: Partitioner<I>, N: NoiseFunction<u32>> NoiseFunction<I> for PerCell<P, N> {
+impl<I: VectorSpace<Scalar = f32>, P: Partitioner<I>, N: NoiseFunction<u32>> NoiseFunction<I>
+    for PerCell<P, N>
+{
     type Output = N::Output;
 
     #[inline]
@@ -96,7 +98,7 @@ pub struct PerNearestPoint<P, L, N> {
     pub noise: N,
 }
 
-impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u32>>
+impl<I: VectorSpace<Scalar = f32>, L: LengthFunction<I>, P: Partitioner<I>, N: NoiseFunction<u32>>
     NoiseFunction<I> for PerNearestPoint<P, L, N>
 {
     type Output = N::Output;
@@ -244,7 +246,7 @@ impl_distance_to_edge!(Vec4);
 /// This is designed for use in [`PerCellPointDistances`].
 pub trait WorleyMode {
     /// Evaluates the result of this worley mode with the these offsets from the [`CellPoint`](crate::cells::CellPoint)s according to this [`LengthFunction`].
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -305,7 +307,7 @@ impl<T: Default> Default for WorleySmoothMin<T> {
 
 impl<T: SmoothMin> WorleyMode for WorleySmoothMin<T> {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -358,7 +360,7 @@ impl<T: Default> Default for WorleyNearestSmoothMin<T> {
 
 impl<T: SmoothMin> WorleyMode for WorleyNearestSmoothMin<T> {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -390,7 +392,7 @@ pub struct WorleyLeastDistance;
 
 impl WorleyMode for WorleyLeastDistance {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -422,7 +424,7 @@ pub struct WorleySecondLeastDistance;
 
 impl WorleyMode for WorleySecondLeastDistance {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -451,7 +453,7 @@ pub struct WorleyDifference;
 
 impl WorleyMode for WorleyDifference {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -481,7 +483,7 @@ pub struct WorleyAverage;
 
 impl WorleyMode for WorleyAverage {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -512,7 +514,7 @@ pub struct WorleyProduct;
 
 impl WorleyMode for WorleyProduct {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -542,7 +544,7 @@ pub struct WorleyRatio;
 
 impl WorleyMode for WorleyRatio {
     #[inline]
-    fn evaluate_worley<I: VectorSpace>(
+    fn evaluate_worley<I: VectorSpace<Scalar = f32>>(
         &self,
         points: impl Iterator<Item = I>,
         lengths: &impl LengthFunction<I>,
@@ -581,8 +583,12 @@ pub struct PerCellPointDistances<P, L, W> {
     pub worley_mode: W,
 }
 
-impl<I: VectorSpace, L: LengthFunction<I>, P: Partitioner<I, Cell: WorleyDomainCell>, W: WorleyMode>
-    NoiseFunction<I> for PerCellPointDistances<P, L, W>
+impl<
+    I: VectorSpace<Scalar = f32>,
+    L: LengthFunction<I>,
+    P: Partitioner<I, Cell: WorleyDomainCell>,
+    W: WorleyMode,
+> NoiseFunction<I> for PerCellPointDistances<P, L, W>
 {
     type Output = f32;
 
@@ -648,10 +654,10 @@ pub struct MixCellValues<P, C, N, const DIFFERENTIATE: bool = false> {
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: InterpolatableCell>,
     C: Curve<f32>,
-    N: ConcreteAnyValueFromBits<Concrete: VectorSpace>,
+    N: ConcreteAnyValueFromBits<Concrete: VectorSpace<Scalar = f32>>,
 > NoiseFunction<I> for MixCellValues<P, C, N, false>
 {
     type Output = N::Concrete;
@@ -669,10 +675,10 @@ impl<
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: DifferentiableCell>,
     C: SampleDerivative<f32>,
-    N: ConcreteAnyValueFromBits<Concrete: VectorSpace>,
+    N: ConcreteAnyValueFromBits<Concrete: VectorSpace<Scalar = f32>>,
 > NoiseFunction<I> for MixCellValues<P, C, N, true>
 {
     type Output = WithGradient<N::Concrete, <P::Cell as DifferentiableCell>::Gradient<N::Concrete>>;
@@ -727,7 +733,7 @@ pub struct MixCellValuesForDomain<P, C, N, const DIFFERENTIATE: bool = false> {
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: InterpolatableCell>,
     C: Curve<f32>,
     N: AnyValueFromBits<I>,
@@ -748,7 +754,7 @@ impl<
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: DifferentiableCell>,
     C: SampleDerivative<f32>,
     N: AnyValueFromBits<I>,
@@ -773,14 +779,14 @@ impl<
 }
 
 /// Allows blending between different values `V` where each values corresponds to a [`CellPoint<I>`](crate::cells::CellPoint).
-pub trait ValueBlender<I: VectorSpace, V> {
+pub trait ValueBlender<I: VectorSpace<Scalar = f32>, V> {
     /// Blends together each value `V` of `to_blend` according to some weight `I`, where weights beyond the range of `blending_half_radius` are ignored.
     /// `blending_half_radius` cuts off the blend before it hits discontinuities.
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V;
 }
 
 /// Same as [`ValueBlender`] but also differentiates the result.
-pub trait DifferentiableValueBlender<I: VectorSpace, V>: ValueBlender<I, V> {
+pub trait DifferentiableValueBlender<I: VectorSpace<Scalar = f32>, V>: ValueBlender<I, V> {
     /// Same as [`blend_values`](ValueBlender::blend_values) but also differentiates the result.
     fn differential_blend_values(
         &self,
@@ -791,7 +797,7 @@ pub trait DifferentiableValueBlender<I: VectorSpace, V>: ValueBlender<I, V> {
 
 /// Similar to [`ValueBlender`] but specialized for blending gradient dot products.
 /// In other words, the weight has a role in the value, even before blending.
-pub trait GradientBlender<I: VectorSpace> {
+pub trait GradientBlender<I: VectorSpace<Scalar = f32>> {
     /// Blends between gradient and offset pairs, returning a dot product blended value.
     fn blend_gradients(
         &self,
@@ -801,7 +807,7 @@ pub trait GradientBlender<I: VectorSpace> {
 }
 
 /// Same as [`GradientBlender`] but also differentiates the result.
-pub trait DifferentiableGradientBlender<I: VectorSpace>: GradientBlender<I> {
+pub trait DifferentiableGradientBlender<I: VectorSpace<Scalar = f32>>: GradientBlender<I> {
     /// Same as [`blend_gradients`](GradientBlender::blend_gradients) but also differentiates the result.
     fn differential_blend_gradients(
         &self,
@@ -854,7 +860,7 @@ pub struct BlendCellValues<P, B, N, const DIFFERENTIATE: bool = false> {
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
     B: ValueBlender<I, N::Concrete>,
     N: ConcreteAnyValueFromBits,
@@ -876,7 +882,7 @@ impl<
 }
 
 impl<
-    I: VectorSpace + Mul<N::Concrete, Output = I>,
+    I: VectorSpace<Scalar = f32> + Mul<N::Concrete, Output = I>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
     B: DifferentiableValueBlender<I, N::Concrete>,
     N: ConcreteAnyValueFromBits<Concrete: Copy>,
@@ -900,7 +906,7 @@ impl<
 /// This trait facilitates generating gradients and computing their dot products.
 ///
 /// If you're not sure which one to use, try [`QuickGradients`], a fast lookup table.
-pub trait GradientGenerator<I: VectorSpace> {
+pub trait GradientGenerator<I: VectorSpace<Scalar = f32>> {
     /// Gets the dot product of `I` with some gradient vector based on this seed.
     /// Each element of `offset` can be assumed to be in -1..=1.
     /// The dot product should be in (-1,1).
@@ -1036,7 +1042,7 @@ pub struct BlendCellGradients<P, B, G, const DIFFERENTIATE: bool = false> {
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
     B: GradientBlender<I>,
     G: GradientGenerator<I>,
@@ -1057,7 +1063,7 @@ impl<
 }
 
 impl<
-    I: VectorSpace,
+    I: VectorSpace<Scalar = f32>,
     P: Partitioner<I, Cell: BlendableDomainCell>,
     B: DifferentiableGradientBlender<I>,
     G: GradientGenerator<I>,
@@ -1290,8 +1296,11 @@ impl GradientGenerator<Vec3A> for QualityGradients {
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct DistanceBlend<L>(pub L);
 
-impl<V: Mul<f32, Output = V> + Default + AddAssign<V>, L: LengthFunction<I>, I: VectorSpace>
-    ValueBlender<I, V> for DistanceBlend<L>
+impl<
+    V: Mul<f32, Output = V> + Default + AddAssign<V>,
+    L: LengthFunction<I>,
+    I: VectorSpace<Scalar = f32>,
+> ValueBlender<I, V> for DistanceBlend<L>
 {
     #[inline]
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
@@ -1326,7 +1335,7 @@ pub struct LocalBlend<T> {
     pub radius_scale: f32,
 }
 
-impl<V, I: VectorSpace, B: ValueBlender<I, V>> ValueBlender<I, V> for LocalBlend<B> {
+impl<V, I: VectorSpace<Scalar = f32>, B: ValueBlender<I, V>> ValueBlender<I, V> for LocalBlend<B> {
     #[inline]
     fn blend_values(&self, to_blend: impl Iterator<Item = (V, I)>, blending_half_radius: f32) -> V {
         self.blender
@@ -1334,8 +1343,8 @@ impl<V, I: VectorSpace, B: ValueBlender<I, V>> ValueBlender<I, V> for LocalBlend
     }
 }
 
-impl<V, I: VectorSpace, B: DifferentiableValueBlender<I, V>> DifferentiableValueBlender<I, V>
-    for LocalBlend<B>
+impl<V, I: VectorSpace<Scalar = f32>, B: DifferentiableValueBlender<I, V>>
+    DifferentiableValueBlender<I, V> for LocalBlend<B>
 {
     #[inline]
     fn differential_blend_values(
@@ -1348,7 +1357,7 @@ impl<V, I: VectorSpace, B: DifferentiableValueBlender<I, V>> DifferentiableValue
     }
 }
 
-impl<I: VectorSpace, B: GradientBlender<I>> GradientBlender<I> for LocalBlend<B> {
+impl<I: VectorSpace<Scalar = f32>, B: GradientBlender<I>> GradientBlender<I> for LocalBlend<B> {
     #[inline]
     fn blend_gradients(
         &self,
@@ -1360,8 +1369,8 @@ impl<I: VectorSpace, B: GradientBlender<I>> GradientBlender<I> for LocalBlend<B>
     }
 }
 
-impl<I: VectorSpace, B: DifferentiableGradientBlender<I>> DifferentiableGradientBlender<I>
-    for LocalBlend<B>
+impl<I: VectorSpace<Scalar = f32>, B: DifferentiableGradientBlender<I>>
+    DifferentiableGradientBlender<I> for LocalBlend<B>
 {
     #[inline]
     fn differential_blend_gradients(

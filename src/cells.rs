@@ -14,7 +14,7 @@ use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm, UNormHalf};
 /// For example, on a cartesian grid, this could be a grid square.
 pub trait DomainCell {
     /// The larger/full domain this is a portion of.
-    type Full: VectorSpace;
+    type Full: VectorSpace<Scalar = f32>;
 
     /// Identifies this cell roughly from others per `rng`,
     /// roughly meaning the ids are not necessarily unique.
@@ -48,7 +48,7 @@ pub trait BlendableDomainCell: DomainCell {
 /// Represents a [`DomainCell`] that can be smoothly interpolated within.
 pub trait InterpolatableCell: DomainCell {
     /// Interpolates between the bounding [`CellPoint`]s of this [`DomainCell`] according to some [`Curve`].
-    fn interpolate_within<T: VectorSpace>(
+    fn interpolate_within<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -63,7 +63,7 @@ pub trait DifferentiableCell: InterpolatableCell {
     type Gradient<D>;
 
     /// Calculates the [`Gradient`](DifferentiableCell::Gradient) vector for the function [`interpolate_within`](InterpolatableCell::interpolate_within).
-    fn interpolation_gradient<T: VectorSpace>(
+    fn interpolation_gradient<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -72,7 +72,7 @@ pub trait DifferentiableCell: InterpolatableCell {
     ) -> Self::Gradient<T>;
 
     /// Combines [`interpolate_within`](InterpolatableCell::interpolate_within) and [`interpolation_gradient`](DifferentiableCell::interpolation_gradient).
-    fn interpolate_with_gradient<T: VectorSpace>(
+    fn interpolate_with_gradient<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         mut f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -237,7 +237,7 @@ pub struct CellPoint<T> {
 }
 
 /// Represents a type that can partition some domain `T` into [`DomainCell`]s.
-pub trait Partitioner<T: VectorSpace> {
+pub trait Partitioner<T: VectorSpace<Scalar = f32>> {
     /// The [`DomainCell`] this partitioner produces.
     type Cell: DomainCell<Full = T>;
 
@@ -432,7 +432,7 @@ impl<W: WrappingAmount<IVec2>> DomainCell for SquareCell<Vec2, IVec2, W> {
 
 impl<W: WrappingAmount<IVec2>> InterpolatableCell for SquareCell<Vec2, IVec2, W> {
     #[inline]
-    fn interpolate_within<T: VectorSpace>(
+    fn interpolate_within<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -453,7 +453,7 @@ impl<W: WrappingAmount<IVec2>> DifferentiableCell for SquareCell<Vec2, IVec2, W>
     type Gradient<D> = [D; 2];
 
     #[inline]
-    fn interpolation_gradient<T: VectorSpace>(
+    fn interpolation_gradient<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -520,7 +520,7 @@ impl<W: WrappingAmount<IVec3>> DomainCell for SquareCell<Vec3, IVec3, W> {
 
 impl<W: WrappingAmount<IVec3>> InterpolatableCell for SquareCell<Vec3, IVec3, W> {
     #[inline]
-    fn interpolate_within<T: VectorSpace>(
+    fn interpolate_within<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -545,7 +545,7 @@ impl<W: WrappingAmount<IVec3>> DifferentiableCell for SquareCell<Vec3, IVec3, W>
     type Gradient<D> = [D; 3];
 
     #[inline]
-    fn interpolation_gradient<T: VectorSpace>(
+    fn interpolation_gradient<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -640,7 +640,7 @@ impl<W: WrappingAmount<IVec3>> DomainCell for SquareCell<Vec3A, IVec3, W> {
 
 impl<W: WrappingAmount<IVec3>> InterpolatableCell for SquareCell<Vec3A, IVec3, W> {
     #[inline]
-    fn interpolate_within<T: VectorSpace>(
+    fn interpolate_within<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -665,7 +665,7 @@ impl<W: WrappingAmount<IVec3>> DifferentiableCell for SquareCell<Vec3A, IVec3, W
     type Gradient<D> = [D; 3];
 
     #[inline]
-    fn interpolation_gradient<T: VectorSpace>(
+    fn interpolation_gradient<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -768,7 +768,7 @@ impl<W: WrappingAmount<IVec4>> DomainCell for SquareCell<Vec4, IVec4, W> {
 
 impl<W: WrappingAmount<IVec4>> InterpolatableCell for SquareCell<Vec4, IVec4, W> {
     #[inline]
-    fn interpolate_within<T: VectorSpace>(
+    fn interpolate_within<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -818,7 +818,7 @@ impl<W: WrappingAmount<IVec4>> DifferentiableCell for SquareCell<Vec4, IVec4, W>
     type Gradient<D> = [D; 4];
 
     #[inline]
-    fn interpolation_gradient<T: VectorSpace>(
+    fn interpolation_gradient<T: VectorSpace<Scalar = f32>>(
         &self,
         rng: NoiseRng,
         f: impl FnMut(CellPoint<Self::Full>) -> T,
@@ -1405,7 +1405,7 @@ impl<P: Default, const HALF_SCALE: bool> Default for Voronoi<HALF_SCALE, P> {
     }
 }
 
-impl<T: VectorSpace, P: Partitioner<T>, const HALF_SCALE: bool> Partitioner<T>
+impl<T: VectorSpace<Scalar = f32>, P: Partitioner<T>, const HALF_SCALE: bool> Partitioner<T>
     for Voronoi<HALF_SCALE, P>
 where
     VoronoiCell<HALF_SCALE, P::Cell>: DomainCell<Full = T>,

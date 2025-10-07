@@ -3,8 +3,8 @@
 use bevy::{
     asset::RenderAssetUsages,
     input::mouse::AccumulatedMouseMotion,
+    mesh::{Indices, PrimitiveTopology},
     prelude::*,
-    render::mesh::{Indices, Mesh},
 };
 use bevy_math::Vec2;
 use noiz::{math_noise::Pow2, prelude::*};
@@ -76,7 +76,7 @@ fn heightmap_noise() -> impl SampleableFor<Vec2, f32> + ScalableNoise + Seedable
 // It's just an example.
 fn build_mesh(noise: impl SampleableFor<Vec2, f32>, extent: f32, resolution: f32) -> Mesh {
     let mut mesh = Mesh::new(
-        bevy::render::mesh::PrimitiveTopology::TriangleList,
+        PrimitiveTopology::TriangleList,
         RenderAssetUsages::RENDER_WORLD,
     );
 

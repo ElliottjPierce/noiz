@@ -319,7 +319,7 @@ impl<N> From<N> for Noise<N> {
     }
 }
 
-impl<I: VectorSpace, N: NoiseFunction<I>> NoiseFunction<I> for Noise<N> {
+impl<I: VectorSpace<Scalar = f32>, N: NoiseFunction<I>> NoiseFunction<I> for Noise<N> {
     type Output = N::Output;
 
     #[inline]
@@ -349,7 +349,7 @@ impl<N> SeedableNoise for Noise<N> {
     }
 }
 
-impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
+impl<I: VectorSpace<Scalar = f32>, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
     type Result = N::Output;
 
     #[inline]
@@ -360,7 +360,9 @@ impl<I: VectorSpace, N: NoiseFunction<I>> Sampleable<I> for Noise<N> {
     }
 }
 
-impl<T, I: VectorSpace, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T> for Noise<N> {
+impl<T, I: VectorSpace<Scalar = f32>, N: NoiseFunction<I, Output: Into<T>>> SampleableFor<I, T>
+    for Noise<N>
+{
     #[inline]
     fn sample(&self, loc: I) -> T {
         let (result, _rng) = self.sample_raw(loc);

@@ -5,7 +5,7 @@ use bevy_math::{Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 use crate::cells::WithGradient;
 
 /// Represents some function on a vector `T` that computes some version of it's length.
-pub trait LengthFunction<T: VectorSpace> {
+pub trait LengthFunction<T: VectorSpace<Scalar = f32>> {
     /// If the absolute value of no element of `T` exceeds `element_max`, [`length_of`](LengthFunction::length_of) will not exceed this value.
     fn max_for_element_max(&self, element_max: f32) -> f32;
     /// Computes the length or magnitude of `vec`.
@@ -21,7 +21,7 @@ pub trait LengthFunction<T: VectorSpace> {
 }
 
 /// A [`LengthFunction`] that can be differentiated.
-pub trait DifferentiableLengthFunction<T: VectorSpace>: LengthFunction<T> {
+pub trait DifferentiableLengthFunction<T: VectorSpace<Scalar = f32>>: LengthFunction<T> {
     /// Same as [`length_of`](LengthFunction::length_of) but also gives gradient information.
     fn length_and_gradient_of(&self, vec: T) -> WithGradient<f32, T>;
 }
@@ -247,7 +247,7 @@ impl_distances!(Vec3A);
 impl_distances!(Vec4);
 
 /// Represents a [`VectorSpace`] with a known dimension.
-pub trait ElementalVectorSpace: VectorSpace {
+pub trait ElementalVectorSpace: VectorSpace<Scalar = f32> {
     /// The number of elements in the vector / the number of dimensions there are.
     const NUM_ELEMENTS: f32;
     /// Compile time `NUM_ELEMENTS.sqrt()`

@@ -19,8 +19,8 @@ authors = ["Elliott Pierce"]
 description = "A simple, configurable, blazingly fast noise library built for and with Bevy."
 
 [dependencies]
-bevy_math = { version = "0.16", default-features = false, features = ["curve"] }
-bevy_reflect = { version = "0.16", default-features = false, features = [
+bevy_math = { version = "0.17", default-features = false, features = ["curve"] }
+bevy_reflect = { version = "0.17", default-features = false, features = [
   "glam",
 ], optional = true }
 serde = { version = "1", default-features = false, features = [
@@ -29,7 +29,7 @@ serde = { version = "1", default-features = false, features = [
 
 [dev-dependencies]
 # for examples
-bevy = "0.16"
+bevy = "0.17"
 
 # For benches
 criterion = "0.5"

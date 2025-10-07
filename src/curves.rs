@@ -184,7 +184,7 @@ pub struct Lerped<T> {
     pub end: T,
 }
 
-impl<T: VectorSpace> Curve<T> for Lerped<T> {
+impl<T: VectorSpace<Scalar = f32>> Curve<T> for Lerped<T> {
     #[inline]
     fn domain(&self) -> Interval {
         Interval::EVERYWHERE
@@ -196,7 +196,7 @@ impl<T: VectorSpace> Curve<T> for Lerped<T> {
     }
 }
 
-impl<T: VectorSpace> SampleDerivative<T> for Lerped<T> {
+impl<T: VectorSpace<Scalar = f32>> SampleDerivative<T> for Lerped<T> {
     #[inline]
     fn sample_with_derivative_unchecked(&self, t: f32) -> WithDerivative<T> {
         WithDerivative {
