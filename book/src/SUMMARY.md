@@ -20,4 +20,5 @@
   - [Learning Resources](./more-info/learning-resources.md)
 - [Changelogs](./changelogs/README.md)
   - [V 0.2](./changelogs/release-0-2.md)
+  - [V 0.3](./changelogs/release-0-3.md)
 - [Improving Noiz](./improving-noiz.md)
