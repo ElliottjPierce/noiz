@@ -32,7 +32,7 @@ serde = { default-features = false, features = [
 bevy = "0.18"
 
 # For benches
-criterion      = "0.5"
+criterion      = "0.8"
 fastnoise-lite = "1.1"
 libnoise       = "1.1"
 noise          = "0.9"
