@@ -95,7 +95,7 @@ macro_rules! benches_nD {
         });
 
         fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-            let octaves = black_box(octaves);
+            let octaves = ::core::hint::black_box(octaves);
             group.bench_function(format!("perlin fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Fbm::<$d, Perlin<$d>>::new(
@@ -111,7 +111,7 @@ macro_rules! benches_nD {
         }
 
         fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-            let octaves = black_box(octaves);
+            let octaves = ::core::hint::black_box(octaves);
             group.bench_function(format!("simplex fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Fbm::<$d, Simplex<$d>>::new(
@@ -127,7 +127,7 @@ macro_rules! benches_nD {
         }
 
         fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-            let octaves = black_box(octaves);
+            let octaves = ::core::hint::black_box(octaves);
             group.bench_function(format!("value fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Fbm::<$d, Value<$d>>::new(

@@ -122,7 +122,7 @@ macro_rules! benches_nD {
         });
 
         fn fbm_perlin(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-            let octaves = black_box(octaves);
+            let octaves = ::core::hint::black_box(octaves);
             group.bench_function(format!("perlin fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
@@ -148,7 +148,7 @@ macro_rules! benches_nD {
         }
 
         fn fbm_simplex(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-            let octaves = black_box(octaves);
+            let octaves = ::core::hint::black_box(octaves);
             group.bench_function(format!("simplex fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
@@ -180,7 +180,7 @@ macro_rules! benches_nD {
         }
 
         fn fbm_value(group: &mut BenchmarkGroup<WallTime>, octaves: u32) {
-            let octaves = black_box(octaves);
+            let octaves = ::core::hint::black_box(octaves);
             group.bench_function(format!("value fbm {octaves} octaves"), |bencher| {
                 bencher.iter(|| {
                     let noise = Noise::<
@@ -219,7 +219,7 @@ pub fn benches(c: &mut Criterion) {
             let noise =
                 Noise::<MixCellValues<OrthoGrid, Smoothstep, Random<UNorm, f32>>>::default();
             let mut res = 0.0;
-            let ocraves = black_box(8u32);
+            let ocraves = ::core::hint::black_box(8u32);
             for x in 0..SIZE_2D {
                 for y in 0..SIZE_2D {
                     let mut loc = Vec2::new(x as f32, y as f32) / 32.0;

@@ -1,4 +1,4 @@
-//! Benches this noise lib compared to others.
+// Benches this noise lib compared to others.
 #![expect(
     missing_docs,
     reason = "Its a benchmark and cirterion macros don't add docs."
