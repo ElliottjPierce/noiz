@@ -19,17 +19,17 @@ repository = "https://github.com/ElliottjPierce/noiz"
 version = "0.3.0"
 
 [dependencies]
-bevy_math = { default-features = false, features = ["curve"], version = "0.17" }
+bevy_math = { default-features = false, features = ["curve"], version = "0.18" }
 bevy_reflect = { default-features = false, features = [
   "glam",
-], optional = true, version = "0.17" }
+], optional = true, version = "0.18" }
 serde = { default-features = false, features = [
   "derive",
 ], optional = true, version = "1" }
 
 [dev-dependencies]
 # for examples
-bevy = "0.17"
+bevy = "0.18"
 
 # For benches
 criterion      = "0.5"
