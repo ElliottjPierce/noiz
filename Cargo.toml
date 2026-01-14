@@ -63,9 +63,6 @@ codegen-units = 1
 incremental = false
 opt-level   = 3
 
-[build]
-rustflags = ["-O"]
-
 
 [lints.clippy]
 doc_markdown                       = "warn"
