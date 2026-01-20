@@ -3,12 +3,9 @@
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 [![Crates.io](https://img.shields.io/crates/v/noiz.svg)](https://crates.io/crates/noiz)
 [![Docs.io](https://docs.rs/noiz/badge.svg)](https://docs.rs/noiz/latest/noiz/)
-[![CI](https://github.com/ElliottjPierce/noiz/workflows/CI/badge.svg)](https://github.com/ElliottjPierce/noiz/actions)
 
 A simple, configurable, blazingly fast noise library built for and with [Bevy](https://bevyengine.org/).
-
-Here's some fbm simplex noise as a taste:
-![FbmSimplex](./book/src/images/FbmSimplex.png)
+See the [book](https://elliottjpierce.github.io/noiz/) for a taste.
 
 Noiz is:
 - Simple
@@ -35,6 +32,7 @@ Noiz is not:
 |--------------|--------------|
 | 0.16         | 0.1, 0.2     |
 | 0.17         | 0.3          |
+| 0.18         | 0.4          |
 
 ## What Makes Noiz Unique?
 
@@ -48,9 +46,10 @@ Noiz is not:
 - Noiz supports noise derivatives and gradiesnts, allowing fast erosion approximations, analytical normals, etc.
 - Noiz supports many noise types that other libraries do not, for example, distance-to-edge worly noise and smooth worly noise.
 - Noiz has good documentation and a [book](https://elliottjpierce.github.io/noiz/).
-- Noiz is faster than many other libraries.
+- Noiz is faster than many other libraries (see the book for benchmarks).
 
 ## For a Quick Start, Check Out the Book!
 
 In addition to rust docs, Noiz has a book available [here](https://elliottjpierce.github.io/noiz/).
 This explains how to use Noiz in practice with much more detail than the API reference.
+Also see the interactive examples for inspiration.
