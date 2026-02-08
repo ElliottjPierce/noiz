@@ -47,7 +47,7 @@ One way you might think of is to blur the lines between the squares.
 That's values noise!
 
 Basically, instead of picking a value for each domain cell, pick one for each corner of the domain cell, and mix those values together across the cell.
-If that didn't make sense, see a visual explanation [here](https://www.youtube.com/watch?v=DxUY42r_6Cg&t=619s), which covers both value and perlin noise; more on perlin in a bit.
+If that didn't make sense, see a visual explanation [here](https://www.youtube.com/watch?v=DxUY42r_6Cg), which covers both value and perlin noise; more on perlin in a bit.
 This is called [bilinear interpolation](https://en.wikipedia.org/wiki/Bilinear_interpolation).
 In noiz, we call this mixing, as it is generalized for squares, cubes, and hyper cubes.
 
@@ -102,7 +102,7 @@ It's just a bunch of blurry squares!
 That's where perlin noise comes in!
 Instead of mixing *random* values over a domain cell, source those values partly from the sample location and partly from a random unit vector.
 That probably won't make sense at first (and that's ok).
-If you want a visual explanation, see [here](https://www.youtube.com/watch?v=DxUY42r_6Cg&t=619s) again.
+If you want a visual explanation, see [here](https://www.youtube.com/watch?v=DxUY42r_6Cg) again.
 Ultimately, since the sample location has more effect, this adds lots more shapes to the noise.
 Here's how this works in noiz:
 
