@@ -67,7 +67,7 @@ pub struct PowI(pub i32);
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Sqrt;
 
-/// A [`NoiseFunction`] makes more positive numbers get closer to 0.
+/// A [`NoiseFunction`] that makes more positive numbers get closer to 0.
 /// Negative numbers are meaningless. Positive numbers will produce UNorm results.
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
