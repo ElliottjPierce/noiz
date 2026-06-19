@@ -1,4 +1,4 @@
-# Release 0.5
+# Release 0.6
 
 WIP. Updated during development. After release, this is moved to the book.
 

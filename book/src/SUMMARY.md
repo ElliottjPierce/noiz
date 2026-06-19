@@ -22,4 +22,5 @@
   - [V 0.2](./changelogs/release-0-2.md)
   - [V 0.3](./changelogs/release-0-3.md)
   - [V 0.4](./changelogs/release-0-4.md)
+  - [V 0.5](./changelogs/release-0-5.md)
 - [Improving Noiz](./improving-noiz.md)
