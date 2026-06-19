@@ -1158,7 +1158,7 @@ impl NoiseOptions {
                 let noise = &mut self.options2d[selected];
                 noise.noise.set_seed(self.seed);
                 noise.noise.set_period(self.period);
-                noise.display_image(images.get_mut(self.image.id()).unwrap());
+                noise.display_image(&mut images.get_mut(self.image.id()).unwrap());
                 Some(noise.name)
             }
             ExampleMode::Image3d => {
@@ -1167,7 +1167,7 @@ impl NoiseOptions {
                 noise.noise.set_seed(self.seed);
                 noise.noise.set_period(self.period);
                 noise.display_image(
-                    images.get_mut(self.image.id()).unwrap(),
+                    &mut images.get_mut(self.image.id()).unwrap(),
                     time.elapsed_secs() * self.time_scale,
                 );
                 changed.then_some(noise.name)
@@ -1178,7 +1178,7 @@ impl NoiseOptions {
                 noise.noise.set_seed(self.seed);
                 noise.noise.set_period(self.period);
                 noise.display_image(
-                    images.get_mut(self.image.id()).unwrap(),
+                    &mut images.get_mut(self.image.id()).unwrap(),
                     time.elapsed_secs() * self.time_scale,
                     time.elapsed_secs() * core::f32::consts::E * -self.time_scale,
                 );

@@ -259,7 +259,7 @@ impl NoiseOptions {
         let noise = &mut self.options[selected];
         noise.noise.set_seed(self.seed);
         noise.noise.set_period(self.period);
-        noise.display_image(images.get_mut(self.image.id()).unwrap());
+        noise.display_image(&mut images.get_mut(self.image.id()).unwrap());
         println!(
             "Updated {}, period: {} seed: {}.",
             noise.name, self.period, self.seed
