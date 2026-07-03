@@ -5,6 +5,7 @@
 )]
 #![doc = include_str!("../README.md")]
 
+pub mod builder;
 pub mod cell_noise;
 pub mod cells;
 pub mod curves;
@@ -37,6 +38,14 @@ impl<I, T0: NoiseFunction<I>> NoiseFunction<I> for (T0,) {
     #[inline]
     fn evaluate(&self, input: I, seeds: &mut NoiseRng) -> Self::Output {
         self.0.evaluate(input, seeds)
+    }
+}
+
+impl<I> NoiseFunction<I> for () {
+    type Output = I;
+    #[inline]
+    fn evaluate(&self, input: I, _seeds: &mut NoiseRng) -> Self::Output {
+        input
     }
 }
 
