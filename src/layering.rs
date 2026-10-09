@@ -12,7 +12,13 @@ use crate::{
     lengths::{DifferentiableLengthFunction, LengthFunction},
     rng::NoiseRng,
 };
-use bevy_math::{Curve, VectorSpace, WithDerivative, curve::derivatives::SampleDerivative};
+
+use bevy_curve::{
+    Curve,
+    derivatives::SampleDerivative,
+};
+
+use bevy_math::{VectorSpace, WithDerivative,};
 
 /// This represents the context of some [`LayerResult`].
 /// This may store metadata collected in [`LayerOperation::prepare`].
@@ -941,9 +947,9 @@ pub struct PeakDerivativeContribution;
 
 impl Curve<f32> for PeakDerivativeContribution {
     #[inline]
-    fn domain(&self) -> bevy_math::curve::Interval {
+    fn domain(&self) -> bevy_curve::Interval {
         // SAFETY: nothing is greater than infinity.
-        unsafe { bevy_math::curve::Interval::new(0.0, f32::INFINITY).unwrap_unchecked() }
+        unsafe { bevy_curve::Interval::new(0.0, f32::INFINITY).unwrap_unchecked() }
     }
 
     #[inline]
@@ -972,9 +978,9 @@ pub struct SmoothDerivativeContribution;
 
 impl Curve<f32> for SmoothDerivativeContribution {
     #[inline]
-    fn domain(&self) -> bevy_math::curve::Interval {
+    fn domain(&self) -> bevy_curve::Interval {
         // SAFETY: nothing is greater than infinity.
-        unsafe { bevy_math::curve::Interval::new(0.0, f32::INFINITY).unwrap_unchecked() }
+        unsafe { bevy_curve::Interval::new(0.0, f32::INFINITY).unwrap_unchecked() }
     }
 
     #[inline]
