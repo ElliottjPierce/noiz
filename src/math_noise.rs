@@ -5,7 +5,9 @@
 
 use core::ops::{Mul, Neg};
 
-use bevy_math::{Curve, Vec2, Vec3, Vec3A, Vec4};
+use bevy_curve::Curve;
+
+use bevy_math::{Vec2, Vec3, Vec3A, Vec4};
 
 use crate::{NoiseFunction, cells::WithGradient, lengths::LengthFunction};
 

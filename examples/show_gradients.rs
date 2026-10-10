@@ -178,7 +178,7 @@ fn setup(
             })),
         ))
         .observe(
-            |ev: On<Pointer<Move>>, noise: Res<NoiseOptions>, mut hit: ResMut<Hit>| {
+            |ev: On<PointerMove>, noise: Res<NoiseOptions>, mut hit: ResMut<Hit>| {
                 let sample =
                     ev.hit.position.unwrap().xy() * vec2(1.0, -1.0) + vec2(WIDTH, HEIGHT) / 2.0;
                 let loc = Vec2::new(
