@@ -17,7 +17,7 @@ Noiz is:
 - Serializable
 - Reflectable
 - Readable
-- Under development (as I have time and features are requested)
+- Maintained (as I have time and features are requested)
 - Free and open source forever (feel free to open issues and prs!)
 - No Std compatible
 

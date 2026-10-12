@@ -5,12 +5,9 @@ use core::{
     ops::{Add, Mul},
 };
 
-use bevy_curve::{
-    Curve,
-    derivatives::SampleDerivative,
-};
+use bevy_curve::{Curve, derivatives::SampleDerivative};
 
-use bevy_math::{HasTangent, Vec2, Vec3, Vec3A, Vec4,};
+use bevy_math::{HasTangent, Vec2, Vec3, Vec3A, Vec4};
 
 use crate::{NoiseFunction, cells::WithGradient, rng::NoiseRng};
 

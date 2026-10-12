@@ -46,7 +46,11 @@ libm = ["bevy_math/libm"]
 nostd-libm = ["bevy_math/nostd-libm"]
 
 serialize = ["dep:serde", "bevy_math/serialize", "bevy_curve/serialize"]
-bevy_reflect = ["dep:bevy_reflect", "bevy_math/bevy_reflect", "bevy_curve/bevy_reflect"]
+bevy_reflect = [
+  "dep:bevy_reflect",
+  "bevy_math/bevy_reflect",
+  "bevy_curve/bevy_reflect",
+]
 debug = []
 
 [profile.dev]
