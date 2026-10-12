@@ -41,12 +41,12 @@ libnoise = "1.1"
 [features]
 default = ["std", "bevy_reflect", "serialize"]
 
-std = ["bevy_math/std", "bevy_reflect?/std", "serde?/std"]
+std = ["bevy_math/std", "bevy_curve/std", "bevy_reflect?/std", "serde?/std"]
 libm = ["bevy_math/libm"]
 nostd-libm = ["bevy_math/nostd-libm"]
 
-serialize = ["dep:serde", "bevy_math/serialize"]
-bevy_reflect = ["dep:bevy_reflect"]
+serialize = ["dep:serde", "bevy_math/serialize", "bevy_curve/serialize"]
+bevy_reflect = ["dep:bevy_reflect", "bevy_math/bevy_reflect", "bevy_curve/bevy_reflect"]
 debug = []
 
 [profile.dev]
