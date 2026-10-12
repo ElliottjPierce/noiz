@@ -1,7 +1,6 @@
 //! Contains logic for layering different [`NoiseFunction`]s on top of each other.
 
 use core::{
-    f32,
     marker::PhantomData,
     ops::{AddAssign, Div, Mul},
 };
@@ -13,12 +12,9 @@ use crate::{
     rng::NoiseRng,
 };
 
-use bevy_curve::{
-    Curve,
-    derivatives::SampleDerivative,
-};
+use bevy_curve::{Curve, derivatives::SampleDerivative};
 
-use bevy_math::{VectorSpace, WithDerivative,};
+use bevy_math::{VectorSpace, WithDerivative};
 
 /// This represents the context of some [`LayerResult`].
 /// This may store metadata collected in [`LayerOperation::prepare`].

@@ -1,18 +1,10 @@
 //! Contains logic for creating noise based on [`DomainCell`]s.
 
-use core::{
-    f32,
-    ops::{AddAssign, Mul},
-};
+use core::ops::{AddAssign, Mul};
 
-use bevy_curve::{
-    Curve,
-    derivatives::SampleDerivative,
-};
+use bevy_curve::{Curve, derivatives::SampleDerivative};
 
-use bevy_math::{
-    Vec2, Vec3, Vec3A, Vec4, Vec4Swizzles, VectorSpace,
-};
+use bevy_math::{Vec2, Vec3, Vec3A, Vec4, Vec4Swizzles, VectorSpace};
 
 use crate::{
     NoiseFunction,
@@ -1254,7 +1246,7 @@ impl GradientGenerator<Vec2> for QualityGradients {
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec2 {
         let angle: f32 = UNorm.any_value(seed);
-        Vec2::from_angle(angle * f32::consts::PI * 2.0)
+        Vec2::from_angle(angle * core::f32::consts::PI * 2.0)
     }
 }
 
@@ -1267,8 +1259,8 @@ impl GradientGenerator<Vec3> for QualityGradients {
     #[inline]
     fn get_gradient(&self, seed: u32) -> Vec3 {
         let Vec2 { x, y } = UNorm.any_value(seed);
-        let theta = x * f32::consts::PI * 2.0;
-        let phi = y * f32::consts::PI;
+        let theta = x * core::f32::consts::PI * 2.0;
+        let phi = y * core::f32::consts::PI;
         Vec2::from_angle(theta).extend(phi.cos())
     }
 }

@@ -2,14 +2,9 @@
 
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign};
 
-use bevy_curve::{
-    Curve,
-    derivatives::SampleDerivative,
-};
+use bevy_curve::{Curve, derivatives::SampleDerivative};
 
-use bevy_math::{
-    IVec2, IVec3, IVec4, Vec2, Vec3, Vec3A, Vec4, VectorSpace,
-};
+use bevy_math::{IVec2, IVec3, IVec4, Vec2, Vec3, Vec3A, Vec4, VectorSpace};
 
 use crate::rng::{AnyValueFromBits, NoiseRng, NoiseRngInput, UNorm, UNormHalf};
 

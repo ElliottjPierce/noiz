@@ -17,7 +17,7 @@ Noiz is:
 - Serializable
 - Reflectable
 - Readable
-- Under development (as I have time and features are requested)
+- Maintained (as I have time and features are requested)
 - Free and open source forever (feel free to open issues and prs!)
 - No Std compatible
 
@@ -34,6 +34,7 @@ Noiz is not:
 | 0.17         | 0.3          |
 | 0.18         | 0.4          |
 | 0.19         | 0.5          |
+| 0.20         | 0.6          |
 
 ## What Makes Noiz Unique?
 
