@@ -27,6 +27,7 @@ use noiz::{
     lengths::{ChebyshevLength, EuclideanLength, ManhattanLength},
     math_noise::{Billow, PingPong, Pow4, SNormToUNorm, Spiral},
     misc_noise::{Offset, Peeled, RandomElements, SelfMasked},
+    prelude::{NoiseBuilder, common_noise::SimplexWithDerivative},
     rng::{Random, SNorm, UNorm},
 };
 
@@ -633,38 +634,24 @@ fn main() -> AppExit {
                         },
                         NoiseOption {
                             name: "Derivative Fractal Simplex noise",
-                            noise: Box::new(Noise::<(
-                                LayeredNoise<
-                                    NormedByDerivative<
-                                        f32,
-                                        EuclideanLength,
-                                        PeakDerivativeContribution,
-                                    >,
-                                    Persistence,
-                                    FractalLayers<
-                                        Octave<
-                                            BlendCellGradients<
-                                                SimplexGrid,
-                                                SimplecticBlend,
-                                                QuickGradients,
-                                                true,
-                                            >,
-                                        >,
-                                    >,
-                                >,
-                                SNormToUNorm,
-                            )>::from((
-                                LayeredNoise::new(
-                                    NormedByDerivative::default(),
-                                    Persistence(0.6),
-                                    FractalLayers {
-                                        layer: Default::default(),
-                                        lacunarity: 1.8,
-                                        amount: 8,
-                                    },
-                                ),
-                                Default::default(),
-                            ))),
+                            noise: Box::new(
+                                NoiseBuilder::new(())
+                                    .layered(
+                                        NormedByDerivative::<
+                                            f32,
+                                            EuclideanLength,
+                                            PeakDerivativeContribution,
+                                        >::default(),
+                                        Persistence(0.6),
+                                        |lbuilder| {
+                                            lbuilder.fractal_with(1.8, 8, |fbuilder| {
+                                                fbuilder.octave(SimplexWithDerivative::default())
+                                            })
+                                        },
+                                    )
+                                    .chain(SNormToUNorm)
+                                    .get_noise_default(),
+                            ),
                         },
                         NoiseOption {
                             name: "Domain Mapping White",
