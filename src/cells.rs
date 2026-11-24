@@ -1385,7 +1385,7 @@ impl Partitioner<Vec4> for SimplexGrid {
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
     /// The inner [`Partitioner`] that will have its [`DomainCell`]'s [`CellPoint`]s moved
-    pub partitoner: P,
+    pub partitioner: P,
     /// How much each [`CellPoint`]s will be moved.
     /// Values that are not clamped to 0 and 1 are not invalid but will produce discontinuities.
     /// It is recommended to keep this between 0 and 1/
@@ -1398,7 +1398,7 @@ pub struct Voronoi<const HALF_SCALE: bool = false, P = OrthoGrid> {
 impl<P: Default, const HALF_SCALE: bool> Default for Voronoi<HALF_SCALE, P> {
     fn default() -> Self {
         Self {
-            partitoner: P::default(),
+            partitioner: P::default(),
             randomness: 1.0,
         }
     }
@@ -1414,7 +1414,7 @@ where
     #[inline]
     fn partition(&self, full: T) -> Self::Cell {
         VoronoiCell {
-            cell: self.partitoner.partition(full),
+            cell: self.partitioner.partition(full),
             randomness: self.randomness,
         }
     }
@@ -1429,7 +1429,7 @@ impl<P, const HALF_SCALE: bool> Voronoi<HALF_SCALE, P> {
         P: Default,
     {
         Self {
-            partitoner: P::default(),
+            partitioner: P::default(),
             randomness,
         }
     }
