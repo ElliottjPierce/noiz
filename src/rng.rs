@@ -33,7 +33,7 @@ pub trait NoiseRngInput {
 
 impl NoiseRng {
     /// This is a large prime number with even bit distribution.
-    /// This lets use use this as a multiplier and xor in the rng.
+    /// This lets us use this as a multiplier and xor in the rng.
     const KEY: u32 = 249_222_277;
 
     /// Deterministically changes the seed significantly.

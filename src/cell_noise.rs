@@ -17,7 +17,7 @@ use crate::{
     rng::{AnyValueFromBits, ConcreteAnyValueFromBits, NoiseRng, SNormSplit, UNorm},
 };
 
-/// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s form a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
+/// A [`NoiseFunction`] that sharply jumps between values for different [`DomainCell`]s from a [`Partitioner`] `S`, where each value is from a [`NoiseFunction<u32>`] `N`.
 ///
 /// This is the simplest kind of spatial [`NoiseFunction`], and it can be used to make white noise.
 ///
@@ -60,7 +60,7 @@ impl<I: VectorSpace<Scalar = f32>, P: Partitioner<I>, N: NoiseFunction<u32>> Noi
     }
 }
 
-/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoint`](crate::cells::CellPoint)s form a [`Partitioner`] `P`,
+/// A [`NoiseFunction`] that sharply jumps between values for different [`CellPoint`](crate::cells::CellPoint)s from a [`Partitioner`] `P`,
 /// where each value is from a [`NoiseFunction<u32>`] `N` where the `u32` is sourced from the nearest [`CellPoint`](crate::cells::CellPoint)s.
 /// The [`LengthFunction`] `L` is used to determine which point is nearest.
 ///

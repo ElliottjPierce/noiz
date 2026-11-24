@@ -65,7 +65,7 @@ let noise = Noise::<PerCellPointDistances<
     PerCellPointDistances {
         // Wrap after 16 units.
         cells: Voronoi {
-            partitoner: OrthoGrid(16),
+            partitioner: OrthoGrid(16),
             ..default()
         },
         ..default()
